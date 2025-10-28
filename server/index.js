@@ -411,7 +411,7 @@ app.delete('/api/positions/:id', (req, res) => {
 
 // 创建用户
 app.post('/api/users', (req, res) => {
-  const { username, real_name, email, phone, organization_id, position_id, status = 1 } = req.body;
+  const { username, realName, email, phone, organizationId, positionId, status = 1, password } = req.body;
 
   // 检查用户名是否已存在
   db.get('SELECT id FROM users WHERE username = ?', [username], (err, user) => {
@@ -435,10 +435,11 @@ app.post('/api/users', (req, res) => {
         }
 
         // 创建用户
+        const defaultPassword = password || '123456'; // 默认密码
         db.run(
-          `INSERT INTO users (username, real_name, email, phone, organization_id, position_id, status) 
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [username, real_name, email, phone, organization_id, position_id, status],
+          `INSERT INTO users (username, password, real_name, email, phone, organization_id, position_id, status) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [username, defaultPassword, realName, email, phone, organizationId, positionId, status],
           function(err) {
             if (err) {
               return res.status(500).json({ message: '创建用户失败' });
@@ -450,10 +451,11 @@ app.post('/api/users', (req, res) => {
       });
     } else {
       // 创建用户（无邮箱）
+      const defaultPassword = password || '123456'; // 默认密码
       db.run(
-        `INSERT INTO users (username, real_name, email, phone, organization_id, position_id, status) 
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [username, real_name, email, phone, organization_id, position_id, status],
+        `INSERT INTO users (username, password, real_name, email, phone, organization_id, position_id, status) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [username, defaultPassword, realName, email, phone, organizationId, positionId, status],
         function(err) {
           if (err) {
             return res.status(500).json({ message: '创建用户失败' });
@@ -469,7 +471,7 @@ app.post('/api/users', (req, res) => {
 // 更新用户
 app.put('/api/users/:id', (req, res) => {
   const { id } = req.params;
-  const { username, real_name, email, phone, organization_id, position_id, status } = req.body;
+  const { username, realName, email, phone, organizationId, positionId, status } = req.body;
 
   // 检查用户名是否被其他用户使用
   db.get('SELECT id FROM users WHERE username = ? AND id != ?', [username, id], (err, user) => {
@@ -497,7 +499,7 @@ app.put('/api/users/:id', (req, res) => {
           `UPDATE users SET username = ?, real_name = ?, email = ?, phone = ?, 
            organization_id = ?, position_id = ?, status = ?, updated_at = CURRENT_TIMESTAMP 
            WHERE id = ?`,
-          [username, real_name, email, phone, organization_id, position_id, status, id],
+          [username, realName, email, phone, organizationId, positionId, status, id],
           function(err) {
             if (err) {
               return res.status(500).json({ message: '更新失败' });
@@ -517,7 +519,7 @@ app.put('/api/users/:id', (req, res) => {
         `UPDATE users SET username = ?, real_name = ?, email = ?, phone = ?, 
          organization_id = ?, position_id = ?, status = ?, updated_at = CURRENT_TIMESTAMP 
          WHERE id = ?`,
-        [username, real_name, email, phone, organization_id, position_id, status, id],
+        [username, realName, email, phone, organizationId, positionId, status, id],
         function(err) {
           if (err) {
             return res.status(500).json({ message: '更新失败' });
