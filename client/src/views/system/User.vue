@@ -1,18 +1,14 @@
 <template>
   <div class="user-management">
-    <div class="page-header">
-      <h2>用户管理</h2>
-    </div>
-
-    <!-- 搜索区域 -->
-    <div class="search-section">
+    <!-- 搜索表单 -->
+    <div class="search-form">
       <el-form :model="searchForm" inline>
         <el-form-item label="关键词">
           <el-input
             v-model="searchForm.keyword"
             placeholder="请输入用户名、姓名或邮箱"
             clearable
-            style="width: 300px"
+            @keyup.enter="handleSearch"
           />
         </el-form-item>
         <el-form-item>
@@ -22,16 +18,16 @@
       </el-form>
     </div>
 
-    <!-- 操作区域 -->
-    <div class="action-section">
+    <!-- 操作按钮 -->
+    <div class="button-group">
       <el-button type="primary" @click="handleAdd">
         <el-icon><Plus /></el-icon>
         新增用户
       </el-button>
     </div>
 
-    <!-- 表格区域 -->
-    <div class="table-section">
+    <!-- 用户表格 -->
+    <div class="table-container">
       <el-table
         :data="tableData"
         v-loading="loading"
@@ -55,18 +51,18 @@
         <el-table-column prop="created_at" label="创建时间" width="160" />
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handleEdit(row)">
-              编辑
-            </el-button>
-            <el-button type="danger" size="small" @click="handleDelete(row)">
-              删除
-            </el-button>
+            <div class="operation-buttons">
+              <el-button size="small" @click="handleEdit(row)">编辑</el-button>
+              <el-button size="small" type="danger" @click="handleDelete(row)">
+                删除
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
 
       <!-- 分页 -->
-      <div class="pagination-section">
+      <div class="pagination">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.limit"
@@ -439,37 +435,46 @@ onMounted(() => {
 
 <style scoped>
 .user-management {
-  padding: 20px;
+  padding: 0;
 }
 
-.page-header {
-  margin-bottom: 20px;
+.search-form {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #f7fafc;
 }
 
-.page-header h2 {
-  margin: 0;
-  color: #303133;
+.button-group {
+  margin-bottom: 24px;
 }
 
-.search-section {
-  background: #f5f5f5;
-  padding: 20px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-}
-
-.action-section {
-  margin-bottom: 20px;
-}
-
-.table-section {
-  background: white;
-  border-radius: 4px;
+.table-container {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  border: 1px solid #f7fafc;
   overflow: hidden;
 }
 
-.pagination-section {
-  padding: 20px;
+.pagination {
+  margin-top: 20px;
   text-align: right;
+}
+
+/* 操作按钮组样式 */
+.operation-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 </style>

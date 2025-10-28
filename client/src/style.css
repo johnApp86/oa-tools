@@ -14,28 +14,39 @@ html, body {
   height: 100%;
 }
 
-/* 明亮主题色彩 */
+/* 现代化主题色彩 */
 :root {
   --primary-color: #409eff;
+  --primary-light: #79bbff;
+  --primary-dark: #337ecc;
   --success-color: #67c23a;
+  --success-light: #95d475;
   --warning-color: #e6a23c;
+  --warning-light: #eebe77;
   --danger-color: #f56c6c;
+  --danger-light: #f89898;
   --info-color: #909399;
+  --info-light: #b1b3b8;
   
-  --bg-color: #f5f7fa;
+  --bg-color: #f8fafc;
   --sidebar-bg: #ffffff;
-  --header-bg: #ffffff;
+  --header-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --content-bg: #ffffff;
   
-  --text-primary: #303133;
-  --text-regular: #606266;
-  --text-secondary: #909399;
-  --text-placeholder: #c0c4cc;
+  --text-primary: #1a202c;
+  --text-regular: #4a5568;
+  --text-secondary: #718096;
+  --text-placeholder: #a0aec0;
   
-  --border-color: #dcdfe6;
-  --border-light: #e4e7ed;
-  --border-lighter: #ebeef5;
-  --border-extra-light: #f2f6fc;
+  --border-color: #e2e8f0;
+  --border-light: #edf2f7;
+  --border-lighter: #f7fafc;
+  --border-extra-light: #fafafa;
+  
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 /* 布局样式 */
@@ -46,13 +57,15 @@ html, body {
 }
 
 .layout-header {
-  height: 60px;
+  height: 64px;
   background: var(--header-bg);
   border-bottom: 1px solid var(--border-light);
   display: flex;
   align-items: center;
-  padding: 0 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 0 24px;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  z-index: 1000;
 }
 
 .layout-main {
@@ -62,60 +75,73 @@ html, body {
 }
 
 .layout-sidebar {
-  width: 240px;
+  width: 260px;
   background: var(--sidebar-bg);
   border-right: 1px solid var(--border-light);
   overflow-y: auto;
+  box-shadow: var(--shadow-sm);
 }
 
 .layout-content {
   flex: 1;
   background: var(--bg-color);
-  padding: 20px;
+  padding: 24px;
   overflow-y: auto;
 }
 
-/* 卡片样式 */
+/* 现代化卡片样式 */
 .page-card {
   background: var(--content-bg);
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  margin-bottom: 20px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border-lighter);
+  transition: all 0.3s ease;
 }
 
-/* 表格样式 */
+.page-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* 现代化表格样式 */
 .table-container {
   background: var(--content-bg);
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  padding: 24px;
+  border: 1px solid var(--border-lighter);
+  overflow: hidden;
 }
 
-/* 表单样式 */
+/* 现代化表单样式 */
 .form-container {
   background: var(--content-bg);
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 30px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  padding: 32px;
   max-width: 600px;
   margin: 0 auto;
+  border: 1px solid var(--border-lighter);
 }
 
-/* 按钮组样式 */
+/* 现代化按钮组样式 */
 .button-group {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
 }
 
-/* 搜索表单样式 */
+/* 现代化搜索表单样式 */
 .search-form {
   background: var(--content-bg);
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  margin-bottom: 20px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border-lighter);
 }
 
 /* 响应式设计 */
@@ -151,6 +177,128 @@ html, body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
+}
+
+/* Element Plus 样式覆盖 */
+.el-button {
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+}
+
+.el-button--primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3) !important;
+}
+
+.el-button--primary:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4) !important;
+}
+
+.el-button--danger {
+  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%) !important;
+  border: none !important;
+  box-shadow: 0 2px 4px rgba(245, 101, 101, 0.3) !important;
+}
+
+.el-button--danger:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(245, 101, 101, 0.4) !important;
+}
+
+.el-input__wrapper {
+  border-radius: 6px !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+  border: 1px solid var(--border-color) !important;
+  transition: all 0.3s ease !important;
+}
+
+.el-input__wrapper:hover {
+  border-color: var(--primary-light) !important;
+}
+
+.el-input__wrapper.is-focus {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1) !important;
+}
+
+.el-table {
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.el-table th {
+  background-color: var(--border-extra-light) !important;
+  color: var(--text-regular) !important;
+  font-weight: 600 !important;
+  border-bottom: 2px solid var(--border-color) !important;
+}
+
+.el-table td {
+  border-bottom: 1px solid var(--border-lighter) !important;
+}
+
+.el-table tr:hover > td {
+  background-color: var(--border-extra-light) !important;
+}
+
+.el-tag {
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+}
+
+.el-tag--success {
+  background: linear-gradient(135deg, #68d391 0%, #48bb78 100%) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.el-tag--danger {
+  background: linear-gradient(135deg, #fc8181 0%, #f56565 100%) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.el-dialog {
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-xl) !important;
+}
+
+.el-dialog__header {
+  background: linear-gradient(135deg, var(--border-extra-light) 0%, var(--border-lighter) 100%) !important;
+  border-radius: 12px 12px 0 0 !important;
+  padding: 20px 24px !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.el-dialog__title {
+  font-weight: 600 !important;
+  color: var(--text-primary) !important;
+}
+
+.el-menu {
+  border: none !important;
+}
+
+.el-menu-item {
+  border-radius: 6px !important;
+  margin: 4px 8px !important;
+  transition: all 0.3s ease !important;
+}
+
+.el-menu-item:hover {
+  background-color: var(--border-extra-light) !important;
+}
+
+.el-menu-item.is-active {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%) !important;
+  color: white !important;
+}
+
+.el-sub-menu .el-menu-item {
+  margin: 2px 16px !important;
 }
 
 /* 动画效果 */

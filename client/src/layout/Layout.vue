@@ -84,20 +84,24 @@ const activeMenu = computed(() => route.path);
 }
 
 .layout-header {
-  height: 60px;
-  background: #409eff;
+  height: 64px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 0 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  position: relative;
+  z-index: 1000;
 }
 
 .header-left .logo {
   margin: 0;
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .header-right .user-info {
@@ -121,10 +125,11 @@ const activeMenu = computed(() => route.path);
 }
 
 .layout-sidebar {
-  width: 200px;
-  background: #f5f5f5;
-  border-right: 1px solid #e6e6e6;
+  width: 260px;
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
   overflow-y: auto;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 .sidebar-menu {
@@ -134,8 +139,8 @@ const activeMenu = computed(() => route.path);
 
 .layout-content {
   flex: 1;
-  background: #ffffff;
+  background: #f8fafc;
   overflow-y: auto;
-  padding: 20px;
+  padding: 24px;
 }
 </style>

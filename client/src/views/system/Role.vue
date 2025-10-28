@@ -41,19 +41,21 @@
           </template>
         </el-table-column>
         <el-table-column prop="created_at" label="创建时间" width="180" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="handleEdit(row)">编辑</el-button>
-            <el-button
-              size="small"
-              type="primary"
-              @click="handlePermission(row)"
-            >
-              权限设置
-            </el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">
-              删除
-            </el-button>
+            <div class="operation-buttons">
+              <el-button size="small" @click="handleEdit(row)">编辑</el-button>
+              <el-button
+                size="small"
+                type="primary"
+                @click="handlePermission(row)"
+              >
+                权限设置
+              </el-button>
+              <el-button size="small" type="danger" @click="handleDelete(row)">
+                删除
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -367,30 +369,46 @@ onMounted(() => {
 
 <style scoped>
 .role-management {
-  padding: 20px;
+  padding: 0;
 }
 
 .search-form {
   background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  margin-bottom: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #f7fafc;
 }
 
 .button-group {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .table-container {
   background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  border: 1px solid #f7fafc;
+  overflow: hidden;
 }
 
 .pagination {
   margin-top: 20px;
   text-align: right;
+}
+
+/* 操作按钮组样式 */
+.operation-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 </style>
