@@ -35,6 +35,7 @@
             <el-icon><House /></el-icon>
             <span>首页</span>
           </el-menu-item>
+          
           <el-sub-menu index="/system">
             <template #title>
               <el-icon><Setting /></el-icon>
@@ -57,6 +58,37 @@
               <span>菜单管理</span>
             </el-menu-item>
           </el-sub-menu>
+
+          <el-sub-menu index="/hr">
+            <template #title>
+              <el-icon><UserFilled /></el-icon>
+              <span>HR管理</span>
+            </template>
+            <el-menu-item index="/hr/recruitment">
+              <el-icon><Plus /></el-icon>
+              <span>招聘管理</span>
+            </el-menu-item>
+            <el-menu-item index="/hr/onboarding">
+              <el-icon><Check /></el-icon>
+              <span>入职离职管理</span>
+            </el-menu-item>
+            <el-menu-item index="/hr/attendance">
+              <el-icon><Clock /></el-icon>
+              <span>考勤、请假</span>
+            </el-menu-item>
+            <el-menu-item index="/hr/salary">
+              <el-icon><Wallet /></el-icon>
+              <span>薪酬福利管理</span>
+            </el-menu-item>
+            <el-menu-item index="/hr/employee">
+              <el-icon><Document /></el-icon>
+              <span>档案管理</span>
+            </el-menu-item>
+            <el-menu-item index="/hr/reports">
+              <el-icon><DataAnalysis /></el-icon>
+              <span>报表分析</span>
+            </el-menu-item>
+          </el-sub-menu>
         </el-menu>
       </aside>
 
@@ -71,6 +103,21 @@
 <script setup>
 import { computed } from "vue";
 import { useRoute } from "vue-router";
+import { 
+  House, 
+  Setting, 
+  OfficeBuilding, 
+  User, 
+  Avatar, 
+  Menu,
+  UserFilled, 
+  Plus, 
+  Check, 
+  Clock, 
+  Wallet, 
+  Document, 
+  DataAnalysis 
+} from '@element-plus/icons-vue';
 
 const route = useRoute();
 const activeMenu = computed(() => route.path);

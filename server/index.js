@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const db = require('./database/db');
+const { initHRDatabase } = require('./database/hr-init');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -12,6 +13,9 @@ app.use(express.json());
 
 // 静态文件服务
 app.use(express.static(path.join(__dirname, '../client/dist')));
+
+// 初始化HR数据库
+initHRDatabase();
 
 // 健康检查
 app.get('/api/health', (req, res) => {
@@ -50,6 +54,50 @@ app.get('/api/menus/tree', (req, res) => {
           name: '菜单管理',
           path: '/system/menu',
           icon: 'Menu'
+        }
+      ]
+    },
+    {
+      id: 6,
+      name: 'HR管理',
+      path: '/hr',
+      icon: 'UserGroup',
+      children: [
+        {
+          id: 7,
+          name: '招聘管理',
+          path: '/hr/recruitment',
+          icon: 'UserPlus'
+        },
+        {
+          id: 8,
+          name: '入职离职管理',
+          path: '/hr/onboarding',
+          icon: 'UserCheck'
+        },
+        {
+          id: 9,
+          name: '考勤、请假',
+          path: '/hr/attendance',
+          icon: 'Clock'
+        },
+        {
+          id: 10,
+          name: '薪酬福利管理',
+          path: '/hr/salary',
+          icon: 'CurrencyDollar'
+        },
+        {
+          id: 11,
+          name: '档案管理',
+          path: '/hr/employee',
+          icon: 'DocumentText'
+        },
+        {
+          id: 12,
+          name: '报表分析',
+          path: '/hr/reports',
+          icon: 'ChartBar'
         }
       ]
     }
@@ -409,6 +457,16 @@ app.delete('/api/positions/:id', (req, res) => {
   });
 });
 
+// 获取所有岗位（用于下拉选择）
+app.get('/api/positions/all', (req, res) => {
+  db.all('SELECT id, name, code FROM positions WHERE status = 1 ORDER BY level, sort_order', (err, positions) => {
+    if (err) {
+      return res.status(500).json({ message: '查询失败' });
+    }
+    res.json(positions);
+  });
+});
+
 // 创建用户
 app.post('/api/users', (req, res) => {
   const { username, realName, email, phone, organizationId, positionId, status = 1, password } = req.body;
@@ -667,6 +725,12 @@ app.delete('/api/menus/:id', (req, res) => {
     });
   });
 });
+
+// 引入HR模块路由
+const hrRoutes = require('./routes/hr');
+
+// 注册HR模块路由
+app.use('/api/hr', hrRoutes);
 
 // 启动服务器
 app.listen(PORT, () => {

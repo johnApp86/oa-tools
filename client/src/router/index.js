@@ -12,35 +12,64 @@ const routes = [
         meta: { title: '首页' }
       },
       {
-        path: '/system',
-        name: 'System',
-        meta: { title: '系统管理' },
-        children: [
-          {
-            path: 'organization',
-            name: 'Organization',
-            component: () => import('../views/system/Organization.vue'),
-            meta: { title: '组织管理' }
-          },
-          {
-            path: 'position',
-            name: 'Position',
-            component: () => import('../views/system/Position.vue'),
-            meta: { title: '岗位管理' }
-          },
-          {
-            path: 'user',
-            name: 'User',
-            component: () => import('../views/system/User.vue'),
-            meta: { title: '用户管理' }
-          },
-          {
-            path: 'menu',
-            name: 'Menu',
-            component: () => import('../views/system/Menu.vue'),
-            meta: { title: '菜单管理' }
-          }
-        ]
+        path: 'system/organization',
+        name: 'Organization',
+        component: () => import('../views/system/Organization.vue'),
+        meta: { title: '组织管理' }
+      },
+      {
+        path: 'system/position',
+        name: 'Position',
+        component: () => import('../views/system/Position.vue'),
+        meta: { title: '岗位管理' }
+      },
+      {
+        path: 'system/user',
+        name: 'User',
+        component: () => import('../views/system/User.vue'),
+        meta: { title: '用户管理' }
+      },
+      {
+        path: 'system/menu',
+        name: 'Menu',
+        component: () => import('../views/system/Menu.vue'),
+        meta: { title: '菜单管理' }
+      },
+      {
+        path: 'hr/recruitment',
+        name: 'Recruitment',
+        component: () => import('../views/hr/Recruitment.vue'),
+        meta: { title: '招聘管理' }
+      },
+      {
+        path: 'hr/onboarding',
+        name: 'Onboarding',
+        component: () => import('../views/hr/Onboarding.vue'),
+        meta: { title: '入职离职管理' }
+      },
+      {
+        path: 'hr/attendance',
+        name: 'Attendance',
+        component: () => import('../views/hr/Attendance.vue'),
+        meta: { title: '考勤、请假' }
+      },
+      {
+        path: 'hr/salary',
+        name: 'Salary',
+        component: () => import('../views/hr/Salary.vue'),
+        meta: { title: '薪酬福利管理' }
+      },
+      {
+        path: 'hr/employee',
+        name: 'Employee',
+        component: () => import('../views/hr/Employee.vue'),
+        meta: { title: '档案管理' }
+      },
+      {
+        path: 'hr/reports',
+        name: 'Reports',
+        component: () => import('../views/hr/Report.vue'),
+        meta: { title: '报表分析' }
       }
     ]
   }

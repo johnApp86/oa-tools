@@ -4,12 +4,13 @@
   "description": "OA管理系统 - Vue3 + Express + SQLite3",
   "main": "server/index.js",
   "scripts": {
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "server": "cd server && npm run dev",
+    "dev": "concurrently --kill-others-on-fail \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm start",
     "client": "cd client && npm run dev",
     "build": "cd client && npm run build",
     "start": "cd server && npm start",
-    "install-all": "npm install && cd server && npm install && cd ../client && npm install"
+    "install-all": "npm install && cd server && npm install && cd ../client && npm install",
+    "stop": "taskkill /f /im node.exe 2>nul || echo 没有运行的Node.js进程"
   },
   "keywords": ["vue3", "express", "sqlite3", "oa", "management"],
   "author": "",
