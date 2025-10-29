@@ -20,6 +20,14 @@ export const createRecruitmentPosition = (data) => {
   })
 }
 
+// 删除招聘职位
+export const deleteRecruitmentPosition = (id) => {
+  return request({
+    url: `/hr/recruitment/positions/${id}`,
+    method: 'delete'
+  })
+}
+
 // 获取简历列表
 export const getResumes = (params) => {
   return request({
@@ -136,6 +144,14 @@ export const createSalaryRecord = (data) => {
   })
 }
 
+// 删除薪酬记录
+export const deleteSalaryRecord = (id) => {
+  return request({
+    url: `/hr/salary/records/${id}`,
+    method: 'delete'
+  })
+}
+
 // ==================== 档案管理 ====================
 
 // 获取员工档案列表
@@ -153,6 +169,14 @@ export const createEmployeeFile = (data) => {
     url: '/hr/employee/files',
     method: 'post',
     data
+  })
+}
+
+// 删除员工档案
+export const deleteEmployeeFile = (id) => {
+  return request({
+    url: `/hr/employee/files/${id}`,
+    method: 'delete'
   })
 }
 

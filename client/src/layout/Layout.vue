@@ -38,8 +38,10 @@
           
           <el-sub-menu index="/system">
             <template #title>
-              <el-icon><Setting /></el-icon>
-              <span>系统管理</span>
+              <div style="display: flex; align-items: center;">
+                <el-icon style="margin-right: 8px;"><Setting /></el-icon>
+                <span>系统管理</span>
+              </div>
             </template>
             <el-menu-item index="/system/organization">
               <el-icon><OfficeBuilding /></el-icon>
@@ -57,12 +59,18 @@
               <el-icon><Menu /></el-icon>
               <span>菜单管理</span>
             </el-menu-item>
+            <el-menu-item index="/system/role">
+              <el-icon><UserFilled /></el-icon>
+              <span>角色管理</span>
+            </el-menu-item>
           </el-sub-menu>
 
           <el-sub-menu index="/hr">
             <template #title>
-              <el-icon><UserFilled /></el-icon>
-              <span>HR管理</span>
+              <div style="display: flex; align-items: center;">
+                <el-icon style="margin-right: 8px;"><UserFilled /></el-icon>
+                <span>HR管理</span>
+              </div>
             </template>
             <el-menu-item index="/hr/recruitment">
               <el-icon><Plus /></el-icon>

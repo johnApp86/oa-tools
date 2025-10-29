@@ -236,7 +236,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import { getSalaryRecords, createSalaryRecord } from '@/api/hr'
+import { getSalaryRecords, createSalaryRecord, deleteSalaryRecord } from '@/api/hr'
 import { getUserList } from '@/api/user'
 
 // 响应式数据
@@ -398,11 +398,13 @@ const deleteRecord = async (row) => {
     await ElMessageBox.confirm('确定要删除这条薪酬记录吗？', '提示', {
       type: 'warning'
     })
-    // TODO: 实现删除API
+    await deleteSalaryRecord(row.id)
     ElMessage.success('删除成功')
     loadData()
   } catch (error) {
-    // 用户取消删除
+    if (error !== 'cancel') {
+      ElMessage.error(error.message || '删除失败')
+    }
   }
 }
 
@@ -453,6 +455,9 @@ onMounted(() => {
 
 .stat-card {
   text-align: center;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f7fafc;
 }
 
 .stat-content {
@@ -476,11 +481,96 @@ onMounted(() => {
   color: #67c23a;
 }
 
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
+}
+
+/* 按钮样式优化 */
+:deep(.el-button) {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-button--primary) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+:deep(.el-button--primary:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+}
+
+:deep(.el-button--danger) {
+  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+  border: none;
+  box-shadow: 0 2px 4px rgba(245, 101, 101, 0.3);
+}
+
+:deep(.el-button--danger:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(245, 101, 101, 0.4);
+}
+
+/* 输入框样式优化 */
+:deep(.el-input__wrapper) {
+  border-radius: 6px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-input__wrapper:hover) {
+  border-color: #cbd5e0;
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
 :deep(.el-input-number) {
   width: 100%;
 }
 
 :deep(.el-input-number .el-input__inner) {
   text-align: left;
+}
+
+/* 对话框样式优化 */
+:deep(.el-dialog) {
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+:deep(.el-dialog__header) {
+  background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+  border-radius: 12px 12px 0 0;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+:deep(.el-dialog__title) {
+  font-weight: 600;
+  color: #2d3748;
 }
 </style>

@@ -1,18 +1,15 @@
 <template>
   <div class="recruitment-management">
-    <div class="page-header">
-      <h2>招聘管理</h2>
-      <el-button type="primary" @click="showCreateDialog = true">
-        <el-icon><Plus /></el-icon>
-        发布职位
-      </el-button>
-    </div>
-
-    <!-- 搜索筛选 -->
-    <div class="search-section">
+    <!-- 搜索表单 -->
+    <div class="search-form">
       <el-form :model="searchForm" inline>
         <el-form-item label="关键词">
-          <el-input v-model="searchForm.keyword" placeholder="搜索职位标题或岗位名称" clearable />
+          <el-input
+            v-model="searchForm.keyword"
+            placeholder="搜索职位标题或岗位名称"
+            clearable
+            @keyup.enter="loadData"
+          />
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="searchForm.status" placeholder="选择状态" clearable>
@@ -28,35 +25,47 @@
       </el-form>
     </div>
 
+    <!-- 操作按钮 -->
+    <div class="button-group">
+      <el-button type="primary" @click="showCreateDialog = true">
+        <el-icon><Plus /></el-icon>
+        发布职位
+      </el-button>
+    </div>
+
     <!-- 职位列表 -->
-    <el-table :data="positions" v-loading="loading" stripe>
-      <el-table-column prop="title" label="职位标题" />
-      <el-table-column prop="position_name" label="岗位名称" />
-      <el-table-column prop="org_name" label="所属组织" />
-      <el-table-column prop="salary_range" label="薪资范围" />
-      <el-table-column prop="urgent_level" label="紧急程度">
-        <template #default="{ row }">
-          <el-tag :type="getUrgentLevelType(row.urgent_level)">
-            {{ getUrgentLevelText(row.urgent_level) }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="status" label="状态">
-        <template #default="{ row }">
-          <el-tag :type="row.status === 1 ? 'success' : 'danger'">
-            {{ row.status === 1 ? '招聘中' : row.status === 0 ? '已暂停' : '已结束' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="created_at" label="发布时间" />
-      <el-table-column label="操作" width="200">
-        <template #default="{ row }">
-          <el-button size="small" @click="viewResumes(row)">查看简历</el-button>
-          <el-button size="small" type="primary" @click="editPosition(row)">编辑</el-button>
-          <el-button size="small" type="danger" @click="deletePosition(row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <div class="table-container">
+      <el-table :data="positions" v-loading="loading" stripe border>
+        <el-table-column prop="title" label="职位标题" />
+        <el-table-column prop="position_name" label="岗位名称" />
+        <el-table-column prop="org_name" label="所属组织" />
+        <el-table-column prop="salary_range" label="薪资范围" />
+        <el-table-column prop="urgent_level" label="紧急程度">
+          <template #default="{ row }">
+            <el-tag :type="getUrgentLevelType(row.urgent_level)">
+              {{ getUrgentLevelText(row.urgent_level) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 1 ? 'success' : 'danger'">
+              {{ row.status === 1 ? '招聘中' : row.status === 0 ? '已暂停' : '已结束' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="created_at" label="发布时间" />
+        <el-table-column label="操作" width="200" fixed="right">
+          <template #default="{ row }">
+            <div class="operation-buttons">
+              <el-button size="small" @click="viewResumes(row)">查看简历</el-button>
+              <el-button size="small" type="primary" @click="editPosition(row)">编辑</el-button>
+              <el-button size="small" type="danger" @click="deletePosition(row)">删除</el-button>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
     <!-- 分页 -->
     <div class="pagination">
@@ -169,6 +178,7 @@ import { Plus } from '@element-plus/icons-vue'
 import { 
   getRecruitmentPositions, 
   createRecruitmentPosition, 
+  deleteRecruitmentPosition,
   getResumes 
 } from '@/api/hr'
 import { getAllPositions } from '@/api/position'
@@ -310,11 +320,13 @@ const deletePosition = async (row) => {
     await ElMessageBox.confirm('确定要删除这个职位吗？', '提示', {
       type: 'warning'
     })
-    // TODO: 实现删除API
+    await deleteRecruitmentPosition(row.id)
     ElMessage.success('删除成功')
     loadData()
   } catch (error) {
-    // 用户取消删除
+    if (error !== 'cancel') {
+      ElMessage.error(error.message || '删除失败')
+    }
   }
 }
 
@@ -372,25 +384,155 @@ onMounted(() => {
 
 <style scoped>
 .recruitment-management {
-  padding: 20px;
+  padding: 0;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+.search-form {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #f7fafc;
 }
 
-.search-section {
-  background: #f5f5f5;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+.button-group {
+  margin-bottom: 24px;
+}
+
+.table-container {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  border: 1px solid #f7fafc;
+  overflow: hidden;
 }
 
 .pagination {
-  margin-top: 20px;
+  margin-top: 24px;
   text-align: right;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
+}
+
+/* 按钮样式优化 */
+:deep(.el-button) {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-button--primary) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+:deep(.el-button--primary:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+}
+
+:deep(.el-button--danger) {
+  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+  border: none;
+  box-shadow: 0 2px 4px rgba(245, 101, 101, 0.3);
+}
+
+:deep(.el-button--danger:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(245, 101, 101, 0.4);
+}
+
+/* 标签样式优化 */
+:deep(.el-tag) {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+:deep(.el-tag--success) {
+  background: linear-gradient(135deg, #68d391 0%, #48bb78 100%);
+  border: none;
+  color: white;
+}
+
+:deep(.el-tag--danger) {
+  background: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
+  border: none;
+  color: white;
+}
+
+:deep(.el-tag--warning) {
+  background: linear-gradient(135deg, #f6e05e 0%, #d69e2e 100%);
+  border: none;
+  color: white;
+}
+
+/* 输入框样式优化 */
+:deep(.el-input__wrapper) {
+  border-radius: 6px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-input__wrapper:hover) {
+  border-color: #cbd5e0;
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* 对话框样式优化 */
+:deep(.el-dialog) {
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+:deep(.el-dialog__header) {
+  background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+  border-radius: 12px 12px 0 0;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+:deep(.el-dialog__title) {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+/* 操作按钮组样式 */
+.operation-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 </style>

@@ -90,6 +90,23 @@ router.post('/recruitment/positions', [
   );
 });
 
+// 删除招聘职位
+router.delete('/recruitment/positions/:id', (req, res) => {
+  const { id } = req.params;
+
+  db.run('DELETE FROM recruitment_positions WHERE id = ?', [id], function(err) {
+    if (err) {
+      return res.status(500).json({ message: '删除失败' });
+    }
+
+    if (this.changes === 0) {
+      return res.status(404).json({ message: '职位不存在' });
+    }
+
+    res.json({ message: '删除成功' });
+  });
+});
+
 // 获取简历列表
 router.get('/recruitment/resumes', (req, res) => {
   const { page = 1, limit = 10, keyword = '', position_id = '', status = '' } = req.query;
@@ -279,8 +296,8 @@ router.get('/offboarding/applications', (req, res) => {
   let sql = `SELECT oa.*, u.real_name as user_name, p.name as position_name, o.name as org_name 
              FROM offboarding_applications oa 
              LEFT JOIN users u ON oa.user_id = u.id 
-             LEFT JOIN positions p ON oa.position_id = p.id 
-             LEFT JOIN organizations o ON oa.org_id = o.id 
+             LEFT JOIN positions p ON u.position_id = p.id 
+             LEFT JOIN organizations o ON u.organization_id = o.id 
              WHERE 1=1`;
   const params = [];
   
@@ -681,6 +698,23 @@ router.post('/salary/records', [
   );
 });
 
+// 删除薪酬记录
+router.delete('/salary/records/:id', (req, res) => {
+  const { id } = req.params;
+
+  db.run('DELETE FROM salary_records WHERE id = ?', [id], function(err) {
+    if (err) {
+      return res.status(500).json({ message: '删除失败' });
+    }
+
+    if (this.changes === 0) {
+      return res.status(404).json({ message: '记录不存在' });
+    }
+
+    res.json({ message: '删除成功' });
+  });
+});
+
 // ==================== 档案管理 ====================
 
 // 获取员工档案列表
@@ -767,6 +801,23 @@ router.post('/employee/files', [
       res.json({ message: '创建成功', id: this.lastID });
     }
   );
+});
+
+// 删除员工档案
+router.delete('/employee/files/:id', (req, res) => {
+  const { id } = req.params;
+
+  db.run('DELETE FROM employee_files WHERE id = ?', [id], function(err) {
+    if (err) {
+      return res.status(500).json({ message: '删除失败' });
+    }
+
+    if (this.changes === 0) {
+      return res.status(404).json({ message: '档案不存在' });
+    }
+
+    res.json({ message: '删除成功' });
+  });
 });
 
 // ==================== 报表分析 ====================
