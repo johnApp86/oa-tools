@@ -1,0 +1,23 @@
+{
+    "mcpServers": {
+        "local_fs": {
+            "command": "node",
+            "args": [
+                "mcp/filesystem-server.js"
+            ],
+            "env": {
+                "FS_PATH": "C:/workspace-my/oa-tools",
+                "EXCLUDE_PATTERNS": "client/node_modules,server/node_modules,node_modules"
+            }
+        },
+        "sqlite3": {
+            "command": "node",
+            "args": [
+                "mcp/sqlite-server.js"
+            ],
+            "env": {
+                "SQLITE_PATH": "C:/workspace-my/oa-tools/server/database/oa.db"
+            }
+        }
+    }
+}
