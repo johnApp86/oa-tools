@@ -9,7 +9,8 @@ const PORT = process.env.PORT || 3001;
 
 // 中间件
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ charset: 'utf-8' }));
+app.use(express.urlencoded({ extended: true, charset: 'utf-8' }));
 
 // 静态文件服务
 app.use(express.static(path.join(__dirname, '../client/dist')));
