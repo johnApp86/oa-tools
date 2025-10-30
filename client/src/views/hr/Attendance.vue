@@ -4,18 +4,16 @@
       <!-- 考勤管理 -->
       <el-tab-pane label="考勤管理" name="attendance">
         <div class="tab-content">
-          <div class="page-header">
-            <h3>考勤管理</h3>
-            <div class="header-actions">
-              <el-button type="success" @click="checkIn" :disabled="todayCheckedIn">
-                <el-icon><Clock /></el-icon>
-                签到
-              </el-button>
-              <el-button type="warning" @click="checkOut" :disabled="!todayCheckedIn || todayCheckedOut">
-                <el-icon><Clock /></el-icon>
-                签退
-              </el-button>
-            </div>
+          <!-- 操作按钮 -->
+          <div class="button-group">
+            <el-button type="success" @click="checkIn" :disabled="todayCheckedIn">
+              <el-icon><Clock /></el-icon>
+              签到
+            </el-button>
+            <el-button type="warning" @click="checkOut" :disabled="!todayCheckedIn || todayCheckedOut">
+              <el-icon><Clock /></el-icon>
+              签退
+            </el-button>
           </div>
 
           <!-- 今日考勤状态 -->
@@ -41,8 +39,8 @@
             </el-card>
           </div>
 
-          <!-- 搜索筛选 -->
-          <div class="search-section">
+          <!-- 搜索表单 -->
+          <div class="search-form">
             <el-form :model="attendanceSearchForm" inline>
               <el-form-item label="员工">
                 <el-select v-model="attendanceSearchForm.user_id" placeholder="选择员工" clearable>
@@ -76,7 +74,8 @@
           </div>
 
           <!-- 考勤记录列表 -->
-          <el-table :data="attendanceRecords" v-loading="attendanceLoading" stripe>
+          <div class="table-container">
+            <el-table :data="attendanceRecords" v-loading="attendanceLoading" stripe border>
             <el-table-column prop="user_name" label="员工姓名" />
             <el-table-column prop="position_name" label="岗位" />
             <el-table-column prop="date" label="日期" />
@@ -97,7 +96,8 @@
             </el-table-column>
             <el-table-column prop="checkin_location" label="签到地点" />
             <el-table-column prop="checkout_location" label="签退地点" />
-          </el-table>
+            </el-table>
+          </div>
 
           <!-- 分页 -->
           <div class="pagination">
@@ -117,19 +117,16 @@
       <!-- 请假管理 -->
       <el-tab-pane label="请假管理" name="leave">
         <div class="tab-content">
-          <div class="page-header">
-            <h3>请假管理</h3>
-            <el-button type="primary" @click="showLeaveDialog = true">
-              <el-icon><Plus /></el-icon>
-              申请请假
-            </el-button>
-          </div>
-
-          <!-- 搜索筛选 -->
-          <div class="search-section">
+          <!-- 搜索表单 -->
+          <div class="search-form">
             <el-form :model="leaveSearchForm" inline>
               <el-form-item label="关键词">
-                <el-input v-model="leaveSearchForm.keyword" placeholder="搜索姓名或邮箱" clearable />
+                <el-input
+                  v-model="leaveSearchForm.keyword"
+                  placeholder="搜索姓名或邮箱"
+                  clearable
+                  @keyup.enter="loadLeaveData"
+                />
               </el-form-item>
               <el-form-item label="请假类型">
                 <el-select v-model="leaveSearchForm.type" placeholder="选择请假类型" clearable>
@@ -154,8 +151,37 @@
             </el-form>
           </div>
 
+          <!-- 操作按钮 -->
+          <div class="button-group">
+            <el-button type="primary" @click="showLeaveDialog = true">
+              <el-icon><Plus /></el-icon>
+              申请请假
+            </el-button>
+          </div>
+
+          <!-- 请假统计卡片 -->
+          <div class="leave-stats">
+            <div class="leave-stat-card">
+              <div class="leave-stat-value">{{ leaveStats.total }}</div>
+              <div class="leave-stat-label">总申请数</div>
+            </div>
+            <div class="leave-stat-card">
+              <div class="leave-stat-value">{{ leaveStats.pending }}</div>
+              <div class="leave-stat-label">待审核</div>
+            </div>
+            <div class="leave-stat-card">
+              <div class="leave-stat-value">{{ leaveStats.approved }}</div>
+              <div class="leave-stat-label">已通过</div>
+            </div>
+            <div class="leave-stat-card">
+              <div class="leave-stat-value">{{ leaveStats.rejected }}</div>
+              <div class="leave-stat-label">已拒绝</div>
+            </div>
+          </div>
+
           <!-- 请假申请列表 -->
-          <el-table :data="leaveApplications" v-loading="leaveLoading" stripe>
+          <div class="table-container">
+            <el-table :data="leaveApplications" v-loading="leaveLoading" stripe border>
             <el-table-column prop="user_name" label="员工姓名" />
             <el-table-column prop="position_name" label="岗位" />
             <el-table-column prop="type" label="请假类型">
@@ -167,10 +193,14 @@
             <el-table-column prop="end_date" label="结束日期" />
             <el-table-column label="请假天数">
               <template #default="{ row }">
-                {{ calculateLeaveDays(row.start_date, row.end_date) }}天
+                <span class="leave-days">{{ calculateLeaveDays(row.start_date, row.end_date) }}天</span>
               </template>
             </el-table-column>
-            <el-table-column prop="reason" label="请假原因" />
+            <el-table-column prop="reason" label="请假原因">
+              <template #default="{ row }">
+                <span class="leave-reason" :title="row.reason">{{ row.reason }}</span>
+              </template>
+            </el-table-column>
             <el-table-column prop="status" label="状态">
               <template #default="{ row }">
                 <el-tag :type="getLeaveStatusType(row.status)">
@@ -179,14 +209,17 @@
               </template>
             </el-table-column>
             <el-table-column prop="created_at" label="申请时间" />
-            <el-table-column label="操作" width="200">
+            <el-table-column label="操作" width="250">
               <template #default="{ row }">
-                <el-button size="small" @click="viewLeaveDetail(row)">查看详情</el-button>
-                <el-button size="small" type="success" @click="updateLeaveStatus(row, 2)">通过</el-button>
-                <el-button size="small" type="danger" @click="updateLeaveStatus(row, 3)">拒绝</el-button>
+                <div class="operation-buttons">
+                  <el-button size="small" @click="viewLeaveDetail(row)">查看详情</el-button>
+                  <el-button size="small" type="success" @click="updateLeaveStatus(row, 2)">通过</el-button>
+                  <el-button size="small" type="danger" @click="updateLeaveStatus(row, 3)">拒绝</el-button>
+                </div>
               </template>
             </el-table-column>
-          </el-table>
+            </el-table>
+          </div>
 
           <!-- 分页 -->
           <div class="pagination">
@@ -281,6 +314,21 @@ const allUsers = ref([])
 const leaveLoading = ref(false)
 const leaveApplications = ref([])
 const showLeaveDialog = ref(false)
+
+// 请假统计数据
+const leaveStats = computed(() => {
+  const total = leaveApplications.value.length
+  const pending = leaveApplications.value.filter(item => item.status === 1).length
+  const approved = leaveApplications.value.filter(item => item.status === 2).length
+  const rejected = leaveApplications.value.filter(item => item.status === 3).length
+  
+  return {
+    total,
+    pending,
+    approved,
+    rejected
+  }
+})
 
 // 考勤搜索表单
 const attendanceSearchForm = reactive({
@@ -595,27 +643,19 @@ onMounted(() => {
 
 <style scoped>
 .attendance-management {
-  padding: 20px;
+  padding: 0;
 }
 
 .tab-content {
-  padding: 20px 0;
+  padding: 0;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.header-actions {
-  display: flex;
-  gap: 10px;
+.button-group {
+  margin-bottom: 24px;
 }
 
 .today-status {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .status-info {
@@ -640,15 +680,267 @@ onMounted(() => {
   color: #333;
 }
 
-.search-section {
-  background: #f5f5f5;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+.search-form {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #f7fafc;
+}
+
+.table-container {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  border: 1px solid #f7fafc;
+  overflow: hidden;
 }
 
 .pagination {
-  margin-top: 20px;
+  margin-top: 24px;
   text-align: right;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
+}
+
+/* 按钮样式优化 */
+:deep(.el-button) {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-button--primary) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+:deep(.el-button--primary:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+}
+
+:deep(.el-button--success) {
+  background: linear-gradient(135deg, #68d391 0%, #48bb78 100%);
+  border: none;
+  box-shadow: 0 2px 4px rgba(104, 211, 145, 0.3);
+}
+
+:deep(.el-button--success:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(104, 211, 145, 0.4);
+}
+
+:deep(.el-button--warning) {
+  background: linear-gradient(135deg, #f6e05e 0%, #d69e2e 100%);
+  border: none;
+  box-shadow: 0 2px 4px rgba(246, 224, 94, 0.3);
+}
+
+:deep(.el-button--warning:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(246, 224, 94, 0.4);
+}
+
+/* 标签样式优化 */
+:deep(.el-tag) {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+:deep(.el-tag--success) {
+  background: linear-gradient(135deg, #68d391 0%, #48bb78 100%);
+  border: none;
+  color: white;
+}
+
+:deep(.el-tag--danger) {
+  background: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
+  border: none;
+  color: white;
+}
+
+:deep(.el-tag--warning) {
+  background: linear-gradient(135deg, #f6e05e 0%, #d69e2e 100%);
+  border: none;
+  color: white;
+}
+
+/* 输入框样式优化 */
+:deep(.el-input__wrapper) {
+  border-radius: 6px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-input__wrapper:hover) {
+  border-color: #cbd5e0;
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* 对话框样式优化 */
+:deep(.el-dialog) {
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+:deep(.el-dialog__header) {
+  background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+  border-radius: 12px 12px 0 0;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+:deep(.el-dialog__title) {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+/* 请假页面特殊样式 */
+.leave-management {
+  background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+  min-height: 100vh;
+}
+
+/* 请假类型标签样式 */
+:deep(.el-tag--info) {
+  background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);
+  border: none;
+  color: #0277bd;
+  font-weight: 500;
+}
+
+/* 请假状态标签特殊样式 */
+:deep(.el-tag--warning) {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border: none;
+  color: #f57c00;
+  font-weight: 500;
+}
+
+:deep(.el-tag--success) {
+  background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+  border: none;
+  color: #2e7d32;
+  font-weight: 500;
+}
+
+:deep(.el-tag--danger) {
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  border: none;
+  color: #c62828;
+  font-weight: 500;
+}
+
+/* 请假天数特殊样式 */
+.leave-days {
+  font-weight: 600;
+  color: #1976d2;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+/* 请假原因样式 */
+.leave-reason {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 操作按钮组样式 */
+.operation-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+  white-space: nowrap;
+  min-width: auto;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+/* 请假申请卡片样式 */
+.leave-application-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f7fafc;
+  transition: all 0.3s ease;
+}
+
+.leave-application-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 12px -1px rgba(0, 0, 0, 0.15), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* 请假统计卡片 */
+.leave-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.leave-stat-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.leave-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 12px -1px rgba(0, 0, 0, 0.15), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.leave-stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1976d2;
+  margin-bottom: 8px;
+}
+
+.leave-stat-label {
+  font-size: 14px;
+  color: #718096;
+  font-weight: 500;
 }
 </style>

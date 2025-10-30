@@ -4,19 +4,16 @@
       <!-- 入职管理 -->
       <el-tab-pane label="入职管理" name="onboarding">
         <div class="tab-content">
-          <div class="page-header">
-            <h3>入职申请管理</h3>
-            <el-button type="primary" @click="showOnboardingDialog = true">
-              <el-icon><Plus /></el-icon>
-              新建入职申请
-            </el-button>
-          </div>
-
-          <!-- 搜索筛选 -->
-          <div class="search-section">
+          <!-- 搜索表单 -->
+          <div class="search-form">
             <el-form :model="onboardingSearchForm" inline>
               <el-form-item label="关键词">
-                <el-input v-model="onboardingSearchForm.keyword" placeholder="搜索姓名或邮箱" clearable />
+                <el-input
+                  v-model="onboardingSearchForm.keyword"
+                  placeholder="搜索姓名或邮箱"
+                  clearable
+                  @keyup.enter="loadOnboardingData"
+                />
               </el-form-item>
               <el-form-item label="状态">
                 <el-select v-model="onboardingSearchForm.status" placeholder="选择状态" clearable>
@@ -32,8 +29,17 @@
             </el-form>
           </div>
 
+          <!-- 操作按钮 -->
+          <div class="button-group">
+            <el-button type="primary" @click="showOnboardingDialog = true">
+              <el-icon><Plus /></el-icon>
+              新建入职申请
+            </el-button>
+          </div>
+
           <!-- 入职申请列表 -->
-          <el-table :data="onboardingApplications" v-loading="onboardingLoading" stripe>
+          <div class="table-container">
+            <el-table :data="onboardingApplications" v-loading="onboardingLoading" stripe border>
             <el-table-column prop="user_name" label="姓名" />
             <el-table-column prop="position_name" label="岗位" />
             <el-table-column prop="org_name" label="所属组织" />
@@ -48,14 +54,17 @@
               </template>
             </el-table-column>
             <el-table-column prop="created_at" label="申请时间" />
-            <el-table-column label="操作" width="200">
+            <el-table-column label="操作" width="250">
               <template #default="{ row }">
-                <el-button size="small" @click="viewOnboardingDetail(row)">查看详情</el-button>
-                <el-button size="small" type="success" @click="updateOnboardingStatus(row, 2)">通过</el-button>
-                <el-button size="small" type="danger" @click="updateOnboardingStatus(row, 3)">拒绝</el-button>
+                <div class="operation-buttons">
+                  <el-button size="small" @click="viewOnboardingDetail(row)">查看详情</el-button>
+                  <el-button size="small" type="success" @click="updateOnboardingStatus(row, 2)">通过</el-button>
+                  <el-button size="small" type="danger" @click="updateOnboardingStatus(row, 3)">拒绝</el-button>
+                </div>
               </template>
             </el-table-column>
-          </el-table>
+            </el-table>
+          </div>
 
           <!-- 分页 -->
           <div class="pagination">
@@ -75,19 +84,16 @@
       <!-- 离职管理 -->
       <el-tab-pane label="离职管理" name="offboarding">
         <div class="tab-content">
-          <div class="page-header">
-            <h3>离职申请管理</h3>
-            <el-button type="primary" @click="showOffboardingDialog = true">
-              <el-icon><Plus /></el-icon>
-              新建离职申请
-            </el-button>
-          </div>
-
-          <!-- 搜索筛选 -->
-          <div class="search-section">
+          <!-- 搜索表单 -->
+          <div class="search-form">
             <el-form :model="offboardingSearchForm" inline>
               <el-form-item label="关键词">
-                <el-input v-model="offboardingSearchForm.keyword" placeholder="搜索姓名或邮箱" clearable />
+                <el-input
+                  v-model="offboardingSearchForm.keyword"
+                  placeholder="搜索姓名或邮箱"
+                  clearable
+                  @keyup.enter="loadOffboardingData"
+                />
               </el-form-item>
               <el-form-item label="状态">
                 <el-select v-model="offboardingSearchForm.status" placeholder="选择状态" clearable>
@@ -103,8 +109,17 @@
             </el-form>
           </div>
 
+          <!-- 操作按钮 -->
+          <div class="button-group">
+            <el-button type="primary" @click="showOffboardingDialog = true">
+              <el-icon><Plus /></el-icon>
+              新建离职申请
+            </el-button>
+          </div>
+
           <!-- 离职申请列表 -->
-          <el-table :data="offboardingApplications" v-loading="offboardingLoading" stripe>
+          <div class="table-container">
+            <el-table :data="offboardingApplications" v-loading="offboardingLoading" stripe border>
             <el-table-column prop="user_name" label="姓名" />
             <el-table-column prop="position_name" label="岗位" />
             <el-table-column prop="org_name" label="所属组织" />
@@ -118,14 +133,17 @@
               </template>
             </el-table-column>
             <el-table-column prop="created_at" label="申请时间" />
-            <el-table-column label="操作" width="200">
+            <el-table-column label="操作" width="250">
               <template #default="{ row }">
-                <el-button size="small" @click="viewOffboardingDetail(row)">查看详情</el-button>
-                <el-button size="small" type="success" @click="updateOffboardingStatus(row, 2)">通过</el-button>
-                <el-button size="small" type="danger" @click="updateOffboardingStatus(row, 3)">拒绝</el-button>
+                <div class="operation-buttons">
+                  <el-button size="small" @click="viewOffboardingDetail(row)">查看详情</el-button>
+                  <el-button size="small" type="success" @click="updateOffboardingStatus(row, 2)">通过</el-button>
+                  <el-button size="small" type="danger" @click="updateOffboardingStatus(row, 3)">拒绝</el-button>
+                </div>
               </template>
             </el-table-column>
-          </el-table>
+            </el-table>
+          </div>
 
           <!-- 分页 -->
           <div class="pagination">
@@ -553,29 +571,170 @@ onMounted(() => {
 
 <style scoped>
 .onboarding-management {
-  padding: 20px;
+  padding: 0;
 }
 
 .tab-content {
-  padding: 20px 0;
+  padding: 0;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+.search-form {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #f7fafc;
 }
 
-.search-section {
-  background: #f5f5f5;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+.button-group {
+  margin-bottom: 24px;
+}
+
+.table-container {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  border: 1px solid #f7fafc;
+  overflow: hidden;
 }
 
 .pagination {
-  margin-top: 20px;
+  margin-top: 24px;
   text-align: right;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
+}
+
+/* 按钮样式优化 */
+:deep(.el-button) {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-button--primary) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+:deep(.el-button--primary:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+}
+
+:deep(.el-button--danger) {
+  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+  border: none;
+  box-shadow: 0 2px 4px rgba(245, 101, 101, 0.3);
+}
+
+:deep(.el-button--danger:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(245, 101, 101, 0.4);
+}
+
+:deep(.el-button--success) {
+  background: linear-gradient(135deg, #68d391 0%, #48bb78 100%);
+  border: none;
+  box-shadow: 0 2px 4px rgba(104, 211, 145, 0.3);
+}
+
+:deep(.el-button--success:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(104, 211, 145, 0.4);
+}
+
+/* 标签样式优化 */
+:deep(.el-tag) {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+:deep(.el-tag--success) {
+  background: linear-gradient(135deg, #68d391 0%, #48bb78 100%);
+  border: none;
+  color: white;
+}
+
+:deep(.el-tag--danger) {
+  background: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
+  border: none;
+  color: white;
+}
+
+:deep(.el-tag--warning) {
+  background: linear-gradient(135deg, #f6e05e 0%, #d69e2e 100%);
+  border: none;
+  color: white;
+}
+
+/* 输入框样式优化 */
+:deep(.el-input__wrapper) {
+  border-radius: 6px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-input__wrapper:hover) {
+  border-color: #cbd5e0;
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* 对话框样式优化 */
+:deep(.el-dialog) {
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+:deep(.el-dialog__header) {
+  background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+  border-radius: 12px 12px 0 0;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+:deep(.el-dialog__title) {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+/* 操作按钮组样式 */
+.operation-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 </style>

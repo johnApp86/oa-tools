@@ -1,15 +1,7 @@
 <template>
   <div class="salary-management">
-    <div class="page-header">
-      <h2>薪酬福利管理</h2>
-      <el-button type="primary" @click="showCreateDialog = true">
-        <el-icon><Plus /></el-icon>
-        新增薪酬记录
-      </el-button>
-    </div>
-
-    <!-- 搜索筛选 -->
-    <div class="search-section">
+    <!-- 搜索表单 -->
+    <div class="search-form">
       <el-form :model="searchForm" inline>
         <el-form-item label="员工">
           <el-select v-model="searchForm.user_id" placeholder="选择员工" clearable>
@@ -48,8 +40,17 @@
       </el-form>
     </div>
 
+    <!-- 操作按钮 -->
+    <div class="button-group">
+      <el-button type="primary" @click="showCreateDialog = true">
+        <el-icon><Plus /></el-icon>
+        新增薪酬记录
+      </el-button>
+    </div>
+
     <!-- 薪酬记录列表 -->
-    <el-table :data="salaryRecords" v-loading="loading" stripe>
+    <div class="table-container">
+      <el-table :data="salaryRecords" v-loading="loading" stripe border>
       <el-table-column prop="user_name" label="员工姓名" />
       <el-table-column prop="position_name" label="岗位" />
       <el-table-column prop="year" label="年份" />
@@ -83,13 +84,16 @@
       </el-table-column>
       <el-table-column prop="notes" label="备注" />
       <el-table-column prop="created_at" label="创建时间" />
-      <el-table-column label="操作" width="150">
+      <el-table-column label="操作" width="200">
         <template #default="{ row }">
-          <el-button size="small" @click="editRecord(row)">编辑</el-button>
-          <el-button size="small" type="danger" @click="deleteRecord(row)">删除</el-button>
+          <div class="operation-buttons">
+            <el-button size="small" @click="editRecord(row)">编辑</el-button>
+            <el-button size="small" type="danger" @click="deleteRecord(row)">删除</el-button>
+          </div>
         </template>
       </el-table-column>
-    </el-table>
+      </el-table>
+    </div>
 
     <!-- 分页 -->
     <div class="pagination">
@@ -427,21 +431,29 @@ onMounted(() => {
 
 <style scoped>
 .salary-management {
-  padding: 20px;
+  padding: 0;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+.search-form {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #f7fafc;
 }
 
-.search-section {
-  background: #f5f5f5;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+.button-group {
+  margin-bottom: 24px;
+}
+
+.table-container {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  border: 1px solid #f7fafc;
+  overflow: hidden;
 }
 
 .pagination {
@@ -572,5 +584,18 @@ onMounted(() => {
 :deep(.el-dialog__title) {
   font-weight: 600;
   color: #2d3748;
+}
+
+/* 操作按钮组样式 */
+.operation-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 </style>

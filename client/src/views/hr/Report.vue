@@ -1,11 +1,7 @@
 <template>
   <div class="report-analysis">
-    <div class="page-header">
-      <h2>报表分析</h2>
-    </div>
-
-    <!-- 筛选条件 -->
-    <div class="filter-section">
+    <!-- 搜索表单 -->
+    <div class="search-form">
       <el-form :model="filterForm" inline>
         <el-form-item label="年份">
           <el-select v-model="filterForm.year" placeholder="选择年份" @change="loadReports">
@@ -518,36 +514,69 @@ onMounted(() => {
 
 <style scoped>
 .report-analysis {
-  padding: 20px;
+  padding: 0;
 }
 
-.page-header {
-  margin-bottom: 20px;
-}
-
-.filter-section {
-  background: #f5f5f5;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+.search-form {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #f7fafc;
 }
 
 .statistics-cards {
-  margin-bottom: 30px;
+  margin-bottom: 24px;
 }
 
 .stat-card {
-  height: 100px;
+  height: 120px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f7fafc;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 12px -1px rgba(0, 0, 0, 0.15), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .stat-content {
   display: flex;
   align-items: center;
   height: 100%;
+  padding: 20px;
 }
 
 .stat-icon {
-  margin-right: 20px;
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15px;
+  font-size: 24px;
+  color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon.attendance {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stat-icon.salary {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.stat-icon.employee {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.stat-icon.recruitment {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
 }
 
 .stat-info {
@@ -557,17 +586,18 @@ onMounted(() => {
 .stat-value {
   font-size: 24px;
   font-weight: bold;
-  color: #333;
+  color: #2d3748;
   margin-bottom: 5px;
 }
 
 .stat-label {
   font-size: 14px;
-  color: #666;
+  color: #718096;
+  font-weight: 500;
 }
 
 .tab-content {
-  padding: 20px 0;
+  padding: 0;
 }
 
 .total-salary {
@@ -577,5 +607,61 @@ onMounted(() => {
 
 :deep(.el-progress) {
   width: 100px;
+}
+
+/* 按钮样式优化 */
+:deep(.el-button) {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-button--primary) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+:deep(.el-button--primary:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+}
+
+/* 输入框样式优化 */
+:deep(.el-input__wrapper) {
+  border-radius: 6px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-input__wrapper:hover) {
+  border-color: #cbd5e0;
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
 }
 </style>

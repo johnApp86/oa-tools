@@ -214,11 +214,28 @@ const insertInitialData = () => {
   });
 };
 
+// 初始化HR模块数据库
+const initHRDatabase = () => {
+  return new Promise((resolve, reject) => {
+    const { initHRDatabase: initHR } = require('./server/database/hr-init');
+    try {
+      initHR();
+      console.log('HR模块数据库初始化完成');
+      resolve();
+    } catch (err) {
+      console.error('HR模块数据库初始化失败:', err);
+      reject(err);
+    }
+  });
+};
+
 // 执行初始化
 createTables()
   .then(() => insertInitialData())
+  .then(() => initHRDatabase())
   .then(() => {
     console.log('数据库重置完成！');
+    console.log('默认账号: admin / admin123');
     db.close();
   })
   .catch(err => {

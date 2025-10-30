@@ -728,9 +728,13 @@ app.delete('/api/menus/:id', (req, res) => {
 
 // 引入HR模块路由
 const hrRoutes = require('./routes/hr');
+const roleRoutes = require('./routes/roles');
 
 // 注册HR模块路由
 app.use('/api/hr', hrRoutes);
+
+// 注册角色管理路由
+app.use('/api/roles', roleRoutes);
 
 // 启动服务器
 app.listen(PORT, () => {
