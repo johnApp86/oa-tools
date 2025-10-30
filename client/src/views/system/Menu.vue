@@ -33,14 +33,15 @@
         v-loading="loading"
         border
         style="width: 100%"
-      >
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="菜单名称" width="120" />
-        <el-table-column prop="path" label="路径" width="200" />
-        <el-table-column prop="icon" label="图标" width="100" />
-        <el-table-column prop="level" label="级别" width="80" />
-        <el-table-column prop="sort_order" label="排序" width="80" />
-        <el-table-column label="操作" width="200" fixed="right">
+      
+        table-layout="fixed">
+        <el-table-column prop="id" label="ID" width="80" show-overflow-tooltip/>
+        <el-table-column prop="name" label="菜单名称" width="120" show-overflow-tooltip/>
+        <el-table-column prop="path" label="路径" width="200" show-overflow-tooltip/>
+        <el-table-column prop="icon" label="图标" width="100" show-overflow-tooltip/>
+        <el-table-column prop="level" label="级别" width="80" show-overflow-tooltip/>
+        <el-table-column prop="sort_order" label="排序" width="80" show-overflow-tooltip/>
+        <el-table-column label="操作" width="280" show-overflow-tooltipfixed="right">
           <template #default="{ row }">
             <div class="operation-buttons">
               <el-button size="small" @click="handleEdit(row)">编辑</el-button>
@@ -421,9 +422,41 @@ onMounted(() => {
 /* 操作按钮组样式 */
 .operation-buttons {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: nowrap;
-  align-items: center;
+  white-space: nowrap;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100% !important;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
 }
 
 .operation-buttons .el-button {

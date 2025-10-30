@@ -76,7 +76,8 @@
 
     <!-- 档案列表 -->
     <div class="table-container">
-      <el-table :data="employeeFiles" v-loading="loading" stripe border>
+      <el-table :data="employeeFiles" v-loading="loading" stripe border
+        table-layout="fixed">
         <el-table-column prop="employee_id" label="员工编号">
           <template #default="{ row }">
             <span class="employee-id">{{ row.employee_id }}</span>
@@ -91,7 +92,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="created_at" label="建档时间" />
-        <el-table-column label="操作" width="200">
+        <el-table-column label="操作" width="280" show-overflow-tooltip>
           <template #default="{ row }">
             <div class="operation-buttons">
               <el-button size="small" @click="viewFile(row)">查看详情</el-button>
@@ -602,10 +603,41 @@ onMounted(() => {
 /* 操作按钮组样式 */
 .operation-buttons {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: nowrap;
-  align-items: center;
-  justify-content: flex-start;
+  white-space: nowrap;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100% !important;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
 }
 
 .operation-buttons .el-button {

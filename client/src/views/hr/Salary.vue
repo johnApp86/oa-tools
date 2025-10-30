@@ -4,7 +4,9 @@
     <div class="search-form">
       <el-form :model="searchForm" inline>
         <el-form-item label="员工">
-          <el-select v-model="searchForm.user_id" placeholder="选择员工" clearable>
+          <el-select v-model="searchForm.user_id" placeholder="选择员工" clearable
+            style="width: 200px"
+            :popper-append-to-body="false">
             <el-option
               v-for="user in allUsers"
               :key="user.id"
@@ -14,7 +16,9 @@
           </el-select>
         </el-form-item>
         <el-form-item label="年份">
-          <el-select v-model="searchForm.year" placeholder="选择年份" clearable>
+          <el-select v-model="searchForm.year" placeholder="选择年份" clearable
+            style="width: 200px"
+            :popper-append-to-body="false">
             <el-option
               v-for="year in yearOptions"
               :key="year"
@@ -24,7 +28,9 @@
           </el-select>
         </el-form-item>
         <el-form-item label="月份">
-          <el-select v-model="searchForm.month" placeholder="选择月份" clearable>
+          <el-select v-model="searchForm.month" placeholder="选择月份" clearable
+            style="width: 200px"
+            :popper-append-to-body="false">
             <el-option
               v-for="month in monthOptions"
               :key="month"
@@ -50,41 +56,43 @@
 
     <!-- 薪酬记录列表 -->
     <div class="table-container">
-      <el-table :data="salaryRecords" v-loading="loading" stripe border>
-      <el-table-column prop="user_name" label="员工姓名" />
-      <el-table-column prop="position_name" label="岗位" />
-      <el-table-column prop="year" label="年份" />
-      <el-table-column prop="month" label="月份" />
-      <el-table-column prop="base_salary" label="基本工资" align="right">
+      <el-table :data="salaryRecords" v-loading="loading" stripe border
+        style="width: 100%"
+        table-layout="fixed">
+      <el-table-column prop="user_name" label="员工姓名" width="120" show-overflow-tooltip />
+      <el-table-column prop="position_name" label="岗位" width="120" show-overflow-tooltip />
+      <el-table-column prop="year" label="年份" width="80" show-overflow-tooltip />
+      <el-table-column prop="month" label="月份" width="80" show-overflow-tooltip />
+      <el-table-column prop="base_salary" label="基本工资" width="120" align="right" show-overflow-tooltip>
         <template #default="{ row }">
           ¥{{ formatMoney(row.base_salary) }}
         </template>
       </el-table-column>
-      <el-table-column prop="bonus" label="奖金" align="right">
+      <el-table-column prop="bonus" label="奖金" width="120" align="right" show-overflow-tooltip>
         <template #default="{ row }">
           ¥{{ formatMoney(row.bonus) }}
         </template>
       </el-table-column>
-      <el-table-column prop="allowance" label="津贴" align="right">
+      <el-table-column prop="allowance" label="津贴" width="120" align="right" show-overflow-tooltip>
         <template #default="{ row }">
           ¥{{ formatMoney(row.allowance) }}
         </template>
       </el-table-column>
-      <el-table-column prop="deduction" label="扣除" align="right">
+      <el-table-column prop="deduction" label="扣除" width="120" align="right" show-overflow-tooltip>
         <template #default="{ row }">
           ¥{{ formatMoney(row.deduction) }}
         </template>
       </el-table-column>
-      <el-table-column label="实发工资" align="right">
+      <el-table-column label="实发工资" width="140" align="right" show-overflow-tooltip>
         <template #default="{ row }">
           <span class="total-salary">
             ¥{{ formatMoney(calculateTotalSalary(row)) }}
           </span>
         </template>
       </el-table-column>
-      <el-table-column prop="notes" label="备注" />
-      <el-table-column prop="created_at" label="创建时间" />
-      <el-table-column label="操作" width="200">
+      <el-table-column prop="notes" label="备注" min-width="150" show-overflow-tooltip />
+      <el-table-column prop="created_at" label="创建时间" width="180" show-overflow-tooltip />
+      <el-table-column label="操作" width="280" show-overflow-tooltip>
         <template #default="{ row }">
           <div class="operation-buttons">
             <el-button size="small" @click="editRecord(row)">编辑</el-button>
@@ -589,9 +597,41 @@ onMounted(() => {
 /* 操作按钮组样式 */
 .operation-buttons {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: nowrap;
-  align-items: center;
+  white-space: nowrap;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100% !important;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
 }
 
 .operation-buttons .el-button {

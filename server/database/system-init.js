@@ -45,11 +45,13 @@ const createTables = () => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         code TEXT UNIQUE,
+        organization_id INTEGER,
         level INTEGER DEFAULT 1,
         sort_order INTEGER DEFAULT 0,
         status INTEGER DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (organization_id) REFERENCES organizations (id)
       )`,
 
       // 角色表
@@ -68,10 +70,12 @@ const createTables = () => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         path TEXT,
+        component TEXT,
         icon TEXT,
         parent_id INTEGER,
         level INTEGER DEFAULT 1,
         sort_order INTEGER DEFAULT 0,
+        type INTEGER DEFAULT 1,
         status INTEGER DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -163,20 +167,20 @@ const insertBasicData = () => {
           
           // 插入默认岗位
           const positions = [
-            { id: 1, name: '总经理', code: 'GM', level: 1, sort_order: 1 },
-            { id: 2, name: '技术总监', code: 'CTO', level: 2, sort_order: 1 },
-            { id: 3, name: '人事经理', code: 'HRM', level: 2, sort_order: 1 },
-            { id: 4, name: '财务经理', code: 'CFM', level: 2, sort_order: 1 },
-            { id: 5, name: '软件工程师', code: 'SE', level: 3, sort_order: 1 },
-            { id: 6, name: '人事专员', code: 'HRS', level: 3, sort_order: 1 }
+            { id: 1, name: '总经理', code: 'GM', organization_id: 1, level: 1, sort_order: 1 },
+            { id: 2, name: '技术总监', code: 'CTO', organization_id: 2, level: 2, sort_order: 1 },
+            { id: 3, name: '人事经理', code: 'HRM', organization_id: 3, level: 2, sort_order: 1 },
+            { id: 4, name: '财务经理', code: 'CFM', organization_id: 4, level: 2, sort_order: 1 },
+            { id: 5, name: '软件工程师', code: 'SE', organization_id: 2, level: 3, sort_order: 1 },
+            { id: 6, name: '人事专员', code: 'HRS', organization_id: 3, level: 3, sort_order: 1 }
           ];
 
           let posCompleted = 0;
           positions.forEach(pos => {
             db.run(`
-              INSERT INTO positions (id, name, code, level, sort_order) 
-              VALUES (?, ?, ?, ?, ?)
-            `, [pos.id, pos.name, pos.code, pos.level, pos.sort_order], (err) => {
+              INSERT INTO positions (id, name, code, organization_id, level, sort_order) 
+              VALUES (?, ?, ?, ?, ?, ?)
+            `, [pos.id, pos.name, pos.code, pos.organization_id, pos.level, pos.sort_order], (err) => {
               if (err) {
                 console.error('❌ 插入岗位失败:', err.message);
               }
@@ -222,28 +226,40 @@ const insertMenuUserData = () => {
   return new Promise((resolve, reject) => {
     // 插入默认菜单
     const menus = [
-      { id: 1, name: '首页', path: '/', icon: 'House', parent_id: null, level: 1, sort_order: 1 },
-      { id: 2, name: '系统管理', path: '/system', icon: 'Setting', parent_id: null, level: 1, sort_order: 2 },
-      { id: 3, name: '组织管理', path: '/system/organization', icon: 'OfficeBuilding', parent_id: 2, level: 2, sort_order: 1 },
-      { id: 4, name: '岗位管理', path: '/system/position', icon: 'User', parent_id: 2, level: 2, sort_order: 2 },
-      { id: 5, name: '用户管理', path: '/system/user', icon: 'Avatar', parent_id: 2, level: 2, sort_order: 3 },
-      { id: 6, name: '角色管理', path: '/system/role', icon: 'UserFilled', parent_id: 2, level: 2, sort_order: 4 },
-      { id: 7, name: '菜单管理', path: '/system/menu', icon: 'Menu', parent_id: 2, level: 2, sort_order: 5 },
-      { id: 8, name: 'HR管理', path: '/hr', icon: 'UserFilled', parent_id: null, level: 1, sort_order: 3 },
-      { id: 9, name: '招聘管理', path: '/hr/recruitment', icon: 'Plus', parent_id: 8, level: 2, sort_order: 1 },
-      { id: 10, name: '入职离职管理', path: '/hr/onboarding', icon: 'User', parent_id: 8, level: 2, sort_order: 2 },
-      { id: 11, name: '考勤管理', path: '/hr/attendance', icon: 'Clock', parent_id: 8, level: 2, sort_order: 3 },
-      { id: 12, name: '薪酬福利管理', path: '/hr/salary', icon: 'Wallet', parent_id: 8, level: 2, sort_order: 4 },
-      { id: 13, name: '档案管理', path: '/hr/employee', icon: 'Document', parent_id: 8, level: 2, sort_order: 5 },
-      { id: 14, name: '报表分析', path: '/hr/reports', icon: 'DataAnalysis', parent_id: 8, level: 2, sort_order: 6 }
+      { id: 1, name: '首页', path: '/', component: 'Dashboard', icon: 'House', parent_id: null, level: 1, sort_order: 1 },
+      { id: 2, name: '系统管理', path: '/system', component: 'Layout', icon: 'Setting', parent_id: null, level: 1, sort_order: 2 },
+      { id: 3, name: '组织管理', path: '/system/organization', component: 'system/Organization', icon: 'OfficeBuilding', parent_id: 2, level: 2, sort_order: 1 },
+      { id: 4, name: '岗位管理', path: '/system/position', component: 'system/Position', icon: 'User', parent_id: 2, level: 2, sort_order: 2 },
+      { id: 5, name: '用户管理', path: '/system/user', component: 'system/User', icon: 'Avatar', parent_id: 2, level: 2, sort_order: 3 },
+      { id: 6, name: '角色管理', path: '/system/role', component: 'system/Role', icon: 'UserFilled', parent_id: 2, level: 2, sort_order: 4 },
+      { id: 7, name: '菜单管理', path: '/system/menu', component: 'system/Menu', icon: 'Menu', parent_id: 2, level: 2, sort_order: 5 },
+      { id: 8, name: 'HR管理', path: '/hr', component: 'Layout', icon: 'UserFilled', parent_id: null, level: 1, sort_order: 3 },
+      { id: 9, name: '招聘管理', path: '/hr/recruitment', component: 'hr/Recruitment', icon: 'Plus', parent_id: 8, level: 2, sort_order: 1 },
+      { id: 10, name: '入职离职管理', path: '/hr/onboarding', component: 'hr/Onboarding', icon: 'User', parent_id: 8, level: 2, sort_order: 2 },
+      { id: 11, name: '考勤管理', path: '/hr/attendance', component: 'hr/Attendance', icon: 'Clock', parent_id: 8, level: 2, sort_order: 3 },
+      { id: 12, name: '薪酬福利管理', path: '/hr/salary', component: 'hr/Salary', icon: 'Wallet', parent_id: 8, level: 2, sort_order: 4 },
+      { id: 13, name: '档案管理', path: '/hr/employee', component: 'hr/Employee', icon: 'Document', parent_id: 8, level: 2, sort_order: 5 },
+      { id: 14, name: '报表分析', path: '/hr/reports', component: 'hr/Report', icon: 'DataAnalysis', parent_id: 8, level: 2, sort_order: 6 },
+      // 财务模块菜单
+      { id: 15, name: '财务管理', path: '/finance', component: 'Layout', icon: 'Money', parent_id: null, level: 1, sort_order: 4 },
+      { id: 16, name: '总账', path: '/finance/general-ledger', component: 'finance/GeneralLedger', icon: 'Document', parent_id: 15, level: 2, sort_order: 1 },
+      { id: 17, name: '应收账款', path: '/finance/accounts-receivable', component: 'finance/AccountsReceivable', icon: 'CreditCard', parent_id: 15, level: 2, sort_order: 2 },
+      { id: 18, name: '应付账款', path: '/finance/accounts-payable', component: 'finance/AccountsPayable', icon: 'CreditCard', parent_id: 15, level: 2, sort_order: 3 },
+      { id: 19, name: '固定资产', path: '/finance/fixed-assets', component: 'finance/FixedAssets', icon: 'OfficeBuilding', parent_id: 15, level: 2, sort_order: 4 },
+      { id: 20, name: '资金管理', path: '/finance/cash-management', component: 'finance/CashManagement', icon: 'Wallet', parent_id: 15, level: 2, sort_order: 5 },
+      { id: 21, name: '成本管理', path: '/finance/cost-accounting', component: 'finance/CostAccounting', icon: 'Document', parent_id: 15, level: 2, sort_order: 6 },
+      { id: 22, name: '预算管理', path: '/finance/budgeting', component: 'finance/Budgeting', icon: 'DataAnalysis', parent_id: 15, level: 2, sort_order: 7 },
+      { id: 23, name: '报表与分析', path: '/finance/financial-reporting', component: 'finance/FinancialReporting', icon: 'Document', parent_id: 15, level: 2, sort_order: 8 },
+      { id: 24, name: '税务管理', path: '/finance/tax-management', component: 'finance/TaxManagement', icon: 'Document', parent_id: 15, level: 2, sort_order: 9 },
+      { id: 25, name: '费用管理', path: '/finance/expense-management', component: 'finance/ExpenseManagement', icon: 'Document', parent_id: 15, level: 2, sort_order: 10 }
     ];
 
     let menuCompleted = 0;
     menus.forEach(menu => {
       db.run(`
-        INSERT INTO menus (id, name, path, icon, parent_id, level, sort_order) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `, [menu.id, menu.name, menu.path, menu.icon, menu.parent_id, menu.level, menu.sort_order], (err) => {
+        INSERT INTO menus (id, name, path, component, icon, parent_id, level, sort_order, type, status) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [menu.id, menu.name, menu.path, menu.component || null, menu.icon, menu.parent_id, menu.level, menu.sort_order, menu.type || 1, menu.status || 1], (err) => {
         if (err) {
           console.error('❌ 插入菜单失败:', err.message);
         }

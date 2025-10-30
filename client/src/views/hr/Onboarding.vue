@@ -16,7 +16,9 @@
                 />
               </el-form-item>
               <el-form-item label="状态">
-                <el-select v-model="onboardingSearchForm.status" placeholder="选择状态" clearable>
+                <el-select v-model="onboardingSearchForm.status" placeholder="选择状态" clearable
+            style="width: 200px"
+            :popper-append-to-body="false">
                   <el-option label="待审核" value="1" />
                   <el-option label="已通过" value="2" />
                   <el-option label="已拒绝" value="3" />
@@ -39,7 +41,8 @@
 
           <!-- 入职申请列表 -->
           <div class="table-container">
-            <el-table :data="onboardingApplications" v-loading="onboardingLoading" stripe border>
+            <el-table :data="onboardingApplications" v-loading="onboardingLoading" stripe border
+        table-layout="fixed">
             <el-table-column prop="user_name" label="姓名" />
             <el-table-column prop="position_name" label="岗位" />
             <el-table-column prop="org_name" label="所属组织" />
@@ -54,7 +57,7 @@
               </template>
             </el-table-column>
             <el-table-column prop="created_at" label="申请时间" />
-            <el-table-column label="操作" width="250">
+            <el-table-column label="操作" width="250" show-overflow-tooltip>
               <template #default="{ row }">
                 <div class="operation-buttons">
                   <el-button size="small" @click="viewOnboardingDetail(row)">查看详情</el-button>
@@ -96,7 +99,9 @@
                 />
               </el-form-item>
               <el-form-item label="状态">
-                <el-select v-model="offboardingSearchForm.status" placeholder="选择状态" clearable>
+                <el-select v-model="offboardingSearchForm.status" placeholder="选择状态" clearable
+            style="width: 200px"
+            :popper-append-to-body="false">
                   <el-option label="待审核" value="1" />
                   <el-option label="已通过" value="2" />
                   <el-option label="已拒绝" value="3" />
@@ -119,7 +124,8 @@
 
           <!-- 离职申请列表 -->
           <div class="table-container">
-            <el-table :data="offboardingApplications" v-loading="offboardingLoading" stripe border>
+            <el-table :data="offboardingApplications" v-loading="offboardingLoading" stripe border
+        table-layout="fixed">
             <el-table-column prop="user_name" label="姓名" />
             <el-table-column prop="position_name" label="岗位" />
             <el-table-column prop="org_name" label="所属组织" />
@@ -133,7 +139,7 @@
               </template>
             </el-table-column>
             <el-table-column prop="created_at" label="申请时间" />
-            <el-table-column label="操作" width="250">
+            <el-table-column label="操作" width="250" show-overflow-tooltip>
               <template #default="{ row }">
                 <div class="operation-buttons">
                   <el-button size="small" @click="viewOffboardingDetail(row)">查看详情</el-button>
@@ -728,9 +734,41 @@ onMounted(() => {
 /* 操作按钮组样式 */
 .operation-buttons {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: nowrap;
-  align-items: center;
+  white-space: nowrap;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100% !important;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
 }
 
 .operation-buttons .el-button {

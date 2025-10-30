@@ -6,7 +6,9 @@
           <el-input v-model="searchForm.keyword" placeholder="请输入账户名称或编号" clearable />
         </el-form-item>
         <el-form-item label="账户类型">
-          <el-select v-model="searchForm.accountType" placeholder="请选择类型" clearable>
+          <el-select v-model="searchForm.accountType" placeholder="请选择类型" clearable
+            style="width: 200px"
+            :popper-append-to-body="false">
             <el-option label="现金" value="cash" />
             <el-option label="银行存款" value="bank" />
             <el-option label="其他" value="other" />
@@ -31,26 +33,28 @@
     </div>
 
     <div class="table-container">
-      <el-table :data="tableData" v-loading="loading" stripe border>
-        <el-table-column prop="account_code" label="账户编号" width="150" />
-        <el-table-column prop="account_name" label="账户名称" width="200" />
-        <el-table-column prop="account_type" label="账户类型" width="120" />
-        <el-table-column prop="bank_name" label="开户银行" width="200" />
-        <el-table-column prop="balance" label="余额" width="120" align="right">
+      <el-table :data="tableData" v-loading="loading" stripe border
+        style="width: 100%"
+        table-layout="fixed">
+        <el-table-column prop="account_code" label="账户编号" width="150" show-overflow-tooltip/>
+        <el-table-column prop="account_name" label="账户名称" width="200" show-overflow-tooltip/>
+        <el-table-column prop="account_type" label="账户类型" width="120" show-overflow-tooltip/>
+        <el-table-column prop="bank_name" label="开户银行" width="200" show-overflow-tooltip/>
+        <el-table-column prop="balance" label="余额" width="120" show-overflow-tooltipalign="right">
           <template #default="{ row }">
             <span :class="getBalanceClass(row.balance)">
               {{ formatCurrency(row.balance) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="status" label="状态" width="100" show-overflow-tooltip>
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">
               {{ row.status === 1 ? "启用" : "禁用" }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="280" show-overflow-tooltipfixed="right">
           <template #default="{ row }">
             <div class="operation-buttons">
               <el-button size="small" @click="handleEdit(row)">编辑</el-button>
@@ -161,7 +165,44 @@ onMounted(() => loadData());
 :deep(.el-table th) { background-color: #f8fafc; color: #4a5568; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
 :deep(.el-table td) { border-bottom: 1px solid #f7fafc; }
 :deep(.el-table tr:hover > td) { background-color: #f7fafc; }
-.operation-buttons { display: flex; gap: 8px; }
+.operation-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100% !important;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
+}
 .positive-balance { color: #10b981; font-weight: 600; }
 .negative-balance { color: #ef4444; font-weight: 600; }
 </style>

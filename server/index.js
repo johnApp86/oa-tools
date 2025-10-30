@@ -612,6 +612,76 @@ app.delete('/api/users/:id', (req, res) => {
   });
 });
 
+// 修复菜单数据API
+app.post('/api/fix-menu-data', (req, res) => {
+  console.log('🔧 开始修复菜单数据...');
+  
+  // 删除现有的财务模块菜单数据
+  db.run(`DELETE FROM menus WHERE name LIKE '%财务%' OR name LIKE '%总账%' OR name LIKE '%应收%' OR name LIKE '%应付%' OR name LIKE '%固定资产%' OR name LIKE '%资金%' OR name LIKE '%成本%' OR name LIKE '%预算%' OR name LIKE '%报表%' OR name LIKE '%税务%' OR name LIKE '%费用%'`, (err) => {
+    if (err) {
+      console.error('❌ 删除旧数据失败:', err.message);
+      return res.status(500).json({ message: '删除旧数据失败' });
+    }
+    console.log('✓ 删除旧的财务模块菜单数据');
+
+    // 插入财务模块菜单数据
+    const financeMenus = [
+      // 财务管理主菜单
+      { id: 15, name: '财务管理', path: '/finance', component: 'Layout', icon: 'Money', parent_id: 0, level: 1, sort_order: 4, type: 1, status: 1 },
+      
+      // 财务子菜单
+      { id: 16, name: '总账', path: '/finance/general-ledger', component: 'finance/GeneralLedger', icon: 'Document', parent_id: 15, level: 2, sort_order: 1, type: 1, status: 1 },
+      { id: 17, name: '应收账款', path: '/finance/accounts-receivable', component: 'finance/AccountsReceivable', icon: 'CreditCard', parent_id: 15, level: 2, sort_order: 2, type: 1, status: 1 },
+      { id: 18, name: '应付账款', path: '/finance/accounts-payable', component: 'finance/AccountsPayable', icon: 'CreditCard', parent_id: 15, level: 2, sort_order: 3, type: 1, status: 1 },
+      { id: 19, name: '固定资产', path: '/finance/fixed-assets', component: 'finance/FixedAssets', icon: 'OfficeBuilding', parent_id: 15, level: 2, sort_order: 4, type: 1, status: 1 },
+      { id: 20, name: '资金管理', path: '/finance/cash-management', component: 'finance/CashManagement', icon: 'Wallet', parent_id: 15, level: 2, sort_order: 5, type: 1, status: 1 },
+      { id: 21, name: '成本管理', path: '/finance/cost-accounting', component: 'finance/CostAccounting', icon: 'Document', parent_id: 15, level: 2, sort_order: 6, type: 1, status: 1 },
+      { id: 22, name: '预算管理', path: '/finance/budgeting', component: 'finance/Budgeting', icon: 'DataAnalysis', parent_id: 15, level: 2, sort_order: 7, type: 1, status: 1 },
+      { id: 23, name: '报表与分析', path: '/finance/financial-reporting', component: 'finance/FinancialReporting', icon: 'Document', parent_id: 15, level: 2, sort_order: 8, type: 1, status: 1 },
+      { id: 24, name: '税务管理', path: '/finance/tax-management', component: 'finance/TaxManagement', icon: 'Document', parent_id: 15, level: 2, sort_order: 9, type: 1, status: 1 },
+      { id: 25, name: '费用管理', path: '/finance/expense-management', component: 'finance/ExpenseManagement', icon: 'Document', parent_id: 15, level: 2, sort_order: 10, type: 1, status: 1 }
+    ];
+
+    let completed = 0;
+    let hasError = false;
+
+    financeMenus.forEach(menu => {
+      db.run(`
+        INSERT INTO menus (id, name, path, component, icon, parent_id, level, sort_order, type, status) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        menu.id, 
+        menu.name, 
+        menu.path, 
+        menu.component, 
+        menu.icon, 
+        menu.parent_id, 
+        menu.level, 
+        menu.sort_order, 
+        menu.type, 
+        menu.status
+      ], (err) => {
+        if (err) {
+          console.error(`❌ 插入菜单 "${menu.name}" 失败:`, err.message);
+          hasError = true;
+        } else {
+          console.log(`✓ 插入菜单 "${menu.name}" 成功`);
+        }
+        
+        completed++;
+        if (completed === financeMenus.length) {
+          if (hasError) {
+            res.status(500).json({ message: '部分菜单数据插入失败' });
+          } else {
+            console.log('🎉 财务模块菜单数据修复完成！');
+            res.json({ message: '菜单数据修复成功' });
+          }
+        }
+      });
+    });
+  });
+});
+
 // 菜单管理API
 app.get('/api/menus', (req, res) => {
   const { page = 1, limit = 10, keyword = '' } = req.query;

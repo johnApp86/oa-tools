@@ -35,20 +35,21 @@
         border
         row-key="id"
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-      >
-        <el-table-column prop="name" label="组织名称" width="200" />
-        <el-table-column prop="code" label="组织代码" width="150" />
-        <el-table-column prop="level" label="层级" width="80" />
-        <el-table-column prop="sort_order" label="排序" width="80" />
-        <el-table-column prop="status" label="状态" width="100">
+      
+        table-layout="fixed">
+        <el-table-column prop="name" label="组织名称" width="200" show-overflow-tooltip/>
+        <el-table-column prop="code" label="组织代码" width="150" show-overflow-tooltip/>
+        <el-table-column prop="level" label="层级" width="80" show-overflow-tooltip/>
+        <el-table-column prop="sort_order" label="排序" width="80" show-overflow-tooltip/>
+        <el-table-column prop="status" label="状态" width="100" show-overflow-tooltip>
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">
               {{ row.status === 1 ? "启用" : "禁用" }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="created_at" label="创建时间" width="180" />
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column prop="created_at" label="创建时间" width="180" show-overflow-tooltip/>
+        <el-table-column label="操作" width="280" show-overflow-tooltipfixed="right">
           <template #default="{ row }">
             <div class="operation-buttons">
               <el-button size="small" @click="handleEdit(row)">编辑</el-button>
@@ -470,9 +471,41 @@ onMounted(() => {
 /* 操作按钮组样式 */
 .operation-buttons {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: nowrap;
-  align-items: center;
+  white-space: nowrap;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100% !important;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
 }
 
 .operation-buttons .el-button {

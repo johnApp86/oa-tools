@@ -43,7 +43,9 @@
           <div class="search-form">
             <el-form :model="attendanceSearchForm" inline>
               <el-form-item label="员工">
-                <el-select v-model="attendanceSearchForm.user_id" placeholder="选择员工" clearable>
+                <el-select v-model="attendanceSearchForm.user_id" placeholder="选择员工" clearable
+            style="width: 200px"
+            :popper-append-to-body="false">
                   <el-option
                     v-for="user in allUsers"
                     :key="user.id"
@@ -75,7 +77,8 @@
 
           <!-- 考勤记录列表 -->
           <div class="table-container">
-            <el-table :data="attendanceRecords" v-loading="attendanceLoading" stripe border>
+            <el-table :data="attendanceRecords" v-loading="attendanceLoading" stripe border
+        table-layout="fixed">
             <el-table-column prop="user_name" label="员工姓名" />
             <el-table-column prop="position_name" label="岗位" />
             <el-table-column prop="date" label="日期" />
@@ -129,7 +132,9 @@
                 />
               </el-form-item>
               <el-form-item label="请假类型">
-                <el-select v-model="leaveSearchForm.type" placeholder="选择请假类型" clearable>
+                <el-select v-model="leaveSearchForm.type" placeholder="选择请假类型" clearable
+            style="width: 200px"
+            :popper-append-to-body="false">
                   <el-option label="年假" value="annual" />
                   <el-option label="病假" value="sick" />
                   <el-option label="事假" value="personal" />
@@ -138,7 +143,9 @@
                 </el-select>
               </el-form-item>
               <el-form-item label="状态">
-                <el-select v-model="leaveSearchForm.status" placeholder="选择状态" clearable>
+                <el-select v-model="leaveSearchForm.status" placeholder="选择状态" clearable
+            style="width: 200px"
+            :popper-append-to-body="false">
                   <el-option label="待审核" value="1" />
                   <el-option label="已通过" value="2" />
                   <el-option label="已拒绝" value="3" />
@@ -181,7 +188,8 @@
 
           <!-- 请假申请列表 -->
           <div class="table-container">
-            <el-table :data="leaveApplications" v-loading="leaveLoading" stripe border>
+            <el-table :data="leaveApplications" v-loading="leaveLoading" stripe border
+        table-layout="fixed">
             <el-table-column prop="user_name" label="员工姓名" />
             <el-table-column prop="position_name" label="岗位" />
             <el-table-column prop="type" label="请假类型">
@@ -209,7 +217,7 @@
               </template>
             </el-table-column>
             <el-table-column prop="created_at" label="申请时间" />
-            <el-table-column label="操作" width="250">
+            <el-table-column label="操作" width="250" show-overflow-tooltip>
               <template #default="{ row }">
                 <div class="operation-buttons">
                   <el-button size="small" @click="viewLeaveDetail(row)">查看详情</el-button>
@@ -880,10 +888,41 @@ onMounted(() => {
 /* 操作按钮组样式 */
 .operation-buttons {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: nowrap;
-  align-items: center;
-  justify-content: flex-start;
+  white-space: nowrap;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100% !important;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
 }
 
 .operation-buttons .el-button {

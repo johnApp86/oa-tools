@@ -3,7 +3,9 @@
     <div class="search-form">
       <el-form :model="searchForm" inline>
         <el-form-item label="报表类型">
-          <el-select v-model="searchForm.reportType" placeholder="请选择报表类型" clearable>
+          <el-select v-model="searchForm.reportType" placeholder="请选择报表类型" clearable
+            style="width: 200px"
+            :popper-append-to-body="false">
             <el-option label="资产负债表" value="balance_sheet" />
             <el-option label="利润表" value="income_statement" />
             <el-option label="现金流量表" value="cash_flow" />
@@ -38,20 +40,22 @@
     </div>
 
     <div class="table-container">
-      <el-table :data="tableData" v-loading="loading" stripe border>
-        <el-table-column prop="report_code" label="报表编号" width="150" />
-        <el-table-column prop="report_name" label="报表名称" width="200" />
-        <el-table-column prop="report_type" label="报表类型" width="150" />
-        <el-table-column prop="period" label="报表期间" width="120" />
-        <el-table-column prop="status" label="状态" width="100">
+      <el-table :data="tableData" v-loading="loading" stripe border
+        style="width: 100%"
+        table-layout="fixed">
+        <el-table-column prop="report_code" label="报表编号" width="150" show-overflow-tooltip/>
+        <el-table-column prop="report_name" label="报表名称" width="200" show-overflow-tooltip/>
+        <el-table-column prop="report_type" label="报表类型" width="150" show-overflow-tooltip/>
+        <el-table-column prop="period" label="报表期间" width="120" show-overflow-tooltip/>
+        <el-table-column prop="status" label="状态" width="100" show-overflow-tooltip>
           <template #default="{ row }">
             <el-tag :type="getStatusTagType(row.status)">
               {{ getStatusLabel(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="created_at" label="生成时间" width="180" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column prop="created_at" label="生成时间" width="180" show-overflow-tooltip/>
+        <el-table-column label="操作" width="280" show-overflow-tooltipfixed="right">
           <template #default="{ row }">
             <div class="operation-buttons">
               <el-button size="small" @click="handleView(row)">查看</el-button>
@@ -169,5 +173,42 @@ onMounted(() => loadData());
 :deep(.el-table th) { background-color: #f8fafc; color: #4a5568; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
 :deep(.el-table td) { border-bottom: 1px solid #f7fafc; }
 :deep(.el-table tr:hover > td) { background-color: #f7fafc; }
-.operation-buttons { display: flex; gap: 8px; }
+.operation-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100% !important;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
+}
 </style>

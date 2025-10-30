@@ -6,7 +6,9 @@
           <el-input v-model="searchForm.keyword" placeholder="请输入成本中心或项目名称" clearable />
         </el-form-item>
         <el-form-item label="成本类型">
-          <el-select v-model="searchForm.costType" placeholder="请选择类型" clearable>
+          <el-select v-model="searchForm.costType" placeholder="请选择类型" clearable
+            style="width: 200px"
+            :popper-append-to-body="false">
             <el-option label="直接材料" value="direct_material" />
             <el-option label="直接人工" value="direct_labor" />
             <el-option label="制造费用" value="manufacturing" />
@@ -32,28 +34,30 @@
     </div>
 
     <div class="table-container">
-      <el-table :data="tableData" v-loading="loading" stripe border>
-        <el-table-column prop="cost_center_code" label="成本中心编号" width="150" />
-        <el-table-column prop="cost_center_name" label="成本中心名称" width="200" />
-        <el-table-column prop="cost_type" label="成本类型" width="120" />
-        <el-table-column prop="budget_amount" label="预算金额" width="120" align="right">
+      <el-table :data="tableData" v-loading="loading" stripe border
+        style="width: 100%"
+        table-layout="fixed">
+        <el-table-column prop="cost_center_code" label="成本中心编号" width="150" show-overflow-tooltip/>
+        <el-table-column prop="cost_center_name" label="成本中心名称" width="200" show-overflow-tooltip/>
+        <el-table-column prop="cost_type" label="成本类型" width="120" show-overflow-tooltip/>
+        <el-table-column prop="budget_amount" label="预算金额" width="120" show-overflow-tooltipalign="right">
           <template #default="{ row }">
             {{ formatCurrency(row.budget_amount) }}
           </template>
         </el-table-column>
-        <el-table-column prop="actual_amount" label="实际金额" width="120" align="right">
+        <el-table-column prop="actual_amount" label="实际金额" width="120" show-overflow-tooltipalign="right">
           <template #default="{ row }">
             {{ formatCurrency(row.actual_amount) }}
           </template>
         </el-table-column>
-        <el-table-column prop="variance" label="差异" width="120" align="right">
+        <el-table-column prop="variance" label="差异" width="120" show-overflow-tooltipalign="right">
           <template #default="{ row }">
             <span :class="getVarianceClass(row.variance)">
               {{ formatCurrency(row.variance) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="280" show-overflow-tooltipfixed="right">
           <template #default="{ row }">
             <div class="operation-buttons">
               <el-button size="small" @click="handleEdit(row)">编辑</el-button>
@@ -164,7 +168,44 @@ onMounted(() => loadData());
 :deep(.el-table th) { background-color: #f8fafc; color: #4a5568; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
 :deep(.el-table td) { border-bottom: 1px solid #f7fafc; }
 :deep(.el-table tr:hover > td) { background-color: #f7fafc; }
-.operation-buttons { display: flex; gap: 8px; }
+.operation-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100% !important;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
+}
 .positive-variance { color: #10b981; font-weight: 600; }
 .negative-variance { color: #ef4444; font-weight: 600; }
 .zero-variance { color: #6b7280; font-weight: 600; }

@@ -12,7 +12,13 @@
           />
         </el-form-item>
         <el-form-item label="科目类型">
-          <el-select v-model="searchForm.accountType" placeholder="请选择科目类型" clearable>
+          <el-select 
+            v-model="searchForm.accountType" 
+            placeholder="请选择科目类型" 
+            clearable
+            style="width: 200px"
+            :popper-append-to-body="false"
+          >
             <el-option label="资产" value="asset" />
             <el-option label="负债" value="liability" />
             <el-option label="所有者权益" value="equity" />
@@ -52,42 +58,44 @@
         border
         row-key="id"
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+        style="width: 100%"
+        table-layout="fixed"
       >
-        <el-table-column prop="code" label="科目代码" width="120" />
-        <el-table-column prop="name" label="科目名称" width="200" />
-        <el-table-column prop="type" label="科目类型" width="100">
+        <el-table-column prop="code" label="科目代码" width="120" show-overflow-tooltip />
+        <el-table-column prop="name" label="科目名称" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="type" label="科目类型" width="120" show-overflow-tooltip>
           <template #default="{ row }">
             <el-tag :type="getTypeTagType(row.type)">
               {{ getTypeLabel(row.type) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="balance" label="余额" width="120" align="right">
+        <el-table-column prop="balance" label="余额" width="140" align="right" show-overflow-tooltip>
           <template #default="{ row }">
             <span :class="getBalanceClass(row.balance)">
               {{ formatCurrency(row.balance) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="debit_balance" label="借方余额" width="120" align="right">
+        <el-table-column prop="debit_balance" label="借方余额" width="140" align="right" show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatCurrency(row.debit_balance) }}
           </template>
         </el-table-column>
-        <el-table-column prop="credit_balance" label="贷方余额" width="120" align="right">
+        <el-table-column prop="credit_balance" label="贷方余额" width="140" align="right" show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatCurrency(row.credit_balance) }}
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="status" label="状态" width="100" show-overflow-tooltip>
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">
               {{ row.status === 1 ? "启用" : "禁用" }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="created_at" label="创建时间" width="180" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column prop="created_at" label="创建时间" width="180" show-overflow-tooltip />
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
             <div class="operation-buttons">
               <el-button size="small" @click="handleEdit(row)">编辑</el-button>
@@ -481,6 +489,7 @@ onMounted(() => {
 :deep(.el-table) {
   border-radius: 8px;
   overflow: hidden;
+  width: 100% !important;
 }
 
 :deep(.el-table th) {
@@ -488,10 +497,16 @@ onMounted(() => {
   color: #4a5568;
   font-weight: 600;
   border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 :deep(.el-table td) {
   border-bottom: 1px solid #f7fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 :deep(.el-table tr:hover > td) {
@@ -501,6 +516,12 @@ onMounted(() => {
 .operation-buttons {
   display: flex;
   gap: 8px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
 }
 
 .positive-balance {

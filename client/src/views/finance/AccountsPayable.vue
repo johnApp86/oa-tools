@@ -12,7 +12,9 @@
           />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
+          <el-select v-model="searchForm.status" placeholder="请选择状态" clearable
+            style="width: 200px"
+            :popper-append-to-body="false">
             <el-option label="未付款" value="unpaid" />
             <el-option label="部分付款" value="partial" />
             <el-option label="已付款" value="paid" />
@@ -40,35 +42,37 @@
 
     <!-- 应付账表格 -->
     <div class="table-container">
-      <el-table :data="tableData" v-loading="loading" stripe border>
-        <el-table-column prop="invoice_no" label="发票号" width="150" />
-        <el-table-column prop="supplier_name" label="供应商名称" width="200" />
-        <el-table-column prop="amount" label="应付金额" width="120" align="right">
+      <el-table :data="tableData" v-loading="loading" stripe border
+        style="width: 100%"
+        table-layout="fixed">
+        <el-table-column prop="invoice_no" label="发票号" width="150" show-overflow-tooltip/>
+        <el-table-column prop="supplier_name" label="供应商名称" width="200" show-overflow-tooltip/>
+        <el-table-column prop="amount" label="应付金额" width="120" show-overflow-tooltipalign="right">
           <template #default="{ row }">
             {{ formatCurrency(row.amount) }}
           </template>
         </el-table-column>
-        <el-table-column prop="paid_amount" label="已付金额" width="120" align="right">
+        <el-table-column prop="paid_amount" label="已付金额" width="120" show-overflow-tooltipalign="right">
           <template #default="{ row }">
             {{ formatCurrency(row.paid_amount) }}
           </template>
         </el-table-column>
-        <el-table-column prop="balance" label="余额" width="120" align="right">
+        <el-table-column prop="balance" label="余额" width="120" show-overflow-tooltipalign="right">
           <template #default="{ row }">
             <span :class="getBalanceClass(row.balance)">
               {{ formatCurrency(row.balance) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="due_date" label="到期日期" width="120" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="due_date" label="到期日期" width="120" show-overflow-tooltip/>
+        <el-table-column prop="status" label="状态" width="100" show-overflow-tooltip>
           <template #default="{ row }">
             <el-tag :type="getStatusTagType(row.status)">
               {{ getStatusLabel(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="280" show-overflow-tooltipfixed="right">
           <template #default="{ row }">
             <div class="operation-buttons">
               <el-button size="small" @click="handleEdit(row)">编辑</el-button>
@@ -264,6 +268,40 @@ onMounted(() => {
 .operation-buttons {
   display: flex;
   gap: 8px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100% !important;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
 }
 
 .positive-balance {

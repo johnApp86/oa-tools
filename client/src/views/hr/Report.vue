@@ -4,7 +4,7 @@
     <div class="search-form">
       <el-form :model="filterForm" inline>
         <el-form-item label="年份">
-          <el-select v-model="filterForm.year" placeholder="选择年份" @change="loadReports">
+          <el-select v-model="filterForm.year" placeholder="选择年份" @change="loadReports" style="width: 200px" :popper-append-to-body="false">
             <el-option
               v-for="year in yearOptions"
               :key="year"
@@ -14,7 +14,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="月份">
-          <el-select v-model="filterForm.month" placeholder="选择月份" @change="loadAttendanceReport">
+          <el-select v-model="filterForm.month" placeholder="选择月份" @change="loadAttendanceReport" style="width: 200px" :popper-append-to-body="false">
             <el-option
               v-for="month in monthOptions"
               :key="month"
@@ -24,7 +24,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="部门">
-          <el-select v-model="filterForm.department" placeholder="选择部门" @change="loadReports">
+          <el-select v-model="filterForm.department" placeholder="选择部门" @change="loadReports" style="width: 200px" :popper-append-to-body="false">
             <el-option
               v-for="dept in departmentOptions"
               :key="dept"
@@ -103,7 +103,8 @@
       <!-- 考勤报表 -->
       <el-tab-pane label="考勤报表" name="attendance">
         <div class="tab-content">
-          <el-table :data="attendanceReport" v-loading="attendanceLoading" stripe>
+          <el-table :data="attendanceReport" v-loading="attendanceLoading" stripe
+        table-layout="fixed">
             <el-table-column prop="user_name" label="员工姓名" />
             <el-table-column prop="position_name" label="岗位" />
             <el-table-column prop="org_name" label="所属组织" />
@@ -130,7 +131,8 @@
       <!-- 薪酬报表 -->
       <el-tab-pane label="薪酬报表" name="salary">
         <div class="tab-content">
-          <el-table :data="salaryReport" v-loading="salaryLoading" stripe>
+          <el-table :data="salaryReport" v-loading="salaryLoading" stripe
+        table-layout="fixed">
             <el-table-column prop="user_name" label="员工姓名" />
             <el-table-column prop="position_name" label="岗位" />
             <el-table-column prop="org_name" label="所属组织" />

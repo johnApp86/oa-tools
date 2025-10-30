@@ -12,7 +12,9 @@
           />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="选择状态" clearable>
+          <el-select v-model="searchForm.status" placeholder="选择状态" clearable
+            style="width: 200px"
+            :popper-append-to-body="false">
             <el-option label="招聘中" value="1" />
             <el-option label="已暂停" value="0" />
             <el-option label="已结束" value="2" />
@@ -35,7 +37,8 @@
 
     <!-- 职位列表 -->
     <div class="table-container">
-      <el-table :data="positions" v-loading="loading" stripe border>
+      <el-table :data="positions" v-loading="loading" stripe border
+        table-layout="fixed">
         <el-table-column prop="title" label="职位标题" />
         <el-table-column prop="position_name" label="岗位名称" />
         <el-table-column prop="org_name" label="所属组织" />
@@ -55,7 +58,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="created_at" label="发布时间" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="280" show-overflow-tooltipfixed="right">
           <template #default="{ row }">
             <div class="operation-buttons">
               <el-button size="small" @click="viewResumes(row)">查看简历</el-button>
@@ -114,7 +117,7 @@
           <el-input v-model="positionForm.salary_range" placeholder="如：8K-15K" />
         </el-form-item>
         <el-form-item label="紧急程度">
-          <el-select v-model="positionForm.urgent_level" placeholder="选择紧急程度">
+          <el-select v-model="positionForm.urgent_level" placeholder="选择紧急程度" style="width: 100%">
             <el-option label="普通" :value="1" />
             <el-option label="紧急" :value="2" />
             <el-option label="非常紧急" :value="3" />
@@ -145,7 +148,8 @@
 
     <!-- 简历列表对话框 -->
     <el-dialog v-model="showResumesDialog" title="简历列表" width="80%">
-      <el-table :data="resumes" v-loading="resumesLoading">
+      <el-table :data="resumes" v-loading="resumesLoading"
+        table-layout="fixed">
         <el-table-column prop="name" label="姓名" />
         <el-table-column prop="email" label="邮箱" />
         <el-table-column prop="phone" label="手机号" />
@@ -159,7 +163,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="created_at" label="投递时间" />
-        <el-table-column label="操作" width="200">
+        <el-table-column label="操作" width="280" show-overflow-tooltip>
           <template #default="{ row }">
             <el-button size="small" @click="viewResume(row)">查看详情</el-button>
             <el-button size="small" type="success" @click="updateResumeStatus(row, 2)">通过</el-button>
@@ -526,9 +530,41 @@ onMounted(() => {
 /* 操作按钮组样式 */
 .operation-buttons {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: nowrap;
-  align-items: center;
+  white-space: nowrap;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100% !important;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
 }
 
 .operation-buttons .el-button {

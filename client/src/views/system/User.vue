@@ -33,22 +33,23 @@
         v-loading="loading"
         border
         style="width: 100%"
+        table-layout="fixed"
       >
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="username" label="用户名" width="120" />
-        <el-table-column prop="real_name" label="真实姓名" width="120" />
-        <el-table-column prop="email" label="邮箱" width="200" />
-        <el-table-column prop="phone" label="手机号" width="120" />
-        <el-table-column prop="org_name" label="组织" width="120" />
-        <el-table-column prop="position_name" label="岗位" width="120" />
-        <el-table-column prop="status" label="状态" width="80">
+        <el-table-column prop="id" label="ID" width="80" show-overflow-tooltip />
+        <el-table-column prop="username" label="用户名" width="120" show-overflow-tooltip />
+        <el-table-column prop="real_name" label="真实姓名" width="120" show-overflow-tooltip />
+        <el-table-column prop="email" label="邮箱" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="phone" label="手机号" width="120" show-overflow-tooltip />
+        <el-table-column prop="org_name" label="组织" width="120" show-overflow-tooltip />
+        <el-table-column prop="position_name" label="岗位" width="120" show-overflow-tooltip />
+        <el-table-column prop="status" label="状态" width="80" show-overflow-tooltip>
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">
               {{ row.status === 1 ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="created_at" label="创建时间" width="160" />
+        <el-table-column prop="created_at" label="创建时间" width="160" show-overflow-tooltip />
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <div class="operation-buttons">
@@ -465,12 +466,41 @@ onMounted(() => {
   text-align: right;
 }
 
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100% !important;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
+}
+
 /* 操作按钮组样式 */
 .operation-buttons {
   display: flex;
   gap: 6px;
   flex-wrap: nowrap;
   align-items: center;
+  white-space: nowrap;
 }
 
 .operation-buttons .el-button {
