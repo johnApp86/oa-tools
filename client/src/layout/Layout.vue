@@ -38,10 +38,8 @@
           
           <el-sub-menu index="/system">
             <template #title>
-              <div style="display: flex; align-items: center;">
-                <el-icon style="margin-right: 8px;"><Setting /></el-icon>
-                <span>系统管理</span>
-              </div>
+              <el-icon><Setting /></el-icon>
+              <span>系统管理</span>
             </template>
             <el-menu-item index="/system/organization">
               <el-icon><OfficeBuilding /></el-icon>
@@ -67,10 +65,8 @@
 
           <el-sub-menu index="/hr">
             <template #title>
-              <div style="display: flex; align-items: center;">
-                <el-icon style="margin-right: 8px;"><UserFilled /></el-icon>
-                <span>HR管理</span>
-              </div>
+              <el-icon><UserFilled /></el-icon>
+              <span>HR管理</span>
             </template>
             <el-menu-item index="/hr/recruitment">
               <el-icon><Plus /></el-icon>
@@ -197,5 +193,26 @@ const activeMenu = computed(() => route.path);
   background: #f8fafc;
   overflow-y: auto;
   padding: 24px;
+}
+
+/* 确保菜单图标正确显示 */
+:deep(.el-sub-menu__title) {
+  display: flex;
+  align-items: center;
+}
+
+:deep(.el-sub-menu__title .el-icon) {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+:deep(.el-menu-item) {
+  display: flex;
+  align-items: center;
+}
+
+:deep(.el-menu-item .el-icon) {
+  margin-right: 8px;
+  font-size: 16px;
 }
 </style>
