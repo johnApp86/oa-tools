@@ -9,8 +9,12 @@
     "client": "cd client && npm run dev",
     "build": "cd client && npm run build",
     "start": "cd server && npm start",
-    "install-all": "npm install && cd server && npm install && cd ../client && npm install",
-    "stop": "taskkill /f /im node.exe 2>nul || echo 没有运行的Node.js进程"
+    "install-all": "bat\\install.bat",
+    "stop": "taskkill /f /im node.exe 2>nul || echo 没有运行的Node.js进程",
+    "clean": "bat\\clean.bat",
+    "init-db": "bat\\init-db.bat",
+    "reset-db": "bat\\reset-db.bat",
+    "menu": "bat\\menu.bat"
   },
   "keywords": ["vue3", "express", "sqlite3", "oa", "management"],
   "author": "",

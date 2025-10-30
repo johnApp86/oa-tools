@@ -3,16 +3,24 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 
-const dbPath = path.join(__dirname, 'server', 'database', 'oa.db');
+const dbPath = path.join(__dirname, 'oa.db');
+
+console.log('========================================');
+console.log('          数据库重置脚本');
+console.log('========================================');
+console.log();
 
 // 删除现有数据库文件
 if (fs.existsSync(dbPath)) {
   fs.unlinkSync(dbPath);
-  console.log('已删除现有数据库文件');
+  console.log('✓ 已删除现有数据库文件');
+} else {
+  console.log('- 数据库文件不存在，将创建新数据库');
 }
 
 // 重新创建数据库
 const db = new sqlite3.Database(dbPath);
+console.log('✓ 数据库连接已建立');
 
 // 创建表结构
 const createTables = () => {
@@ -217,7 +225,7 @@ const insertInitialData = () => {
 // 初始化HR模块数据库
 const initHRDatabase = () => {
   return new Promise((resolve, reject) => {
-    const { initHRDatabase: initHR } = require('./server/database/hr-init');
+    const { initHRDatabase: initHR } = require('./hr-tables');
     try {
       initHR();
       console.log('HR模块数据库初始化完成');
@@ -234,11 +242,23 @@ createTables()
   .then(() => insertInitialData())
   .then(() => initHRDatabase())
   .then(() => {
-    console.log('数据库重置完成！');
-    console.log('默认账号: admin / admin123');
+    console.log();
+    console.log('========================================');
+    console.log('          数据库重置完成');
+    console.log('========================================');
+    console.log();
+    console.log('🔑 默认账号信息:');
+    console.log('  用户名: admin');
+    console.log('  密码: admin123');
+    console.log();
+    console.log('🚀 启动命令:');
+    console.log('  npm run dev        # 开发模式');
+    console.log('  npm start          # 生产模式');
+    console.log();
     db.close();
   })
   .catch(err => {
-    console.error('数据库初始化失败:', err);
+    console.error('❌ 数据库初始化失败:', err);
     db.close();
+    process.exit(1);
   });

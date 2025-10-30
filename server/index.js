@@ -1,8 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const db = require('./database/db');
-const { initHRDatabase } = require('./database/hr-init');
+const db = require('./database/db-connection');
+const { initHRDatabase } = require('./database/hr-tables');
 
 const app = express();
 const PORT = process.env.PORT || 3001;

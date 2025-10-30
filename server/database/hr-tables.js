@@ -1,5 +1,5 @@
 // HR模块数据库表结构初始化
-const db = require('./db');
+const db = require('./db-connection');
 
 // 创建HR模块相关表
 const createHRTables = () => {
