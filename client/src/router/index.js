@@ -76,6 +76,67 @@ const routes = [
         name: 'Reports',
         component: () => import('../views/hr/Report.vue'),
         meta: { title: '报表分析' }
+      },
+      // 财务模块路由
+      {
+        path: 'finance/general-ledger',
+        name: 'GeneralLedger',
+        component: () => import('../views/finance/GeneralLedger.vue'),
+        meta: { title: '总账' }
+      },
+      {
+        path: 'finance/accounts-receivable',
+        name: 'AccountsReceivable',
+        component: () => import('../views/finance/AccountsReceivable.vue'),
+        meta: { title: '应收账款' }
+      },
+      {
+        path: 'finance/accounts-payable',
+        name: 'AccountsPayable',
+        component: () => import('../views/finance/AccountsPayable.vue'),
+        meta: { title: '应付账款' }
+      },
+      {
+        path: 'finance/fixed-assets',
+        name: 'FixedAssets',
+        component: () => import('../views/finance/FixedAssets.vue'),
+        meta: { title: '固定资产' }
+      },
+      {
+        path: 'finance/cash-management',
+        name: 'CashManagement',
+        component: () => import('../views/finance/CashManagement.vue'),
+        meta: { title: '资金管理' }
+      },
+      {
+        path: 'finance/cost-accounting',
+        name: 'CostAccounting',
+        component: () => import('../views/finance/CostAccounting.vue'),
+        meta: { title: '成本管理' }
+      },
+      {
+        path: 'finance/budgeting',
+        name: 'Budgeting',
+        component: () => import('../views/finance/Budgeting.vue'),
+        meta: { title: '预算管理' }
+      },
+      {
+        path: 'finance/financial-reporting',
+        name: 'FinancialReporting',
+        component: () => import('../views/finance/FinancialReporting.vue'),
+        meta: { title: '报表与分析' }
+      },
+      {
+        path: 'finance/tax-management',
+        name: 'TaxManagement',
+        component: () => import('../views/finance/TaxManagement.vue'),
+        meta: { title: '税务管理' }
+      },
+      {
+        path: 'finance/expense-management',
+        name: 'ExpenseManagement',
+        component: () => import('../views/finance/ExpenseManagement.vue'),
+        meta: { title: '费用管理' }
       }
     ]
   }

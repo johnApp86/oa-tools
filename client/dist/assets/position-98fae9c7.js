@@ -1,0 +1,1 @@
+import{r as o}from"./request-3883ec4c.js";const i=t=>o({url:"/positions",method:"get",params:t}),r=t=>o({url:"/positions/all",method:"get",params:t}),n=t=>o({url:"/positions",method:"post",data:t}),u=(t,s)=>o({url:`/positions/${t}`,method:"put",data:s}),l=t=>o({url:`/positions/${t}`,method:"delete"});export{r as a,n as c,l as d,i as g,u};

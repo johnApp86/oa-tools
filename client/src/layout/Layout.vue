@@ -93,6 +93,53 @@
               <span>报表分析</span>
             </el-menu-item>
           </el-sub-menu>
+
+          <el-sub-menu index="/finance">
+            <template #title>
+              <el-icon><Money /></el-icon>
+              <span>财务管理</span>
+            </template>
+            <el-menu-item index="/finance/general-ledger">
+              <el-icon><Document /></el-icon>
+              <span>总账</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/accounts-receivable">
+              <el-icon><CreditCard /></el-icon>
+              <span>应收账款</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/accounts-payable">
+              <el-icon><CreditCard /></el-icon>
+              <span>应付账款</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/fixed-assets">
+              <el-icon><OfficeBuilding /></el-icon>
+              <span>固定资产</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/cash-management">
+              <el-icon><Wallet /></el-icon>
+              <span>资金管理</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/cost-accounting">
+              <el-icon><Document /></el-icon>
+              <span>成本管理</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/budgeting">
+              <el-icon><DataAnalysis /></el-icon>
+              <span>预算管理</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/financial-reporting">
+              <el-icon><Document /></el-icon>
+              <span>报表与分析</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/tax-management">
+              <el-icon><Document /></el-icon>
+              <span>税务管理</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/expense-management">
+              <el-icon><Document /></el-icon>
+              <span>费用管理</span>
+            </el-menu-item>
+          </el-sub-menu>
         </el-menu>
       </aside>
 
@@ -120,7 +167,9 @@ import {
   Clock, 
   Wallet, 
   Document, 
-  DataAnalysis 
+  DataAnalysis,
+  Money,
+  CreditCard
 } from '@element-plus/icons-vue';
 
 const route = useRoute();
