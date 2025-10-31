@@ -7,7 +7,7 @@ exports.getSalaryRecords = (req, res) => {
     const { page = 1, limit = 10, user_id = '', year = '', month = '' } = req.query;
     const offset = (page - 1) * limit;
 
-    let sql = `SELECT sr.*, u.real_name, p.name as position_name 
+    let sql = `SELECT sr.*, u.real_name as user_name, u.username, u.real_name, p.name as position_name 
                FROM salary_records sr 
                LEFT JOIN users u ON sr.user_id = u.id 
                LEFT JOIN positions p ON u.position_id = p.id 
@@ -107,31 +107,52 @@ exports.createSalaryRecord = [
 
 // 更新薪酬记录
 exports.updateSalaryRecord = [
-  body('base_salary').isDecimal().withMessage('基本工资必须是数字'),
+  body('base_salary').custom((value) => {
+    if (value === undefined || value === null || value === '') {
+      throw new Error('基本工资不能为空');
+    }
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    if (isNaN(numValue) || numValue < 0) {
+      throw new Error('基本工资必须是大于等于0的数字');
+    }
+    return true;
+  }).withMessage('基本工资必须是数字'),
   (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ message: errors.array()[0].msg });
     }
 
-    const { id } = req.params;
-    const { base_salary, bonus, allowance, deduction, notes } = req.body;
+    try {
+      const { id } = req.params;
+      const { base_salary, bonus, allowance, deduction, notes } = req.body;
 
-    db.run(
-      `UPDATE salary_records 
-       SET base_salary = ?, bonus = ?, allowance = ?, deduction = ?, notes = ?, updated_at = CURRENT_TIMESTAMP 
-       WHERE id = ?`,
-      [base_salary, bonus, allowance, deduction, notes, id],
-      function(err) {
-        if (err) {
-          return res.status(500).json({ message: '更新失败' });
+      // 确保数字类型
+      const baseSalaryValue = typeof base_salary === 'string' ? parseFloat(base_salary) : (base_salary || 0);
+      const bonusValue = typeof bonus === 'string' ? parseFloat(bonus) : (bonus || 0);
+      const allowanceValue = typeof allowance === 'string' ? parseFloat(allowance) : (allowance || 0);
+      const deductionValue = typeof deduction === 'string' ? parseFloat(deduction) : (deduction || 0);
+
+      db.run(
+        `UPDATE salary_records 
+         SET base_salary = ?, bonus = ?, allowance = ?, deduction = ?, notes = ?, updated_at = CURRENT_TIMESTAMP 
+         WHERE id = ?`,
+        [baseSalaryValue, bonusValue, allowanceValue, deductionValue, notes || null, id],
+        function(err) {
+          if (err) {
+            console.error('更新薪酬记录失败:', err);
+            return res.status(500).json({ message: '更新失败', error: err.message });
+          }
+          if (this.changes === 0) {
+            return res.status(404).json({ message: '记录不存在' });
+          }
+          res.json({ message: '更新成功' });
         }
-        if (this.changes === 0) {
-          return res.status(404).json({ message: '记录不存在' });
-        }
-        res.json({ message: '更新成功' });
-      }
-    );
+      );
+    } catch (error) {
+      console.error('更新薪酬记录异常:', error);
+      res.status(500).json({ message: '服务器错误', error: error.message });
+    }
   }
 ];
 

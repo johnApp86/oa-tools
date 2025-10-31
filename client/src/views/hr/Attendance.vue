@@ -79,7 +79,11 @@
           <div class="table-container">
             <el-table :data="attendanceRecords" v-loading="attendanceLoading" stripe border
         table-layout="fixed">
-            <el-table-column prop="user_name" label="员工姓名" />
+            <el-table-column prop="user_name" label="员工姓名">
+              <template #default="{ row }">
+                {{ row.user_name || row.real_name || row.username || '-' }}
+              </template>
+            </el-table-column>
             <el-table-column prop="position_name" label="岗位" />
             <el-table-column prop="date" label="日期" />
             <el-table-column prop="checkin_time" label="签到时间">
@@ -190,7 +194,11 @@
           <div class="table-container">
             <el-table :data="leaveApplications" v-loading="leaveLoading" stripe border
         table-layout="fixed">
-            <el-table-column prop="user_name" label="员工姓名" />
+            <el-table-column prop="user_name" label="员工姓名">
+              <template #default="{ row }">
+                {{ row.user_name || row.real_name || row.username || '-' }}
+              </template>
+            </el-table-column>
             <el-table-column prop="position_name" label="岗位" />
             <el-table-column prop="type" label="请假类型">
               <template #default="{ row }">

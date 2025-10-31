@@ -14,6 +14,11 @@ router.post('/records', [
   body('base_salary').isNumeric().withMessage('基本工资必须是数字')
 ], salaryController.createSalaryRecord);
 
+// 更新薪酬记录
+router.put('/records/:id', [
+  body('base_salary').isNumeric().withMessage('基本工资必须是数字')
+], salaryController.updateSalaryRecord);
+
 // 删除薪酬记录
 router.delete('/records/:id', salaryController.deleteSalaryRecord);
 

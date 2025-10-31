@@ -114,8 +114,50 @@ const insertSystemSampleData = () => {
                 return reject(err);
               }
               
-              console.log('✓ 系统核心模块示例数据插入完成');
-              resolve();
+              // 插入菜单数据（包括财务模块）
+              const menus = [
+                // 主菜单
+                { id: 1, name: '首页', path: '/', component: 'Dashboard', icon: 'House', parent_id: 0, level: 1, sort_order: 1, type: 1, status: 1 },
+                { id: 7, name: 'HR管理', path: '/hr', component: 'Layout', icon: 'User', parent_id: 0, level: 1, sort_order: 3, type: 1, status: 1 },
+                { id: 15, name: '财务管理', path: '/finance', component: 'Layout', icon: 'Money', parent_id: 0, level: 1, sort_order: 4, type: 1, status: 1 },
+                // 系统管理子菜单（已由db-connection.js创建）
+                // HR管理子菜单（通过菜单管理或API创建）
+                // 财务子菜单
+                { id: 16, name: '总账', path: '/finance/general-ledger', component: 'finance/GeneralLedger', icon: 'Document', parent_id: 15, level: 2, sort_order: 1, type: 1, status: 1 },
+                { id: 17, name: '应收账款', path: '/finance/accounts-receivable', component: 'finance/AccountsReceivable', icon: 'CreditCard', parent_id: 15, level: 2, sort_order: 2, type: 1, status: 1 },
+                { id: 18, name: '应付账款', path: '/finance/accounts-payable', component: 'finance/AccountsPayable', icon: 'CreditCard', parent_id: 15, level: 2, sort_order: 3, type: 1, status: 1 },
+                { id: 19, name: '固定资产', path: '/finance/fixed-assets', component: 'finance/FixedAssets', icon: 'OfficeBuilding', parent_id: 15, level: 2, sort_order: 4, type: 1, status: 1 },
+                { id: 20, name: '资金管理', path: '/finance/cash-management', component: 'finance/CashManagement', icon: 'Wallet', parent_id: 15, level: 2, sort_order: 5, type: 1, status: 1 },
+                { id: 21, name: '成本管理', path: '/finance/cost-accounting', component: 'finance/CostAccounting', icon: 'Document', parent_id: 15, level: 2, sort_order: 6, type: 1, status: 1 },
+                { id: 22, name: '预算管理', path: '/finance/budgeting', component: 'finance/Budgeting', icon: 'DataAnalysis', parent_id: 15, level: 2, sort_order: 7, type: 1, status: 1 },
+                { id: 24, name: '税务管理', path: '/finance/tax-management', component: 'finance/TaxManagement', icon: 'Document', parent_id: 15, level: 2, sort_order: 8, type: 1, status: 1 },
+                { id: 25, name: '费用管理', path: '/finance/expense-management', component: 'finance/ExpenseManagement', icon: 'Document', parent_id: 15, level: 2, sort_order: 9, type: 1, status: 1 },
+                { id: 23, name: '报表与分析', path: '/finance/financial-reporting', component: 'finance/FinancialReporting', icon: 'Document', parent_id: 15, level: 2, sort_order: 10, type: 1, status: 1 }
+              ];
+              
+              let menuCount = 0;
+              let menuError = false;
+              
+              menus.forEach(menu => {
+                db.run(`
+                  INSERT OR REPLACE INTO menus (id, name, path, component, icon, parent_id, level, sort_order, type, status) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `, [menu.id, menu.name, menu.path, menu.component, menu.icon, menu.parent_id, menu.level, menu.sort_order, menu.type, menu.status], (err) => {
+                  if (err) {
+                    console.error(`插入菜单 "${menu.name}" 失败:`, err.message);
+                    menuError = true;
+                  }
+                  
+                  menuCount++;
+                  if (menuCount === menus.length) {
+                    if (menuError) {
+                      console.warn('⚠️ 部分菜单插入失败，但不影响主流程');
+                    }
+                    console.log('✓ 系统核心模块示例数据插入完成');
+                    resolve();
+                  }
+                });
+              });
             });
           });
         });

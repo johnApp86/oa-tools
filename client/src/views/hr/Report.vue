@@ -105,7 +105,11 @@
         <div class="tab-content">
           <el-table :data="attendanceReport" v-loading="attendanceLoading" stripe
         table-layout="fixed">
-            <el-table-column prop="user_name" label="员工姓名" />
+            <el-table-column prop="user_name" label="员工姓名">
+              <template #default="{ row }">
+                {{ row.user_name || row.real_name || row.username || '-' }}
+              </template>
+            </el-table-column>
             <el-table-column prop="position_name" label="岗位" />
             <el-table-column prop="org_name" label="所属组织" />
             <el-table-column prop="work_days" label="工作天数" align="center" />
@@ -133,7 +137,11 @@
         <div class="tab-content">
           <el-table :data="salaryReport" v-loading="salaryLoading" stripe
         table-layout="fixed">
-            <el-table-column prop="user_name" label="员工姓名" />
+            <el-table-column prop="user_name" label="员工姓名">
+              <template #default="{ row }">
+                {{ row.user_name || row.real_name || row.username || '-' }}
+              </template>
+            </el-table-column>
             <el-table-column prop="position_name" label="岗位" />
             <el-table-column prop="org_name" label="所属组织" />
             <el-table-column prop="total_base_salary" label="基本工资总额" align="right">

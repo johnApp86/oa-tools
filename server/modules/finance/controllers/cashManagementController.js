@@ -155,6 +155,74 @@ exports.deleteTransaction = (req, res) => {
   });
 };
 
+// 获取账户列表（包含余额）
+exports.getAccounts = (req, res) => {
+  try {
+    const { page = 1, limit = 10, keyword = '', account_type = '' } = req.query;
+    const offset = (page - 1) * limit;
+
+    let whereClause = 'WHERE 1=1';
+    const params = [];
+    
+    if (keyword) {
+      whereClause += ` AND (ca.name LIKE ? OR ca.account_number LIKE ?)`;
+      params.push(`%${keyword}%`, `%${keyword}%`);
+    }
+    
+    if (account_type) {
+      whereClause += ` AND ca.account_type = ?`;
+      params.push(account_type);
+    }
+
+    const sql = `
+      SELECT 
+        ca.id,
+        ca.name,
+        ca.account_type,
+        ca.bank_name,
+        ca.account_number,
+        ca.status,
+        COALESCE(SUM(CASE WHEN ct.type = 'income' THEN ct.amount ELSE -ct.amount END), 0) as balance
+      FROM cash_accounts ca
+      LEFT JOIN cash_transactions ct ON ca.id = ct.account_id
+      ${whereClause}
+      GROUP BY ca.id, ca.name, ca.account_type, ca.bank_name, ca.account_number, ca.status
+      ORDER BY ca.name
+      LIMIT ? OFFSET ?
+    `;
+
+    params.push(parseInt(limit), parseInt(offset));
+
+    db.all(sql, params, (err, accounts) => {
+      if (err) {
+        console.error('查询账户列表失败:', err);
+        return res.status(500).json({ message: '查询失败', error: err.message });
+      }
+
+      // 获取总数
+      let countSql = `SELECT COUNT(*) as total FROM cash_accounts ca ${whereClause}`;
+      const countParams = params.slice(0, -2); // 移除limit和offset
+      
+      db.get(countSql, countParams, (err, countResult) => {
+        if (err) {
+          console.error('查询账户总数失败:', err);
+          return res.status(500).json({ message: '查询总数失败' });
+        }
+
+        res.json({
+          data: accounts || [],
+          total: countResult ? countResult.total : 0,
+          page: parseInt(page),
+          limit: parseInt(limit)
+        });
+      });
+    });
+  } catch (error) {
+    console.error('获取账户列表异常:', error);
+    res.status(500).json({ message: '服务器错误', error: error.message });
+  }
+};
+
 // 获取账户余额
 exports.getBalances = (req, res) => {
   try {
@@ -173,13 +241,113 @@ exports.getBalances = (req, res) => {
 
     db.all(sql, [], (err, balances) => {
       if (err) {
-        return res.status(500).json({ message: '查询失败' });
+        console.error('查询账户余额失败:', err);
+        return res.status(500).json({ message: '查询失败', error: err.message });
       }
 
       res.json({ data: balances });
     });
   } catch (error) {
-    res.status(500).json({ message: '服务器错误' });
+    console.error('获取账户余额异常:', error);
+    res.status(500).json({ message: '服务器错误', error: error.message });
+  }
+};
+
+// 创建账户
+exports.createAccount = [
+  body('name').notEmpty().withMessage('账户名称不能为空'),
+  body('account_type').notEmpty().withMessage('账户类型不能为空'),
+  (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ message: errors.array()[0].msg });
+    }
+
+    try {
+      const { name, account_type, bank_name, account_number, status = 1 } = req.body;
+
+      db.run(
+        `INSERT INTO cash_accounts (name, account_type, bank_name, account_number, status, created_at) 
+         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [name, account_type, bank_name || null, account_number || null, status],
+        function(err) {
+          if (err) {
+            console.error('创建账户失败:', err);
+            return res.status(500).json({ message: '创建失败', error: err.message });
+          }
+
+          res.json({ message: '创建成功', id: this.lastID });
+        }
+      );
+    } catch (error) {
+      console.error('创建账户异常:', error);
+      res.status(500).json({ message: '服务器错误', error: error.message });
+    }
+  }
+];
+
+// 更新账户
+exports.updateAccount = (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, account_type, bank_name, account_number, status } = req.body;
+
+    db.run(
+      `UPDATE cash_accounts 
+       SET name = ?, account_type = ?, bank_name = ?, account_number = ?, status = ?, updated_at = CURRENT_TIMESTAMP 
+       WHERE id = ?`,
+      [name, account_type, bank_name || null, account_number || null, status !== undefined ? status : 1, id],
+      function(err) {
+        if (err) {
+          console.error('更新账户失败:', err);
+          return res.status(500).json({ message: '更新失败', error: err.message });
+        }
+
+        if (this.changes === 0) {
+          return res.status(404).json({ message: '账户不存在' });
+        }
+
+        res.json({ message: '更新成功' });
+      }
+    );
+  } catch (error) {
+    console.error('更新账户异常:', error);
+    res.status(500).json({ message: '服务器错误', error: error.message });
+  }
+};
+
+// 删除账户
+exports.deleteAccount = (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 检查是否有交易记录
+    db.get('SELECT COUNT(*) as count FROM cash_transactions WHERE account_id = ?', [id], (err, result) => {
+      if (err) {
+        console.error('检查账户交易记录失败:', err);
+        return res.status(500).json({ message: '数据库错误', error: err.message });
+      }
+
+      if (result && result.count > 0) {
+        return res.status(400).json({ message: '该账户已有交易记录，无法删除' });
+      }
+
+      db.run('DELETE FROM cash_accounts WHERE id = ?', [id], function(err) {
+        if (err) {
+          console.error('删除账户失败:', err);
+          return res.status(500).json({ message: '删除失败', error: err.message });
+        }
+
+        if (this.changes === 0) {
+          return res.status(404).json({ message: '账户不存在' });
+        }
+
+        res.json({ message: '删除成功' });
+      });
+    });
+  } catch (error) {
+    console.error('删除账户异常:', error);
+    res.status(500).json({ message: '服务器错误', error: error.message });
   }
 };
 

@@ -7,10 +7,23 @@ exports.getExpenseApplications = (req, res) => {
     const { page = 1, limit = 10, user_id = '', category = '', status = '', date_start = '', date_end = '' } = req.query;
     const offset = (page - 1) * limit;
 
-    let sql = `SELECT ea.*, u.real_name as applicant_name 
-               FROM expense_applications ea 
-               LEFT JOIN users u ON ea.user_id = u.id 
-               WHERE 1=1`;
+    let sql = `SELECT 
+      ea.id,
+      CASE WHEN ea.id IS NOT NULL THEN 'EXP-' || SUBSTR('000000' || ea.id, -6) ELSE NULL END as expense_code,
+      ea.category as expense_name,
+      ea.category as expense_type,
+      COALESCE(u.real_name, u.username, '') as applicant,
+      COALESCE(ea.amount, 0) as amount,
+      COALESCE(ea.amount, 0) as approved_amount,
+      ea.application_date as apply_date,
+      ea.status,
+      ea.description,
+      ea.user_id,
+      ea.created_at,
+      ea.updated_at
+    FROM expense_applications ea 
+    LEFT JOIN users u ON ea.user_id = u.id 
+    WHERE 1=1`;
     const params = [];
     
     if (user_id) {
@@ -19,13 +32,18 @@ exports.getExpenseApplications = (req, res) => {
     }
     
     if (category) {
-      sql += ` AND ea.category = ?`;
-      params.push(category);
+      sql += ` AND ea.category LIKE ?`;
+      params.push(`%${category}%`);
     }
     
     if (status) {
+      // 处理状态映射：pending -> 0, approved -> 1, rejected -> 2
+      let statusValue = status;
+      if (status === 'pending' || status === '0') statusValue = 'pending';
+      else if (status === 'approved' || status === '1') statusValue = 'approved';
+      else if (status === 'rejected' || status === '2') statusValue = 'rejected';
       sql += ` AND ea.status = ?`;
-      params.push(status);
+      params.push(statusValue);
     }
     
     if (date_start) {
@@ -43,8 +61,23 @@ exports.getExpenseApplications = (req, res) => {
 
     db.all(sql, params, (err, applications) => {
       if (err) {
-        return res.status(500).json({ message: '查询失败' });
+        console.error('查询费用申请失败:', err);
+        return res.status(500).json({ message: '查询失败', error: err.message });
       }
+
+      // 处理状态字段，确保前端能正确显示
+      const processedApplications = (applications || []).map(app => {
+        // 如果状态是字符串，转换为数字以便前端显示
+        let statusValue = app.status;
+        if (statusValue === 'pending') statusValue = 0;
+        else if (statusValue === 'approved') statusValue = 1;
+        else if (statusValue === 'rejected') statusValue = 2;
+        
+        return {
+          ...app,
+          status: statusValue !== undefined ? statusValue : 0
+        };
+      });
 
       // 获取总数
       let countSql = `SELECT COUNT(*) as total FROM expense_applications ea WHERE 1=1`;
@@ -54,12 +87,16 @@ exports.getExpenseApplications = (req, res) => {
         countParams.push(user_id);
       }
       if (category) {
-        countSql += ` AND ea.category = ?`;
-        countParams.push(category);
+        countSql += ` AND ea.category LIKE ?`;
+        countParams.push(`%${category}%`);
       }
       if (status) {
+        let statusValue = status;
+        if (status === 'pending' || status === '0') statusValue = 'pending';
+        else if (status === 'approved' || status === '1') statusValue = 'approved';
+        else if (status === 'rejected' || status === '2') statusValue = 'rejected';
         countSql += ` AND ea.status = ?`;
-        countParams.push(status);
+        countParams.push(statusValue);
       }
       if (date_start) {
         countSql += ` AND ea.application_date >= ?`;
@@ -72,12 +109,13 @@ exports.getExpenseApplications = (req, res) => {
 
       db.get(countSql, countParams, (err, countResult) => {
         if (err) {
+          console.error('查询费用申请总数失败:', err);
           return res.status(500).json({ message: '查询总数失败' });
         }
 
         res.json({
-          data: applications,
-          total: countResult.total,
+          data: processedApplications,
+          total: countResult ? countResult.total : 0,
           page: parseInt(page),
           limit: parseInt(limit)
         });

@@ -23,6 +23,21 @@ router.put('/transactions/:id', [
 // 删除资金流水
 router.delete('/transactions/:id', cashManagementController.deleteTransaction);
 
+// 获取账户列表
+router.get('/accounts', cashManagementController.getAccounts);
+
+// 创建账户
+router.post('/accounts', [
+  body('name').notEmpty().withMessage('账户名称不能为空'),
+  body('account_type').notEmpty().withMessage('账户类型不能为空')
+], cashManagementController.createAccount);
+
+// 更新账户
+router.put('/accounts/:id', cashManagementController.updateAccount);
+
+// 删除账户
+router.delete('/accounts/:id', cashManagementController.deleteAccount);
+
 // 获取账户余额
 router.get('/balances', cashManagementController.getBalances);
 

@@ -7,7 +7,7 @@ exports.getLeaveApplications = (req, res) => {
     const { page = 1, limit = 10, user_id = '', type = '', status = '', start_date = '', end_date = '' } = req.query;
     const offset = (page - 1) * limit;
 
-    let sql = `SELECT la.*, u.real_name, p.name as position_name 
+    let sql = `SELECT la.*, u.real_name as user_name, u.username, u.real_name, p.name as position_name 
                FROM leave_applications la 
                LEFT JOIN users u ON la.user_id = u.id 
                LEFT JOIN positions p ON la.position_id = p.id 

@@ -83,7 +83,11 @@
             <span class="employee-id">{{ row.employee_id }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="user_name" label="姓名" />
+        <el-table-column prop="user_name" label="姓名">
+          <template #default="{ row }">
+            {{ row.user_name || row.real_name || row.username || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="position_name" label="岗位" />
         <el-table-column prop="org_name" label="所属组织" />
         <el-table-column prop="department" label="部门">

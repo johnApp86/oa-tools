@@ -7,7 +7,21 @@ exports.getBudgets = (req, res) => {
     const { page = 1, limit = 10, year = '', department = '' } = req.query;
     const offset = (page - 1) * limit;
 
-    let sql = `SELECT * FROM budgets WHERE 1=1`;
+    let sql = `SELECT 
+      id,
+      CASE WHEN id IS NOT NULL THEN 'BUDGET-' || SUBSTR('000000' || id, -6) ELSE NULL END as budget_code,
+      name as budget_name,
+      year as budget_year,
+      department,
+      COALESCE(amount, 0) as budget_amount,
+      0 as used_amount,
+      COALESCE(amount, 0) as remaining_amount,
+      category,
+      description,
+      status,
+      created_at,
+      updated_at
+    FROM budgets WHERE 1=1`;
     const params = [];
     
     if (year) {
@@ -16,8 +30,8 @@ exports.getBudgets = (req, res) => {
     }
     
     if (department) {
-      sql += ` AND department = ?`;
-      params.push(department);
+      sql += ` AND department LIKE ?`;
+      params.push(`%${department}%`);
     }
 
     sql += ` ORDER BY year DESC, created_at DESC LIMIT ? OFFSET ?`;
@@ -25,8 +39,20 @@ exports.getBudgets = (req, res) => {
 
     db.all(sql, params, (err, budgets) => {
       if (err) {
-        return res.status(500).json({ message: '查询失败' });
+        console.error('查询预算失败:', err);
+        return res.status(500).json({ message: '查询失败', error: err.message });
       }
+
+      // 处理预算数据，计算剩余金额
+      const processedBudgets = (budgets || []).map(budget => {
+        const budgetAmount = budget.budget_amount || 0;
+        const usedAmount = budget.used_amount || 0;
+        return {
+          ...budget,
+          used_amount: usedAmount,
+          remaining_amount: budgetAmount - usedAmount
+        };
+      });
 
       // 获取总数
       let countSql = `SELECT COUNT(*) as total FROM budgets WHERE 1=1`;
@@ -36,18 +62,19 @@ exports.getBudgets = (req, res) => {
         countParams.push(year);
       }
       if (department) {
-        countSql += ` AND department = ?`;
-        countParams.push(department);
+        countSql += ` AND department LIKE ?`;
+        countParams.push(`%${department}%`);
       }
 
       db.get(countSql, countParams, (err, countResult) => {
         if (err) {
+          console.error('查询预算总数失败:', err);
           return res.status(500).json({ message: '查询总数失败' });
         }
 
         res.json({
-          data: budgets,
-          total: countResult.total,
+          data: processedBudgets,
+          total: countResult ? countResult.total : 0,
           page: parseInt(page),
           limit: parseInt(limit)
         });

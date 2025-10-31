@@ -84,25 +84,41 @@
     <el-dialog
       v-model="dialogVisible"
       :title="form.id ? '编辑预算' : '新增预算'"
-      width="500px"
+      width="600px"
+      @close="handleDialogClose"
     >
       <el-form
+        ref="formRef"
         :model="form"
+        :rules="formRules"
         label-width="100px"
+        v-loading="submitLoading"
       >
-        <el-form-item label="预算名称" required>
+        <el-form-item label="预算名称" prop="name" required>
           <el-input v-model="form.name" placeholder="请输入预算名称" />
         </el-form-item>
-        <el-form-item label="预算年度" required>
-          <el-input-number
+        <el-form-item label="预算年度" prop="year" required>
+          <el-date-picker
             v-model="form.year"
-            :min="2020"
-            :max="2100"
-            placeholder="请输入预算年度"
+            type="year"
+            placeholder="请选择预算年度"
+            format="YYYY"
+            value-format="YYYY"
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="预算金额" required>
+        <el-form-item label="部门" prop="department">
+          <el-input v-model="form.department" placeholder="请输入部门名称（可选）" />
+        </el-form-item>
+        <el-form-item label="预算类别" prop="category">
+          <el-select v-model="form.category" placeholder="请选择预算类别" style="width: 100%">
+            <el-option label="收入预算" value="收入预算" />
+            <el-option label="支出预算" value="支出预算" />
+            <el-option label="资本预算" value="资本预算" />
+            <el-option label="其他" value="其他" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="预算金额" prop="amount" required>
           <el-input-number
             v-model="form.amount"
             :precision="2"
@@ -111,11 +127,27 @@
             style="width: 100%"
           />
         </el-form-item>
+        <el-form-item label="描述" prop="description">
+          <el-input
+            v-model="form.description"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入预算描述（可选）"
+          />
+        </el-form-item>
+        <el-form-item label="状态" prop="status">
+          <el-select v-model="form.status" placeholder="请选择状态" style="width: 100%">
+            <el-option label="草稿" :value="0" />
+            <el-option label="已批准" :value="1" />
+            <el-option label="待审批" :value="2" />
+            <el-option label="已拒绝" :value="3" />
+          </el-select>
+        </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">确定</el-button>
+          <el-button @click="handleDialogClose">取消</el-button>
+          <el-button type="primary" @click="handleSubmit" :loading="submitLoading">确定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -165,51 +197,105 @@ const handleReset = () => {
   loadData();
 };
 const dialogVisible = ref(false);
+const submitLoading = ref(false);
+const formRef = ref();
 const form = reactive({
   id: null,
   name: "",
   year: "",
-  amount: 0
+  department: "",
+  category: "",
+  amount: 0,
+  description: "",
+  status: 0
 });
 
+// 表单验证规则
+const formRules = {
+  name: [{ required: true, message: "请输入预算名称", trigger: "blur" }],
+  year: [{ required: true, message: "请选择预算年度", trigger: "change" }],
+  amount: [
+    { required: true, message: "请输入预算金额", trigger: "blur" },
+    { type: "number", min: 0, message: "预算金额必须大于等于0", trigger: "blur" }
+  ]
+};
+
 const handleAdd = () => {
-  Object.assign(form, {
-    id: null,
-    name: "",
-    year: new Date().getFullYear().toString(),
-    amount: 0
-  });
+  resetForm();
   dialogVisible.value = true;
 };
 
 const handleEdit = (row) => {
+  resetForm();
   Object.assign(form, {
     id: row.id,
-    name: row.name || row.budget_name,
-    year: row.year || row.budget_year,
-    amount: row.amount || row.budget_amount
+    name: row.name || "",
+    year: row.year ? String(row.year) : (row.budget_year ? String(row.budget_year) : String(new Date().getFullYear())),
+    department: row.department || "",
+    category: row.category || "",
+    amount: row.amount || row.budget_amount || 0,
+    description: row.description || "",
+    status: row.status !== undefined ? row.status : 0
   });
   dialogVisible.value = true;
 };
 
+// 重置表单
+const resetForm = () => {
+  formRef.value?.resetFields();
+  Object.assign(form, {
+    id: null,
+    name: "",
+    year: String(new Date().getFullYear()),
+    department: "",
+    category: "",
+    amount: 0,
+    description: "",
+    status: 0
+  });
+};
+
+// 关闭对话框
+const handleDialogClose = () => {
+  dialogVisible.value = false;
+  resetForm();
+};
+
 const handleSubmit = async () => {
+  if (!formRef.value) return;
+
   try {
+    await formRef.value.validate();
+    submitLoading.value = true;
+
     const submitData = {
       name: form.name,
-      year: parseInt(form.year),
-      amount: parseFloat(form.amount)
+      year: parseInt(form.year) || new Date().getFullYear(),
+      department: form.department || null,
+      category: form.category || null,
+      amount: parseFloat(form.amount) || 0,
+      description: form.description || null,
+      status: form.status !== undefined ? form.status : 0
     };
-    
+
     if (form.id) {
       await updateBudget(form.id, submitData);
+      ElMessage.success("更新成功");
     } else {
       await createBudget(submitData);
+      ElMessage.success("创建成功");
     }
     
     dialogVisible.value = false;
+    resetForm();
     await loadData();
   } catch (error) {
-    console.error("提交失败:", error);
+    if (error !== false) {
+      console.error("提交失败:", error);
+      ElMessage.error(error.message || "操作失败");
+    }
+  } finally {
+    submitLoading.value = false;
   }
 };
 

@@ -7,7 +7,20 @@ exports.getCostCenters = (req, res) => {
     const { page = 1, limit = 10, keyword = '' } = req.query;
     const offset = (page - 1) * limit;
 
-    let sql = `SELECT * FROM cost_centers WHERE 1=1`;
+    let sql = `SELECT 
+      id,
+      code as cost_center_code,
+      name as cost_center_name,
+      '' as cost_type,
+      0 as budget_amount,
+      0 as actual_amount,
+      0 as variance,
+      description,
+      parent_id,
+      status,
+      created_at,
+      updated_at
+    FROM cost_centers WHERE 1=1`;
     const params = [];
     
     if (keyword) {
@@ -20,7 +33,8 @@ exports.getCostCenters = (req, res) => {
 
     db.all(sql, params, (err, centers) => {
       if (err) {
-        return res.status(500).json({ message: '查询失败' });
+        console.error('查询成本中心失败:', err);
+        return res.status(500).json({ message: '查询失败', error: err.message });
       }
 
       // 获取总数
@@ -33,12 +47,13 @@ exports.getCostCenters = (req, res) => {
 
       db.get(countSql, countParams, (err, countResult) => {
         if (err) {
+          console.error('查询成本中心总数失败:', err);
           return res.status(500).json({ message: '查询总数失败' });
         }
 
         res.json({
-          data: centers,
-          total: countResult.total,
+          data: centers || [],
+          total: countResult ? countResult.total : 0,
           page: parseInt(page),
           limit: parseInt(limit)
         });
@@ -77,25 +92,20 @@ exports.createCostCenter = [
 ];
 
 // 更新成本中心
-exports.updateCostCenter = [
-  body('name').notEmpty().withMessage('成本中心名称不能为空'),
-  (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ message: errors.array()[0].msg });
-    }
-
+exports.updateCostCenter = (req, res) => {
+  try {
     const { id } = req.params;
-    const { name, description, status } = req.body;
+    const { name, code, description, parent_id, status } = req.body;
 
     db.run(
       `UPDATE cost_centers 
-       SET name = ?, description = ?, status = ?, updated_at = CURRENT_TIMESTAMP 
+       SET name = ?, code = ?, description = ?, parent_id = ?, status = ?, updated_at = CURRENT_TIMESTAMP 
        WHERE id = ?`,
-      [name, description, status || 1, id],
+      [name, code, description || null, parent_id || 0, status !== undefined ? status : 1, id],
       function(err) {
         if (err) {
-          return res.status(500).json({ message: '更新失败' });
+          console.error('更新成本中心失败:', err);
+          return res.status(500).json({ message: '更新失败', error: err.message });
         }
 
         if (this.changes === 0) {
@@ -105,8 +115,11 @@ exports.updateCostCenter = [
         res.json({ message: '更新成功' });
       }
     );
+  } catch (error) {
+    console.error('更新成本中心异常:', error);
+    res.status(500).json({ message: '服务器错误', error: error.message });
   }
-];
+};
 
 // 删除成本中心
 exports.deleteCostCenter = (req, res) => {

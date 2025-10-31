@@ -7,7 +7,7 @@ exports.getAttendanceRecords = (req, res) => {
     const { page = 1, limit = 10, user_id = '', date = '', start_date = '', end_date = '' } = req.query;
     const offset = (page - 1) * limit;
 
-    let sql = `SELECT ar.*, u.real_name, p.name as position_name 
+    let sql = `SELECT ar.*, u.real_name as user_name, u.username, u.real_name, p.name as position_name 
                FROM attendance_records ar 
                LEFT JOIN users u ON ar.user_id = u.id 
                LEFT JOIN positions p ON ar.position_id = p.id 

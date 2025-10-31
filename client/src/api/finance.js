@@ -238,6 +238,41 @@ export const deleteCashTransaction = (id) => {
   })
 }
 
+// 获取账户列表
+export const getCashAccounts = (params) => {
+  return request({
+    url: '/finance/cash-management/accounts',
+    method: 'get',
+    params
+  })
+}
+
+// 创建账户
+export const createCashAccount = (data) => {
+  return request({
+    url: '/finance/cash-management/accounts',
+    method: 'post',
+    data
+  })
+}
+
+// 更新账户
+export const updateCashAccount = (id, data) => {
+  return request({
+    url: `/finance/cash-management/accounts/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+// 删除账户
+export const deleteCashAccount = (id) => {
+  return request({
+    url: `/finance/cash-management/accounts/${id}`,
+    method: 'delete'
+  })
+}
+
 // 获取账户余额
 export const getCashBalances = (params) => {
   return request({

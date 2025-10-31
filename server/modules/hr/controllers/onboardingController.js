@@ -7,7 +7,7 @@ exports.getOnboardingApplications = (req, res) => {
     const { page = 1, limit = 10, user_id = '', status = '', start_date = '', end_date = '' } = req.query;
     const offset = (page - 1) * limit;
 
-    let sql = `SELECT oa.*, u.real_name, p.name as position_name, o.name as org_name 
+    let sql = `SELECT oa.*, u.real_name as user_name, u.username, u.real_name, p.name as position_name, o.name as org_name 
                FROM onboarding_applications oa 
                LEFT JOIN users u ON oa.user_id = u.id 
                LEFT JOIN positions p ON oa.position_id = p.id 
@@ -110,10 +110,12 @@ exports.getOffboardingApplications = (req, res) => {
     const { page = 1, limit = 10, user_id = '', status = '', leave_date_start = '', leave_date_end = '' } = req.query;
     const offset = (page - 1) * limit;
 
-    let sql = `SELECT oa.*, u.real_name, p.name as position_name 
+    let sql = `SELECT oa.*, u.real_name as user_name, u.username, u.real_name, p.name as position_name,
+                      o.name as org_name
                FROM offboarding_applications oa 
                LEFT JOIN users u ON oa.user_id = u.id 
                LEFT JOIN positions p ON u.position_id = p.id 
+               LEFT JOIN organizations o ON u.organization_id = o.id 
                WHERE 1=1`;
     const params = [];
     

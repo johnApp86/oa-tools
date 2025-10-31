@@ -144,6 +144,15 @@ export const createSalaryRecord = (data) => {
   })
 }
 
+// 更新薪酬记录
+export const updateSalaryRecord = (id, data) => {
+  return request({
+    url: `/hr/salary/records/${id}`,
+    method: 'put',
+    data
+  })
+}
+
 // 删除薪酬记录
 export const deleteSalaryRecord = (id) => {
   return request({

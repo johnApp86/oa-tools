@@ -127,10 +127,6 @@
               <el-icon><DataAnalysis /></el-icon>
               <span>预算管理</span>
             </el-menu-item>
-            <el-menu-item index="/finance/financial-reporting">
-              <el-icon><Document /></el-icon>
-              <span>报表与分析</span>
-            </el-menu-item>
             <el-menu-item index="/finance/tax-management">
               <el-icon><Document /></el-icon>
               <span>税务管理</span>
@@ -138,6 +134,10 @@
             <el-menu-item index="/finance/expense-management">
               <el-icon><Document /></el-icon>
               <span>费用管理</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/financial-reporting">
+              <el-icon><Document /></el-icon>
+              <span>报表与分析</span>
             </el-menu-item>
           </el-sub-menu>
         </el-menu>

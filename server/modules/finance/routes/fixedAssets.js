@@ -7,12 +7,7 @@ const fixedAssetsController = require('../controllers/fixedAssetsController');
 router.get('/', fixedAssetsController.getFixedAssets);
 
 // 创建固定资产
-router.post('/', [
-  body('name').notEmpty().withMessage('资产名称不能为空'),
-  body('category').notEmpty().withMessage('资产类别不能为空'),
-  body('purchase_price').isNumeric().withMessage('购买价格必须是数字'),
-  body('purchase_date').notEmpty().withMessage('购买日期不能为空')
-], fixedAssetsController.createFixedAsset);
+router.post('/', fixedAssetsController.createFixedAsset);
 
 // 更新固定资产
 router.put('/:id', fixedAssetsController.updateFixedAsset);

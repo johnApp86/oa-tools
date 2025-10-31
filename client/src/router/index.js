@@ -121,12 +121,6 @@ const routes = [
         meta: { title: '预算管理' }
       },
       {
-        path: 'finance/financial-reporting',
-        name: 'FinancialReporting',
-        component: () => import('../views/finance/FinancialReporting.vue'),
-        meta: { title: '报表与分析' }
-      },
-      {
         path: 'finance/tax-management',
         name: 'TaxManagement',
         component: () => import('../views/finance/TaxManagement.vue'),
@@ -137,6 +131,12 @@ const routes = [
         name: 'ExpenseManagement',
         component: () => import('../views/finance/ExpenseManagement.vue'),
         meta: { title: '费用管理' }
+      },
+      {
+        path: 'finance/financial-reporting',
+        name: 'FinancialReporting',
+        component: () => import('../views/finance/FinancialReporting.vue'),
+        meta: { title: '报表与分析' }
       }
     ]
   }

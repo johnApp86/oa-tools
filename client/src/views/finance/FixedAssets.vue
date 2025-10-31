@@ -41,29 +41,36 @@
       <el-table :data="tableData" v-loading="loading" stripe border
         style="width: 100%"
         table-layout="fixed">
-        <el-table-column prop="asset_code" label="资产编号" width="150" show-overflow-tooltip/>
-        <el-table-column prop="asset_name" label="资产名称" width="200" show-overflow-tooltip/>
+        <el-table-column prop="id" label="ID" width="80" show-overflow-tooltip/>
+        <el-table-column prop="code" label="资产编号" width="150" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.code || (row.id ? `FA-${String(row.id).padStart(3, '0')}` : '-') }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="name" label="资产名称" width="200" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.name || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="category" label="资产类别" width="120" show-overflow-tooltip/>
-        <el-table-column prop="original_value" label="原值" width="120" show-overflow-tooltipalign="right">
+        <el-table-column prop="purchase_price" label="购买价格" width="120" align="right" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ formatCurrency(row.original_value) }}
+            {{ formatCurrency(row.purchase_price) }}
           </template>
         </el-table-column>
-        <el-table-column prop="depreciation" label="累计折旧" width="120" show-overflow-tooltipalign="right">
+        <el-table-column prop="purchase_date" label="购买日期" width="120" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ formatCurrency(row.depreciation) }}
+            {{ formatDate(row.purchase_date) }}
           </template>
         </el-table-column>
-        <el-table-column prop="net_value" label="净值" width="120" show-overflow-tooltipalign="right">
+        <el-table-column prop="depreciation_method" label="折旧方法" width="120" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ formatCurrency(row.net_value) }}
+            {{ getDepreciationMethodLabel(row.depreciation_method) }}
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100" show-overflow-tooltip>
+        <el-table-column prop="useful_life" label="使用年限" width="100" align="right" show-overflow-tooltip>
           <template #default="{ row }">
-            <el-tag :type="getStatusTagType(row.status)">
-              {{ getStatusLabel(row.status) }}
-            </el-tag>
+            {{ row.useful_life ? row.useful_life + '年' : '-' }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="280" show-overflow-tooltipfixed="right">
@@ -86,19 +93,33 @@
     <el-dialog
       v-model="dialogVisible"
       :title="form.id ? '编辑资产' : '新增资产'"
-      width="500px"
+      width="600px"
+      @close="handleDialogClose"
     >
       <el-form
+        ref="formRef"
         :model="form"
+        :rules="formRules"
         label-width="100px"
+        v-loading="submitLoading"
       >
-        <el-form-item label="资产名称" required>
+        <el-form-item label="资产编号" prop="code">
+          <el-input v-model="form.code" placeholder="请输入资产编号（如：FA-001）" />
+        </el-form-item>
+        <el-form-item label="资产名称" prop="name" required>
           <el-input v-model="form.name" placeholder="请输入资产名称" />
         </el-form-item>
-        <el-form-item label="资产类别" required>
-          <el-input v-model="form.category" placeholder="请输入资产类别" />
+        <el-form-item label="资产类别" prop="category" required>
+          <el-select v-model="form.category" placeholder="请选择资产类别" style="width: 100%">
+            <el-option label="电子设备" value="电子设备" />
+            <el-option label="办公家具" value="办公家具" />
+            <el-option label="机械设备" value="机械设备" />
+            <el-option label="车辆" value="车辆" />
+            <el-option label="房屋建筑物" value="房屋建筑物" />
+            <el-option label="其他" value="其他" />
+          </el-select>
         </el-form-item>
-        <el-form-item label="购买价格" required>
+        <el-form-item label="购买价格" prop="purchase_price" required>
           <el-input-number
             v-model="form.purchase_price"
             :precision="2"
@@ -107,7 +128,7 @@
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="购买日期" required>
+        <el-form-item label="购买日期" prop="purchase_date" required>
           <el-date-picker
             v-model="form.purchase_date"
             type="date"
@@ -117,11 +138,35 @@
             style="width: 100%"
           />
         </el-form-item>
+        <el-form-item label="折旧方法" prop="depreciation_method">
+          <el-select v-model="form.depreciation_method" placeholder="请选择折旧方法" style="width: 100%">
+            <el-option label="直线法" value="straight_line" />
+            <el-option label="年数总和法" value="sum_of_years" />
+            <el-option label="双倍余额递减法" value="double_declining" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="使用年限" prop="useful_life">
+          <el-input-number
+            v-model="form.useful_life"
+            :min="1"
+            :max="100"
+            placeholder="请输入使用年限（年）"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="描述" prop="description">
+          <el-input
+            v-model="form.description"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入资产描述"
+          />
+        </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">确定</el-button>
+          <el-button @click="handleDialogClose">取消</el-button>
+          <el-button type="primary" @click="handleSubmit" :loading="submitLoading">确定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -155,7 +200,12 @@ const loadData = async () => {
       status: searchForm.status
     };
     const response = await getFixedAssets(params);
-    tableData.value = response.data || [];
+    console.log('固定资产API响应:', response);
+    // 后端返回格式：{ data: [...], total: ..., page: ..., limit: ... }
+    // 但request拦截器已经返回了response.data，所以response本身就是后端返回的对象
+    const dataList = (response && response.data) ? response.data : (Array.isArray(response) ? response : []);
+    console.log('处理后的数据:', dataList);
+    tableData.value = dataList;
   } catch (error) {
     console.error("加载数据失败:", error);
     ElMessage.error("加载数据失败");
@@ -171,56 +221,111 @@ const handleReset = () => {
   loadData();
 };
 const dialogVisible = ref(false);
+const submitLoading = ref(false);
+const formRef = ref();
 const form = reactive({
   id: null,
+  code: "",
   name: "",
   category: "",
   purchase_price: 0,
-  purchase_date: ""
+  purchase_date: "",
+  depreciation_method: "straight_line",
+  useful_life: null,
+  description: ""
 });
 
+// 表单验证规则
+const formRules = {
+  name: [{ required: true, message: "请输入资产名称", trigger: "blur" }],
+  category: [{ required: true, message: "请选择资产类别", trigger: "change" }],
+  purchase_price: [
+    { required: true, message: "请输入购买价格", trigger: "blur" },
+    { type: "number", min: 0, message: "购买价格必须大于0", trigger: "blur" }
+  ],
+  purchase_date: [{ required: true, message: "请选择购买日期", trigger: "change" }]
+};
+
 const handleAdd = () => {
-  Object.assign(form, {
-    id: null,
-    name: "",
-    category: "",
-    purchase_price: 0,
-    purchase_date: new Date().toISOString().split('T')[0]
-  });
+  resetForm();
   dialogVisible.value = true;
 };
 
 const handleEdit = (row) => {
+  resetForm();
   Object.assign(form, {
     id: row.id,
-    name: row.name || row.asset_name,
-    category: row.category,
-    purchase_price: row.purchase_price || row.original_value,
-    purchase_date: row.purchase_date || row.purchase_date
+    code: row.code || "",
+    name: row.name || "",
+    category: row.category || "",
+    purchase_price: row.purchase_price || 0,
+    purchase_date: row.purchase_date || "",
+    depreciation_method: row.depreciation_method || "straight_line",
+    useful_life: row.useful_life || null,
+    description: row.description || ""
   });
   dialogVisible.value = true;
 };
 
+// 重置表单
+const resetForm = () => {
+  formRef.value?.resetFields();
+  Object.assign(form, {
+    id: null,
+    code: "",
+    name: "",
+    category: "",
+    purchase_price: 0,
+    purchase_date: "",
+    depreciation_method: "straight_line",
+    useful_life: null,
+    description: ""
+  });
+};
+
 const handleSubmit = async () => {
+  if (!formRef.value) return;
+
   try {
+    await formRef.value.validate();
+    submitLoading.value = true;
+
     const submitData = {
+      code: form.code || null,
       name: form.name,
       category: form.category,
-      purchase_price: parseFloat(form.purchase_price),
-      purchase_date: form.purchase_date
+      purchase_price: parseFloat(form.purchase_price) || 0,
+      purchase_date: form.purchase_date,
+      depreciation_method: form.depreciation_method || null,
+      useful_life: form.useful_life || null,
+      description: form.description || null
     };
-    
+
     if (form.id) {
       await updateFixedAsset(form.id, submitData);
+      ElMessage.success("更新成功");
     } else {
       await createFixedAsset(submitData);
+      ElMessage.success("创建成功");
     }
     
     dialogVisible.value = false;
+    resetForm();
     await loadData();
   } catch (error) {
-    console.error("提交失败:", error);
+    if (error !== false) { // 验证失败时返回false
+      console.error("提交失败:", error);
+      ElMessage.error(error.message || "操作失败");
+    }
+  } finally {
+    submitLoading.value = false;
   }
+};
+
+// 关闭对话框
+const handleDialogClose = () => {
+  dialogVisible.value = false;
+  resetForm();
 };
 
 const handleDepreciation = () => ElMessage.info("计提折旧功能开发中...");
@@ -268,6 +373,28 @@ const formatCurrency = (amount) => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
+};
+
+const formatDate = (date) => {
+  if (!date) return "-";
+  // 如果是 YYYY-MM-DD 格式，直接返回
+  if (typeof date === "string" && date.match(/^\d{4}-\d{2}-\d{2}/)) {
+    return date.split("T")[0];
+  }
+  // 如果是日期对象，格式化
+  if (date instanceof Date) {
+    return date.toISOString().split("T")[0];
+  }
+  return date;
+};
+
+const getDepreciationMethodLabel = (method) => {
+  const methodMap = {
+    straight_line: "直线法",
+    sum_of_years: "年数总和法",
+    double_declining: "双倍余额递减法"
+  };
+  return methodMap[method] || method || "-";
 };
 
 onMounted(() => loadData());

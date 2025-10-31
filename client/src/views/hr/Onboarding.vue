@@ -43,10 +43,22 @@
           <div class="table-container">
             <el-table :data="onboardingApplications" v-loading="onboardingLoading" stripe border
         table-layout="fixed">
-            <el-table-column prop="user_name" label="姓名" />
+            <el-table-column prop="user_name" label="姓名">
+              <template #default="{ row }">
+                {{ row.user_name || row.real_name || row.username || '-' }}
+              </template>
+            </el-table-column>
             <el-table-column prop="position_name" label="岗位" />
-            <el-table-column prop="org_name" label="所属组织" />
-            <el-table-column prop="start_date" label="入职日期" />
+            <el-table-column prop="org_name" label="所属组织">
+              <template #default="{ row }">
+                {{ row.org_name || '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="start_date" label="入职日期">
+              <template #default="{ row }">
+                {{ formatDate(row.start_date) }}
+              </template>
+            </el-table-column>
             <el-table-column prop="salary" label="薪资" />
             <el-table-column prop="contract_type" label="合同类型" />
             <el-table-column prop="status" label="状态">
@@ -56,7 +68,11 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="created_at" label="申请时间" />
+            <el-table-column prop="created_at" label="申请时间">
+              <template #default="{ row }">
+                {{ formatDate(row.created_at) }}
+              </template>
+            </el-table-column>
             <el-table-column label="操作" width="250" show-overflow-tooltip>
               <template #default="{ row }">
                 <div class="operation-buttons">
@@ -126,10 +142,22 @@
           <div class="table-container">
             <el-table :data="offboardingApplications" v-loading="offboardingLoading" stripe border
         table-layout="fixed">
-            <el-table-column prop="user_name" label="姓名" />
+            <el-table-column prop="user_name" label="姓名">
+              <template #default="{ row }">
+                {{ row.user_name || row.real_name || row.username || '-' }}
+              </template>
+            </el-table-column>
             <el-table-column prop="position_name" label="岗位" />
-            <el-table-column prop="org_name" label="所属组织" />
-            <el-table-column prop="leave_date" label="离职日期" />
+            <el-table-column prop="org_name" label="所属组织">
+              <template #default="{ row }">
+                {{ row.org_name || '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="leave_date" label="离职日期">
+              <template #default="{ row }">
+                {{ formatDate(row.leave_date) }}
+              </template>
+            </el-table-column>
             <el-table-column prop="reason" label="离职原因" />
             <el-table-column prop="status" label="状态">
               <template #default="{ row }">
@@ -138,7 +166,11 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="created_at" label="申请时间" />
+            <el-table-column prop="created_at" label="申请时间">
+              <template #default="{ row }">
+                {{ formatDate(row.created_at) }}
+              </template>
+            </el-table-column>
             <el-table-column label="操作" width="250" show-overflow-tooltip>
               <template #default="{ row }">
                 <div class="operation-buttons">
@@ -404,6 +436,17 @@ const getOffboardingStatusType = (status) => {
 const getOffboardingStatusText = (status) => {
   const texts = { 1: '待审核', 2: '已通过', 3: '已拒绝' }
   return texts[status] || '待审核'
+}
+
+// 格式化日期
+const formatDate = (date) => {
+  if (!date) return '-'
+  // 如果是 ISO 格式字符串（包含T）
+  if (typeof date === 'string' && date.includes('T')) {
+    return date.split('T')[0]
+  }
+  // 如果是其他格式，直接返回
+  return date
 }
 
 // 标签页切换

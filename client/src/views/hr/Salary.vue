@@ -59,7 +59,11 @@
       <el-table :data="salaryRecords" v-loading="loading" stripe border
         style="width: 100%"
         table-layout="fixed">
-      <el-table-column prop="user_name" label="员工姓名" width="120" show-overflow-tooltip />
+      <el-table-column prop="user_name" label="员工姓名" width="120" show-overflow-tooltip>
+        <template #default="{ row }">
+          {{ row.user_name || row.real_name || row.username || '-' }}
+        </template>
+      </el-table-column>
       <el-table-column prop="position_name" label="岗位" width="120" show-overflow-tooltip />
       <el-table-column prop="year" label="年份" width="80" show-overflow-tooltip />
       <el-table-column prop="month" label="月份" width="80" show-overflow-tooltip />
@@ -248,7 +252,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import { getSalaryRecords, createSalaryRecord, deleteSalaryRecord } from '@/api/hr'
+import { getSalaryRecords, createSalaryRecord, updateSalaryRecord, deleteSalaryRecord } from '@/api/hr'
 import { getUserList } from '@/api/user'
 
 // 响应式数据
@@ -372,13 +376,23 @@ const resetSearch = () => {
 const saveRecord = async () => {
   try {
     await salaryFormRef.value.validate()
-    await createSalaryRecord(salaryForm)
-    ElMessage.success('保存成功')
+    
+    if (editingRecord.value && editingRecord.value.id) {
+      // 编辑模式：调用更新API
+      await updateSalaryRecord(editingRecord.value.id, salaryForm)
+      ElMessage.success('更新成功')
+    } else {
+      // 新增模式：调用创建API
+      await createSalaryRecord(salaryForm)
+      ElMessage.success('保存成功')
+    }
+    
     showCreateDialog.value = false
     resetForm()
     loadData()
   } catch (error) {
-    ElMessage.error('保存失败')
+    console.error('保存失败:', error)
+    ElMessage.error(error.message || '保存失败')
   }
 }
 

@@ -10,6 +10,8 @@ exports.getAttendanceStats = (req, res) => {
     let sql = `
       SELECT 
         u.id as user_id,
+        u.real_name as user_name,
+        u.username,
         u.real_name,
         p.name as position_name,
         o.name as org_name,
@@ -70,6 +72,8 @@ exports.getSalaryStats = (req, res) => {
     let sql = `
       SELECT 
         sr.*,
+        u.real_name as user_name,
+        u.username,
         u.real_name,
         p.name as position_name,
         o.name as org_name,

@@ -7,7 +7,7 @@ exports.getEmployeeFiles = (req, res) => {
     const { page = 1, limit = 10, keyword = '', employee_id = '', department = '' } = req.query;
     const offset = (page - 1) * limit;
 
-    let sql = `SELECT ef.*, u.real_name, u.email, u.phone, p.name as position_name, o.name as org_name 
+    let sql = `SELECT ef.*, u.real_name as user_name, u.username, u.real_name, u.email, u.phone, p.name as position_name, o.name as org_name 
                FROM employee_files ef 
                LEFT JOIN users u ON ef.user_id = u.id 
                LEFT JOIN positions p ON ef.position_id = p.id 

@@ -3,7 +3,12 @@
     <div class="search-form">
       <el-form :model="searchForm" inline>
         <el-form-item label="关键词">
-          <el-input v-model="searchForm.keyword" placeholder="请输入账户名称或编号" clearable />
+          <el-input
+            v-model="searchForm.keyword"
+            placeholder="请输入账户名称或编号"
+            clearable
+            @keyup.enter="handleSearch"
+          />
         </el-form-item>
         <el-form-item label="账户类型">
           <el-select v-model="searchForm.accountType" placeholder="请选择类型" clearable
@@ -36,11 +41,28 @@
       <el-table :data="tableData" v-loading="loading" stripe border
         style="width: 100%"
         table-layout="fixed">
-        <el-table-column prop="account_code" label="账户编号" width="150" show-overflow-tooltip/>
-        <el-table-column prop="account_name" label="账户名称" width="200" show-overflow-tooltip/>
-        <el-table-column prop="account_type" label="账户类型" width="120" show-overflow-tooltip/>
-        <el-table-column prop="bank_name" label="开户银行" width="200" show-overflow-tooltip/>
-        <el-table-column prop="balance" label="余额" width="120" show-overflow-tooltipalign="right">
+        <el-table-column prop="id" label="ID" width="80" show-overflow-tooltip/>
+        <el-table-column prop="name" label="账户名称" width="200" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.name || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="account_type" label="账户类型" width="120" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ getAccountTypeLabel(row.account_type) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="bank_name" label="开户银行" width="200" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.bank_name || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="account_number" label="账号" width="150" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.account_number || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="balance" label="余额" width="120" align="right" show-overflow-tooltip>
           <template #default="{ row }">
             <span :class="getBalanceClass(row.balance)">
               {{ formatCurrency(row.balance) }}
@@ -54,7 +76,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" show-overflow-tooltipfixed="right">
+        <el-table-column label="操作" width="280" fixed="right" show-overflow-tooltip>
           <template #default="{ row }">
             <div class="operation-buttons">
               <el-button size="small" @click="handleEdit(row)">编辑</el-button>
@@ -69,6 +91,51 @@
         </el-table-column>
       </el-table>
     </div>
+
+    <!-- 新增/编辑对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="form.id ? '编辑账户' : '新增账户'"
+      width="600px"
+      @close="handleDialogClose"
+    >
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="formRules"
+        label-width="100px"
+        v-loading="submitLoading"
+      >
+        <el-form-item label="账户名称" prop="name" required>
+          <el-input v-model="form.name" placeholder="请输入账户名称" />
+        </el-form-item>
+        <el-form-item label="账户类型" prop="account_type" required>
+          <el-select v-model="form.account_type" placeholder="请选择账户类型" style="width: 100%">
+            <el-option label="现金" value="cash" />
+            <el-option label="银行存款" value="bank" />
+            <el-option label="其他" value="other" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="开户银行" prop="bank_name">
+          <el-input v-model="form.bank_name" placeholder="请输入开户银行（可选）" />
+        </el-form-item>
+        <el-form-item label="账号" prop="account_number">
+          <el-input v-model="form.account_number" placeholder="请输入账号（可选）" />
+        </el-form-item>
+        <el-form-item label="状态" prop="status">
+          <el-select v-model="form.status" placeholder="请选择状态" style="width: 100%">
+            <el-option label="启用" :value="1" />
+            <el-option label="禁用" :value="0" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="handleDialogClose">取消</el-button>
+          <el-button type="primary" @click="handleSubmit" :loading="submitLoading">确定</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -77,11 +144,10 @@ import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus } from "@element-plus/icons-vue";
 import {
-  getCashTransactions,
-  createCashTransaction,
-  updateCashTransaction,
-  deleteCashTransaction,
-  getCashBalances
+  getCashAccounts,
+  createCashAccount,
+  updateCashAccount,
+  deleteCashAccount
 } from "@/api/finance";
 
 const loading = ref(false);
@@ -97,10 +163,10 @@ const loadData = async () => {
   try {
     const params = {
       keyword: searchForm.keyword,
-      account: searchForm.accountType
+      account_type: searchForm.accountType
     };
-    const response = await getCashBalances(params);
-    tableData.value = response.data || [];
+    const response = await getCashAccounts(params);
+    tableData.value = (response && response.data) ? response.data : (Array.isArray(response) ? response : []);
   } catch (error) {
     console.error("加载数据失败:", error);
     ElMessage.error("加载数据失败");
@@ -115,28 +181,126 @@ const handleReset = () => {
   searchForm.accountType = "";
   loadData();
 };
-// 注意：现金管理页面显示的是账户余额，不是交易记录
-// 如果需要编辑/删除账户，需要另外的接口
-const handleAdd = () => ElMessage.info("新增账户功能开发中...");
-const handleEdit = () => ElMessage.info("编辑功能开发中...");
+
+const dialogVisible = ref(false);
+const submitLoading = ref(false);
+const formRef = ref();
+const form = reactive({
+  id: null,
+  name: "",
+  account_type: "",
+  bank_name: "",
+  account_number: "",
+  status: 1
+});
+
+// 表单验证规则
+const formRules = {
+  name: [{ required: true, message: "请输入账户名称", trigger: "blur" }],
+  account_type: [{ required: true, message: "请选择账户类型", trigger: "change" }]
+};
+
+const handleAdd = () => {
+  resetForm();
+  dialogVisible.value = true;
+};
+
+const handleEdit = (row) => {
+  resetForm();
+  Object.assign(form, {
+    id: row.id,
+    name: row.name || "",
+    account_type: row.account_type || "",
+    bank_name: row.bank_name || "",
+    account_number: row.account_number || "",
+    status: row.status !== undefined ? row.status : 1
+  });
+  dialogVisible.value = true;
+};
+
+// 重置表单
+const resetForm = () => {
+  formRef.value?.resetFields();
+  Object.assign(form, {
+    id: null,
+    name: "",
+    account_type: "",
+    bank_name: "",
+    account_number: "",
+    status: 1
+  });
+};
+
+const handleSubmit = async () => {
+  if (!formRef.value) return;
+
+  try {
+    await formRef.value.validate();
+    submitLoading.value = true;
+
+    const submitData = {
+      name: form.name,
+      account_type: form.account_type,
+      bank_name: form.bank_name || null,
+      account_number: form.account_number || null,
+      status: form.status !== undefined ? form.status : 1
+    };
+
+    if (form.id) {
+      await updateCashAccount(form.id, submitData);
+      ElMessage.success("更新成功");
+    } else {
+      await createCashAccount(submitData);
+      ElMessage.success("创建成功");
+    }
+    
+    dialogVisible.value = false;
+    resetForm();
+    await loadData();
+  } catch (error) {
+    if (error !== false) {
+      console.error("提交失败:", error);
+      ElMessage.error(error.message || "操作失败");
+    }
+  } finally {
+    submitLoading.value = false;
+  }
+};
+
+// 关闭对话框
+const handleDialogClose = () => {
+  dialogVisible.value = false;
+  resetForm();
+};
+
 const handleTransfer = () => ElMessage.info("资金调拨功能开发中...");
 const handleTransaction = () => ElMessage.info("交易记录功能开发中...");
 
 const handleDelete = async (row) => {
   try {
-    await ElMessageBox.confirm(`确定要删除账户"${row.account_name || row.name}"吗？`, "确认删除");
-    ElMessage.info("删除账户功能开发中...");
-    // await deleteAccount(row.id);
-    // await loadData();
+    await ElMessageBox.confirm(`确定要删除账户"${row.name}"吗？`, "确认删除");
+    await deleteCashAccount(row.id);
+    ElMessage.success("删除成功");
+    await loadData();
   } catch (error) {
     if (error !== 'cancel') {
       console.error("删除失败:", error);
+      ElMessage.error(error.message || "删除失败");
     }
   }
 };
 
 const getBalanceClass = (balance) => {
   return balance >= 0 ? "positive-balance" : "negative-balance";
+};
+
+const getAccountTypeLabel = (type) => {
+  const typeMap = {
+    cash: "现金",
+    bank: "银行存款",
+    other: "其他"
+  };
+  return typeMap[type] || type || "-";
 };
 
 const formatCurrency = (amount) => {

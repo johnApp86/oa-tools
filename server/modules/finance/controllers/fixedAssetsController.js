@@ -25,7 +25,36 @@ exports.getFixedAssets = (req, res) => {
 
     db.all(sql, params, (err, assets) => {
       if (err) {
-        return res.status(500).json({ message: '查询失败' });
+        console.error('查询固定资产失败:', err);
+        return res.status(500).json({ message: '查询失败', error: err.message });
+      }
+
+      // 确保返回的数据字段完整
+      const processedAssets = (assets || []).map(asset => {
+        const processed = {
+          id: asset.id,
+          code: asset.code || null,
+          name: asset.name || '',
+          category: asset.category || '',
+          purchase_price: asset.purchase_price || 0,
+          purchase_date: asset.purchase_date || null,
+          depreciation_method: asset.depreciation_method || null,
+          useful_life: asset.useful_life || null,
+          description: asset.description || null,
+          created_at: asset.created_at || null,
+          updated_at: asset.updated_at || null
+        };
+        // 调试：确保name字段有值
+        if (!processed.name && asset.name) {
+          processed.name = String(asset.name);
+        }
+        return processed;
+      });
+      
+      // 调试日志
+      if (processedAssets.length > 0) {
+        console.log('原始数据示例:', JSON.stringify(assets[0], null, 2));
+        console.log('处理后的固定资产数据示例:', JSON.stringify(processedAssets[0], null, 2));
       }
 
       // 获取总数
@@ -42,12 +71,13 @@ exports.getFixedAssets = (req, res) => {
 
       db.get(countSql, countParams, (err, countResult) => {
         if (err) {
-          return res.status(500).json({ message: '查询总数失败' });
+          console.error('查询固定资产总数失败:', err);
+          return res.status(500).json({ message: '查询总数失败', error: err.message });
         }
 
         res.json({
-          data: assets,
-          total: countResult.total,
+          data: processedAssets,
+          total: countResult ? countResult.total : 0,
           page: parseInt(page),
           limit: parseInt(limit)
         });
@@ -62,7 +92,16 @@ exports.getFixedAssets = (req, res) => {
 exports.createFixedAsset = [
   body('name').notEmpty().withMessage('资产名称不能为空'),
   body('category').notEmpty().withMessage('资产类别不能为空'),
-  body('purchase_price').isNumeric().withMessage('购买价格必须是数字'),
+  body('purchase_price').custom((value) => {
+    if (value === undefined || value === null || value === '') {
+      throw new Error('购买价格不能为空');
+    }
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    if (isNaN(numValue) || numValue <= 0) {
+      throw new Error('购买价格必须是大于0的数字');
+    }
+    return true;
+  }).withMessage('购买价格必须是数字'),
   body('purchase_date').notEmpty().withMessage('购买日期不能为空'),
   (req, res) => {
     const errors = validationResult(req);
@@ -70,45 +109,63 @@ exports.createFixedAsset = [
       return res.status(400).json({ message: errors.array()[0].msg });
     }
 
-    const { name, code, category, purchase_price, purchase_date, depreciation_method, useful_life, description } = req.body;
+    try {
+      const { name, code, category, purchase_price, purchase_date, depreciation_method, useful_life, description } = req.body;
 
-    db.run(
-      `INSERT INTO fixed_assets (name, code, category, purchase_price, purchase_date, depreciation_method, useful_life, description, created_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-      [name, code, category, purchase_price, purchase_date, depreciation_method, useful_life, description],
-      function(err) {
-        if (err) {
-          return res.status(500).json({ message: '创建失败' });
+      // 确保purchase_price是数字类型
+      const priceValue = typeof purchase_price === 'string' ? parseFloat(purchase_price) : (purchase_price || 0);
+
+      db.run(
+        `INSERT INTO fixed_assets (name, code, category, purchase_price, purchase_date, depreciation_method, useful_life, description, created_at) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [name, code || null, category, priceValue, purchase_date, depreciation_method || null, useful_life || null, description || null],
+        function(err) {
+          if (err) {
+            console.error('创建固定资产失败:', err);
+            return res.status(500).json({ message: '创建失败', error: err.message });
+          }
+
+          res.json({ message: '创建成功', id: this.lastID });
         }
-
-        res.json({ message: '创建成功', id: this.lastID });
-      }
-    );
+      );
+    } catch (error) {
+      console.error('创建固定资产异常:', error);
+      res.status(500).json({ message: '服务器错误', error: error.message });
+    }
   }
 ];
 
 // 更新固定资产
 exports.updateFixedAsset = (req, res) => {
-  const { id } = req.params;
-  const { name, code, category, purchase_price, purchase_date, depreciation_method, useful_life, description } = req.body;
+  try {
+    const { id } = req.params;
+    const { name, code, category, purchase_price, purchase_date, depreciation_method, useful_life, description } = req.body;
 
-  db.run(
-    `UPDATE fixed_assets SET name = ?, code = ?, category = ?, purchase_price = ?, 
-     purchase_date = ?, depreciation_method = ?, useful_life = ?, description = ?, updated_at = CURRENT_TIMESTAMP 
-     WHERE id = ?`,
-    [name, code, category, purchase_price, purchase_date, depreciation_method, useful_life, description, id],
-    function(err) {
-      if (err) {
-        return res.status(500).json({ message: '更新失败' });
+    // 确保purchase_price是数字类型
+    const priceValue = typeof purchase_price === 'string' ? parseFloat(purchase_price) : (purchase_price || 0);
+
+    db.run(
+      `UPDATE fixed_assets SET name = ?, code = ?, category = ?, purchase_price = ?, 
+       purchase_date = ?, depreciation_method = ?, useful_life = ?, description = ?, updated_at = CURRENT_TIMESTAMP 
+       WHERE id = ?`,
+      [name, code || null, category, priceValue, purchase_date, depreciation_method || null, useful_life || null, description || null, id],
+      function(err) {
+        if (err) {
+          console.error('更新固定资产失败:', err);
+          return res.status(500).json({ message: '更新失败', error: err.message });
+        }
+
+        if (this.changes === 0) {
+          return res.status(404).json({ message: '记录不存在' });
+        }
+
+        res.json({ message: '更新成功' });
       }
-
-      if (this.changes === 0) {
-        return res.status(404).json({ message: '记录不存在' });
-      }
-
-      res.json({ message: '更新成功' });
-    }
-  );
+    );
+  } catch (error) {
+    console.error('更新固定资产异常:', error);
+    res.status(500).json({ message: '服务器错误', error: error.message });
+  }
 };
 
 // 删除固定资产

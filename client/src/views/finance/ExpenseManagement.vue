@@ -51,7 +51,11 @@
             {{ formatCurrency(row.approved_amount) }}
           </template>
         </el-table-column>
-        <el-table-column prop="apply_date" label="申请日期" width="120" show-overflow-tooltip/>
+        <el-table-column prop="apply_date" label="申请日期" width="120" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ formatDate(row.apply_date) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="100" show-overflow-tooltip>
           <template #default="{ row }">
             <el-tag :type="getStatusTagType(row.status)">
@@ -242,6 +246,13 @@ const handleDelete = async (row) => {
 };
 
 const getStatusTagType = (status) => {
+  // 处理数字状态（0=待审批, 1=已批准, 2=已拒绝）
+  if (typeof status === 'number') {
+    if (status === 1) return "success";
+    if (status === 2) return "danger";
+    return "warning";
+  }
+  // 处理字符串状态
   const statusMap = {
     pending: "warning",
     approved: "success",
@@ -251,12 +262,19 @@ const getStatusTagType = (status) => {
 };
 
 const getStatusLabel = (status) => {
+  // 处理数字状态（0=待审批, 1=已批准, 2=已拒绝）
+  if (typeof status === 'number') {
+    if (status === 1) return "已批准";
+    if (status === 2) return "已拒绝";
+    return "待审批";
+  }
+  // 处理字符串状态
   const statusMap = {
     pending: "待审批",
     approved: "已批准",
     rejected: "已拒绝"
   };
-  return statusMap[status] || status;
+  return statusMap[status] || status || "待审批";
 };
 
 const formatCurrency = (amount) => {
@@ -265,6 +283,17 @@ const formatCurrency = (amount) => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
+};
+
+const formatDate = (date) => {
+  if (!date) return "-";
+  if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}/)) {
+    return date.split('T')[0];
+  }
+  if (date instanceof Date) {
+    return date.toISOString().split('T')[0];
+  }
+  return date;
 };
 
 onMounted(() => loadData());
