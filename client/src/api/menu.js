@@ -3,7 +3,7 @@ import request from './request'
 // 获取菜单树
 export const getMenuTree = () => {
   return request({
-    url: '/menus/tree',
+    url: '/system/menus/tree',
     method: 'get'
   })
 }
@@ -11,7 +11,7 @@ export const getMenuTree = () => {
 // 获取菜单列表
 export const getMenuList = (params) => {
   return request({
-    url: '/menus',
+    url: '/system/menus',
     method: 'get',
     params
   })
@@ -20,7 +20,7 @@ export const getMenuList = (params) => {
 // 获取菜单详情
 export const getMenuDetail = (id) => {
   return request({
-    url: `/menus/${id}`,
+    url: `/system/menus/${id}`,
     method: 'get'
   })
 }
@@ -28,7 +28,7 @@ export const getMenuDetail = (id) => {
 // 创建菜单
 export const createMenu = (data) => {
   return request({
-    url: '/menus',
+    url: '/system/menus',
     method: 'post',
     data
   })
@@ -37,7 +37,7 @@ export const createMenu = (data) => {
 // 更新菜单
 export const updateMenu = (id, data) => {
   return request({
-    url: `/menus/${id}`,
+    url: `/system/menus/${id}`,
     method: 'put',
     data
   })
@@ -46,7 +46,7 @@ export const updateMenu = (id, data) => {
 // 删除菜单
 export const deleteMenu = (id) => {
   return request({
-    url: `/menus/${id}`,
+    url: `/system/menus/${id}`,
     method: 'delete'
   })
 }

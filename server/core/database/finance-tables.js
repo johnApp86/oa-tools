@@ -248,88 +248,15 @@ const createFinanceTables = () => {
     )
   `);
 
-  // 最后一个表创建完成后，插入示例数据
+  // 所有表创建完成
   console.log('财务模块数据库表创建完成');
-  // 等待一小段时间确保所有表创建完成
-  setTimeout(() => {
-    insertSampleData();
-  }, 100);
-};
-
-// 插入示例数据
-const insertSampleData = () => {
-  console.log('开始插入财务模块示例数据...');
-
-  // 插入示例总账科目
-  db.run(`
-    INSERT OR IGNORE INTO general_ledger_accounts 
-    (code, name, type, parent_id, level) 
-    VALUES 
-    ('1001', '库存现金', 'asset', 0, 1),
-    ('1002', '银行存款', 'asset', 0, 1),
-    ('2001', '短期借款', 'liability', 0, 1),
-    ('4001', '实收资本', 'equity', 0, 1),
-    ('5001', '主营业务收入', 'revenue', 0, 1),
-    ('6001', '主营业务成本', 'expense', 0, 1)
-  `, (err) => {
-    if (err) {
-      console.error('插入示例总账科目失败:', err);
-      return;
-    }
-
-    // 插入示例现金账户
-    db.run(`
-      INSERT OR IGNORE INTO cash_accounts 
-      (name, account_type, bank_name, account_number) 
-      VALUES 
-      ('基本账户', 'bank', '中国工商银行', '6222021234567890123'),
-      ('现金账户', 'cash', NULL, NULL)
-    `, (err) => {
-      if (err) {
-        console.error('插入示例现金账户失败:', err);
-        return;
-      }
-
-      // 插入示例成本中心
-      db.run(`
-        INSERT OR IGNORE INTO cost_centers 
-        (name, code, description) 
-        VALUES 
-        ('管理部门', 'CC001', '公司管理部门'),
-        ('销售部门', 'CC002', '销售部门'),
-        ('生产部门', 'CC003', '生产制造部门')
-      `, (err) => {
-        if (err) {
-          console.error('插入示例成本中心失败:', err);
-          return;
-        }
-
-        // 插入示例预算
-        const currentYear = new Date().getFullYear();
-        db.run(`
-          INSERT OR IGNORE INTO budgets 
-          (name, year, amount, department, category) 
-          VALUES 
-          ('年度管理费用预算', ${currentYear}, 1000000, '管理部门', '管理费用'),
-          ('年度销售费用预算', ${currentYear}, 800000, '销售部门', '销售费用'),
-          ('年度生产成本预算', ${currentYear}, 2000000, '生产部门', '生产成本')
-        `, (err) => {
-          if (err) {
-            console.error('插入示例预算失败:', err);
-            return;
-          }
-
-          console.log('财务模块示例数据插入完成');
-        });
-      });
-    });
-  });
+  // 注意：示例数据由 system-init.js 统一插入，这里只创建表结构
 };
 
 // 执行初始化
 const initFinanceDatabase = () => {
   createFinanceTables();
-  // insertSampleData() 现在在 createFinanceTables() 完成后通过 setTimeout 调用
+  // 注意：示例数据由 system-init.js 统一插入，这里只创建表结构
 };
 
 module.exports = { initFinanceDatabase };

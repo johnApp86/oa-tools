@@ -107,7 +107,8 @@ class MenuController {
 
       db.all(sql, params, (err, menus) => {
         if (err) {
-          return res.status(500).json({ message: '查询失败' });
+          console.error('查询菜单列表失败:', err);
+          return res.status(500).json({ message: '查询失败', error: err.message });
         }
 
         // 获取总数
@@ -121,7 +122,8 @@ class MenuController {
 
         db.get(countSql, countParams, (err, countResult) => {
           if (err) {
-            return res.status(500).json({ message: '查询失败' });
+            console.error('查询菜单总数失败:', err);
+            return res.status(500).json({ message: '查询失败', error: err.message });
           }
 
           res.json({

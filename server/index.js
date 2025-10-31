@@ -39,23 +39,6 @@ app.use('/api/system', systemRoutes);
 app.use('/api/hr', hrRoutes);
 app.use('/api/finance', financeRoutes);
 
-// 兼容性路由 - 保持原有API路径
-const userRoutes = require('./modules/system/routes/users');
-const menuRoutes = require('./modules/system/routes/menus');
-const roleRoutes = require('./modules/system/routes/roles');
-const organizationRoutes = require('./modules/system/routes/organizations');
-const positionRoutes = require('./modules/system/routes/positions');
-const onboardingRoutes = require('./modules/hr/routes/onboarding');
-
-app.use('/api/organizations', organizationRoutes);
-app.use('/api/positions', positionRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/menus', menuRoutes);
-app.use('/api/roles', roleRoutes);
-
-// HR模块兼容性路由 - 离职申请
-app.use('/api/hr/offboarding', onboardingRoutes);
-
 // 启动服务器
 app.listen(PORT, () => {
   console.log(`服务器运行在 http://localhost:${PORT}`);

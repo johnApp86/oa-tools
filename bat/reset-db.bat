@@ -5,10 +5,10 @@ echo ========================================
 echo.
 
 echo 正在检查数据库脚本...
-if not exist "server\database\reset-db.js" (
-    echo ❌ 数据库重置脚本不存在
-    pause
-    exit /b 1
+if not exist "server\core\database\oa.db" (
+    echo ⚠️  数据库文件不存在，将执行初始化
+) else (
+    echo ✓ 数据库文件已找到
 )
 
 echo 正在检查依赖...
@@ -46,10 +46,15 @@ if /i not "%confirm%"=="y" (
 )
 
 echo.
-echo 正在重置数据库...
-node server\database\reset-db.js
+echo 正在删除数据库文件...
+del /f /q "server\core\database\oa.db" 2>nul
+echo ✓ 数据库文件已删除
+
+echo.
+echo 正在重新初始化数据库...
+node server\core\database\system-init.js
 if %errorlevel% neq 0 (
-    echo ❌ 数据库重置失败
+    echo ❌ 数据库初始化失败
     pause
     exit /b 1
 )

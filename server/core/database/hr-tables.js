@@ -144,126 +144,15 @@ const createHRTables = () => {
     )
   `);
 
-  // 最后一个表创建完成后，插入示例数据
+  // 所有表创建完成
   console.log('HR模块数据库表创建完成');
-  // 等待一小段时间确保所有表创建完成
-  setTimeout(() => {
-    insertSampleData();
-  }, 100);
-};
-
-// 插入示例数据
-const insertSampleData = () => {
-  console.log('开始插入HR模块示例数据...');
-
-  // 插入示例招聘职位
-  db.run(`
-    INSERT OR IGNORE INTO recruitment_positions 
-    (title, position_id, org_id, description, requirements, salary_range, urgent_level) 
-    VALUES 
-    ('高级前端开发工程师', 1, 1, '负责公司前端产品开发', '3年以上前端开发经验，熟悉Vue.js', '15K-25K', 2),
-    ('Java后端开发工程师', 2, 1, '负责公司后端服务开发', '3年以上Java开发经验，熟悉Spring框架', '12K-20K', 1),
-    ('产品经理', 3, 1, '负责产品规划和设计', '2年以上产品经验，熟悉产品设计流程', '10K-18K', 1)
-  `, (err) => {
-    if (err) {
-      console.error('插入示例招聘职位失败:', err);
-      return;
-    }
-
-    // 插入示例简历
-    db.run(`
-      INSERT OR IGNORE INTO resumes 
-      (name, email, phone, position_id, experience, education, skills) 
-      VALUES 
-      ('张三', 'zhangsan@example.com', '13800138001', 1, '5年前端开发经验', '本科', 'Vue.js, React, JavaScript'),
-      ('李四', 'lisi@example.com', '13800138002', 2, '4年Java开发经验', '本科', 'Java, Spring, MySQL'),
-      ('王五', 'wangwu@example.com', '13800138003', 3, '3年产品经验', '硕士', '产品设计, 用户研究')
-    `, (err) => {
-      if (err) {
-        console.error('插入示例简历失败:', err);
-        return;
-      }
-
-      // 插入示例入职申请
-      db.run(`
-        INSERT OR IGNORE INTO onboarding_applications 
-        (user_id, position_id, org_id, start_date, salary, contract_type) 
-        VALUES 
-        (1, 1, 1, '2024-01-15', 20000, 'formal'),
-        (2, 2, 1, '2024-02-01', 18000, 'formal')
-      `, (err) => {
-        if (err) {
-          console.error('插入示例入职申请失败:', err);
-          return;
-        }
-
-        // 插入示例考勤记录
-        const today = new Date().toISOString().split('T')[0];
-        db.run(`
-          INSERT OR IGNORE INTO attendance_records 
-          (user_id, position_id, date, checkin_time, checkout_time, checkin_location, checkout_location) 
-          VALUES 
-          (1, 1, '${today}', '${today} 09:00:00', '${today} 18:00:00', '办公室', '办公室'),
-          (2, 2, '${today}', '${today} 09:30:00', '${today} 18:30:00', '办公室', '办公室')
-        `, (err) => {
-          if (err) {
-            console.error('插入示例考勤记录失败:', err);
-            return;
-          }
-
-          // 插入示例请假申请
-          db.run(`
-            INSERT OR IGNORE INTO leave_applications 
-            (user_id, position_id, type, start_date, end_date, reason) 
-            VALUES 
-            (1, 1, 'annual', '2024-01-20', '2024-01-22', '年假'),
-            (2, 2, 'sick', '2024-01-25', '2024-01-25', '生病请假')
-          `, (err) => {
-            if (err) {
-              console.error('插入示例请假申请失败:', err);
-              return;
-            }
-
-            // 插入示例薪酬记录
-            db.run(`
-              INSERT OR IGNORE INTO salary_records 
-              (user_id, year, month, base_salary, bonus, allowance, deduction) 
-              VALUES 
-              (1, 2024, 1, 20000, 5000, 2000, 1000),
-              (2, 2024, 1, 18000, 3000, 1500, 800)
-            `, (err) => {
-              if (err) {
-                console.error('插入示例薪酬记录失败:', err);
-                return;
-              }
-
-              // 插入示例员工档案
-              db.run(`
-                INSERT OR IGNORE INTO employee_files 
-                (user_id, employee_id, position_id, org_id, department, personal_info, work_info) 
-                VALUES 
-                (1, 'EMP001', 1, 1, '技术部', '{"age": 28, "gender": "男", "marital_status": "未婚"}', '{"join_date": "2024-01-15", "work_years": 5}'),
-                (2, 'EMP002', 2, 1, '技术部', '{"age": 26, "gender": "女", "marital_status": "已婚"}', '{"join_date": "2024-02-01", "work_years": 4}')
-              `, (err) => {
-                if (err) {
-                  console.error('插入示例员工档案失败:', err);
-                  return;
-                }
-
-                console.log('HR模块示例数据插入完成');
-              });
-            });
-          });
-        });
-      });
-    });
-  });
+  // 注意：示例数据由 system-init.js 统一插入，这里只创建表结构
 };
 
 // 执行初始化
 const initHRDatabase = () => {
   createHRTables();
-  // insertSampleData() 现在在 createHRTables() 完成后通过 setTimeout 调用
+  // 注意：示例数据由 system-init.js 统一插入，这里只创建表结构
 };
 
 module.exports = { initHRDatabase };

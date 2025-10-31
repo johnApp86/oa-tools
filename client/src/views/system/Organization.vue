@@ -255,21 +255,14 @@ const handleDelete = async (row) => {
       type: "warning",
     });
 
-    const response = await fetch(`/api/organizations/${row.id}`, {
-      method: 'DELETE'
-    });
-
-    if (response.ok) {
-      ElMessage.success("删除成功");
-      loadData();
-    } else {
-      const error = await response.json();
-      ElMessage.error(error.message || "删除失败");
-    }
+    await deleteOrganization(row.id);
+    ElMessage.success("删除成功");
+    loadData();
+    loadTree();
   } catch (error) {
     if (error !== "cancel") {
       console.error("删除失败:", error);
-      ElMessage.error("删除失败");
+      ElMessage.error(error.message || "删除失败");
     }
   }
 };
@@ -290,39 +283,22 @@ const handleSubmit = async () => {
       status: form.status,
     };
 
-    let response;
     if (form.id) {
       // 更新组织
-      response = await fetch(`/api/organizations/${form.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orgData),
-      });
+      await updateOrganization(form.id, orgData);
+      ElMessage.success("更新成功");
     } else {
       // 创建组织
-      response = await fetch('/api/organizations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orgData),
-      });
+      await createOrganization(orgData);
+      ElMessage.success("创建成功");
     }
-
-    if (response.ok) {
-      ElMessage.success(form.id ? "更新成功" : "创建成功");
-      dialogVisible.value = false;
-      loadData();
-      loadTree();
-    } else {
-      const error = await response.json();
-      ElMessage.error(error.message || "操作失败");
-    }
+    
+    dialogVisible.value = false;
+    loadData();
+    loadTree();
   } catch (error) {
     console.error("提交失败:", error);
-    ElMessage.error("操作失败");
+    ElMessage.error(error.message || "操作失败");
   } finally {
     submitLoading.value = false;
   }

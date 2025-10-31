@@ -3,7 +3,7 @@ import request from './request'
 // 获取组织树
 export const getOrganizationTree = () => {
   return request({
-    url: '/organizations/tree',
+    url: '/system/organizations/tree',
     method: 'get'
   })
 }
@@ -11,7 +11,7 @@ export const getOrganizationTree = () => {
 // 获取组织列表
 export const getOrganizationList = (params) => {
   return request({
-    url: '/organizations',
+    url: '/system/organizations',
     method: 'get',
     params
   })
@@ -28,7 +28,7 @@ export const getAllOrganizations = () => {
 // 获取组织详情
 export const getOrganizationDetail = (id) => {
   return request({
-    url: `/organizations/${id}`,
+    url: `/system/organizations/${id}`,
     method: 'get'
   })
 }
@@ -36,7 +36,7 @@ export const getOrganizationDetail = (id) => {
 // 创建组织
 export const createOrganization = (data) => {
   return request({
-    url: '/organizations',
+    url: '/system/organizations',
     method: 'post',
     data
   })
@@ -45,7 +45,7 @@ export const createOrganization = (data) => {
 // 更新组织
 export const updateOrganization = (id, data) => {
   return request({
-    url: `/organizations/${id}`,
+    url: `/system/organizations/${id}`,
     method: 'put',
     data
   })
@@ -54,7 +54,7 @@ export const updateOrganization = (id, data) => {
 // 删除组织
 export const deleteOrganization = (id) => {
   return request({
-    url: `/organizations/${id}`,
+    url: `/system/organizations/${id}`,
     method: 'delete'
   })
 }

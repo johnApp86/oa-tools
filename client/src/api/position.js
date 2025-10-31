@@ -3,7 +3,7 @@ import request from './request'
 // 获取岗位列表
 export const getPositionList = (params) => {
   return request({
-    url: '/positions',
+    url: '/system/positions',
     method: 'get',
     params
   })
@@ -21,7 +21,7 @@ export const getAllPositions = (params) => {
 // 获取岗位详情
 export const getPositionDetail = (id) => {
   return request({
-    url: `/positions/${id}`,
+    url: `/system/positions/${id}`,
     method: 'get'
   })
 }
@@ -29,7 +29,7 @@ export const getPositionDetail = (id) => {
 // 创建岗位
 export const createPosition = (data) => {
   return request({
-    url: '/positions',
+    url: '/system/positions',
     method: 'post',
     data
   })
@@ -38,7 +38,7 @@ export const createPosition = (data) => {
 // 更新岗位
 export const updatePosition = (id, data) => {
   return request({
-    url: `/positions/${id}`,
+    url: `/system/positions/${id}`,
     method: 'put',
     data
   })
@@ -47,7 +47,7 @@ export const updatePosition = (id, data) => {
 // 删除岗位
 export const deletePosition = (id) => {
   return request({
-    url: `/positions/${id}`,
+    url: `/system/positions/${id}`,
     method: 'delete'
   })
 }

@@ -141,6 +141,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { getMenuList, createMenu, updateMenu, deleteMenu } from "@/api/menu";
 
 // 响应式数据
 const loading = ref(false);
@@ -196,8 +197,7 @@ const loadData = async () => {
       keyword: searchForm.keyword,
     };
     
-    const response = await fetch(`/api/menus?${new URLSearchParams(params)}`);
-    const result = await response.json();
+    const result = await getMenuList(params);
     
     tableData.value = result.data;
     pagination.total = result.total;
@@ -224,9 +224,8 @@ const handleReset = () => {
 // 加载菜单选项
 const loadMenuOptions = async () => {
   try {
-    const response = await fetch('/api/menus');
-    const result = await response.json();
-    menuOptions.value = result.data || result;
+    const result = await getMenuList({ page: 1, limit: 1000 });
+    menuOptions.value = result.data || [];
   } catch (error) {
     console.error("加载菜单选项失败:", error);
   }
@@ -271,21 +270,13 @@ const handleDelete = async (row) => {
       }
     );
 
-    const response = await fetch(`/api/menus/${row.id}`, {
-      method: 'DELETE'
-    });
-
-    if (response.ok) {
-      ElMessage.success("删除成功");
-      loadData();
-    } else {
-      const error = await response.json();
-      ElMessage.error(error.message || "删除失败");
-    }
+    await deleteMenu(row.id);
+    ElMessage.success("删除成功");
+    loadData();
   } catch (error) {
     if (error !== "cancel") {
       console.error("删除失败:", error);
-      ElMessage.error("删除失败");
+      ElMessage.error(error.message || "删除失败");
     }
   }
 };
@@ -310,38 +301,21 @@ const handleSubmit = async () => {
       status: form.status,
     };
 
-    let response;
     if (form.id) {
       // 更新菜单
-      response = await fetch(`/api/menus/${form.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(menuData),
-      });
+      await updateMenu(form.id, menuData);
+      ElMessage.success("更新成功");
     } else {
       // 创建菜单
-      response = await fetch('/api/menus', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(menuData),
-      });
+      await createMenu(menuData);
+      ElMessage.success("创建成功");
     }
-
-    if (response.ok) {
-      ElMessage.success(form.id ? "更新成功" : "创建成功");
-      dialogVisible.value = false;
-      loadData();
-    } else {
-      const error = await response.json();
-      ElMessage.error(error.message || "操作失败");
-    }
+    
+    dialogVisible.value = false;
+    loadData();
   } catch (error) {
     console.error("提交失败:", error);
-    ElMessage.error("操作失败");
+    ElMessage.error(error.message || "操作失败");
   } finally {
     submitLoading.value = false;
   }

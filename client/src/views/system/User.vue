@@ -153,6 +153,9 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { getUserList, createUser, updateUser, deleteUser } from "@/api/user";
+import { getAllOrganizations } from "@/api/organization";
+import { getPositionList } from "@/api/position";
 
 // 响应式数据
 const loading = ref(false);
@@ -217,8 +220,7 @@ const loadData = async () => {
       keyword: searchForm.keyword,
     };
     
-    const response = await fetch(`/api/users?${new URLSearchParams(params)}`);
-    const result = await response.json();
+    const result = await getUserList(params);
     
     tableData.value = result.data;
     pagination.total = result.total;
@@ -245,16 +247,12 @@ const handleReset = () => {
 // 加载选项数据
 const loadOptions = async () => {
   try {
-    const [orgRes, posRes] = await Promise.all([
-      fetch('/api/organizations/all'),
-      fetch('/api/positions')
-    ]);
-    const [orgs, positions] = await Promise.all([
-      orgRes.json(),
-      posRes.json()
+    const [orgs, posResult] = await Promise.all([
+      getAllOrganizations(),
+      getPositionList({ page: 1, limit: 1000 })
     ]);
     organizations.value = orgs;
-    positions.value = positions.data || positions;
+    positions.value = posResult.data || [];
   } catch (error) {
     console.error("加载选项数据失败:", error);
   }
@@ -263,9 +261,8 @@ const loadOptions = async () => {
 // 加载岗位数据
 const loadPositions = async (organizationId) => {
   try {
-    const response = await fetch(`/api/positions?organizationId=${organizationId}`);
-    const result = await response.json();
-    positions.value = result.data || result;
+    const result = await getPositionList({ organizationId, page: 1, limit: 1000 });
+    positions.value = result.data || [];
   } catch (error) {
     console.error("加载岗位数据失败:", error);
   }
@@ -311,21 +308,13 @@ const handleDelete = async (row) => {
       }
     );
 
-    const response = await fetch(`/api/users/${row.id}`, {
-      method: 'DELETE'
-    });
-
-    if (response.ok) {
-      ElMessage.success("删除成功");
-      loadData();
-    } else {
-      const error = await response.json();
-      ElMessage.error(error.message || "删除失败");
-    }
+    await deleteUser(row.id);
+    ElMessage.success("删除成功");
+    loadData();
   } catch (error) {
     if (error !== "cancel") {
       console.error("删除失败:", error);
-      ElMessage.error("删除失败");
+      ElMessage.error(error.message || "删除失败");
     }
   }
 };
@@ -340,46 +329,29 @@ const handleSubmit = async () => {
 
     const userData = {
       username: form.username,
-      real_name: form.realName,
+      realName: form.realName,
       email: form.email,
       phone: form.phone,
-      organization_id: form.organizationId,
-      position_id: form.positionId,
+      organizationId: form.organizationId,
+      positionId: form.positionId,
       status: form.status,
     };
 
-    let response;
     if (form.id) {
       // 更新用户
-      response = await fetch(`/api/users/${form.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
+      await updateUser(form.id, userData);
+      ElMessage.success("更新成功");
     } else {
       // 创建用户
-      response = await fetch('/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
+      await createUser(userData);
+      ElMessage.success("创建成功");
     }
-
-    if (response.ok) {
-      ElMessage.success(form.id ? "更新成功" : "创建成功");
-      dialogVisible.value = false;
-      loadData();
-    } else {
-      const error = await response.json();
-      ElMessage.error(error.message || "操作失败");
-    }
+    
+    dialogVisible.value = false;
+    loadData();
   } catch (error) {
     console.error("提交失败:", error);
-    ElMessage.error("操作失败");
+    ElMessage.error(error.message || "操作失败");
   } finally {
     submitLoading.value = false;
   }

@@ -5,7 +5,7 @@ echo ========================================
 echo.
 
 echo 正在检查数据库脚本...
-if not exist "server\database\system-init.js" (
+if not exist "server\core\database\system-init.js" (
     echo ❌ 数据库初始化脚本不存在
     pause
     exit /b 1
@@ -37,7 +37,7 @@ if not exist "server\node_modules" (
 
 echo.
 echo 正在初始化数据库...
-node server\database\system-init.js
+node server\core\database\system-init.js
 if %errorlevel% neq 0 (
     echo ❌ 数据库初始化失败
     pause

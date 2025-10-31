@@ -8,7 +8,7 @@ const userRoutes = require('./users');
 const menuRoutes = require('./menus');
 const roleRoutes = require('./roles');
 
-// 注册子路由
+// 注册子路由（正常路径：/api/system/...）
 router.use('/organizations', organizationRoutes);
 router.use('/positions', positionRoutes);
 router.use('/users', userRoutes);
