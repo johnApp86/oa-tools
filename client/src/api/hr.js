@@ -69,7 +69,7 @@ export const createOnboardingApplication = (data) => {
 // 获取离职申请列表
 export const getOffboardingApplications = (params) => {
   return request({
-    url: '/hr/offboarding/applications',
+    url: '/hr/onboarding/offboarding/applications',
     method: 'get',
     params
   })
@@ -78,7 +78,7 @@ export const getOffboardingApplications = (params) => {
 // 创建离职申请
 export const createOffboardingApplication = (data) => {
   return request({
-    url: '/hr/offboarding/applications',
+    url: '/hr/onboarding/offboarding/applications',
     method: 'post',
     data
   })

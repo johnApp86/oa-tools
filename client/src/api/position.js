@@ -12,7 +12,7 @@ export const getPositionList = (params) => {
 // 获取所有岗位
 export const getAllPositions = (params) => {
   return request({
-    url: '/positions/all',
+    url: '/system/positions/all',
     method: 'get',
     params
   })

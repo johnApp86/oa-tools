@@ -72,6 +72,31 @@
         </el-table-column>
       </el-table>
     </div>
+
+    <!-- 新增/编辑对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="form.id ? '编辑成本中心' : '新增成本中心'"
+      width="500px"
+    >
+      <el-form
+        :model="form"
+        label-width="100px"
+      >
+        <el-form-item label="成本中心名称" required>
+          <el-input v-model="form.name" placeholder="请输入成本中心名称" />
+        </el-form-item>
+        <el-form-item label="成本中心代码" required>
+          <el-input v-model="form.code" placeholder="请输入成本中心代码" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmit">确定</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -79,6 +104,12 @@
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus } from "@element-plus/icons-vue";
+import {
+  getCostCenters,
+  createCostCenter,
+  updateCostCenter,
+  deleteCostCenter
+} from "@/api/finance";
 
 const loading = ref(false);
 const tableData = ref([]);
@@ -91,27 +122,11 @@ const searchForm = reactive({
 const loadData = async () => {
   loading.value = true;
   try {
-    const mockData = [
-      {
-        id: 1,
-        cost_center_code: "CC-001",
-        cost_center_name: "生产部门",
-        cost_type: "direct_material",
-        budget_amount: 100000,
-        actual_amount: 95000,
-        variance: -5000,
-      },
-      {
-        id: 2,
-        cost_center_code: "CC-002",
-        cost_center_name: "管理部门",
-        cost_type: "indirect",
-        budget_amount: 50000,
-        actual_amount: 52000,
-        variance: 2000,
-      }
-    ];
-    tableData.value = mockData;
+    const params = {
+      keyword: searchForm.keyword
+    };
+    const response = await getCostCenters(params);
+    tableData.value = response.data || [];
   } catch (error) {
     console.error("加载数据失败:", error);
     ElMessage.error("加载数据失败");
@@ -126,17 +141,64 @@ const handleReset = () => {
   searchForm.costType = "";
   loadData();
 };
-const handleAdd = () => ElMessage.info("新增成本中心功能开发中...");
-const handleEdit = () => ElMessage.info("编辑功能开发中...");
+const dialogVisible = ref(false);
+const form = reactive({
+  id: null,
+  name: "",
+  code: ""
+});
+
+const handleAdd = () => {
+  Object.assign(form, {
+    id: null,
+    name: "",
+    code: ""
+  });
+  dialogVisible.value = true;
+};
+
+const handleEdit = (row) => {
+  Object.assign(form, {
+    id: row.id,
+    name: row.name || row.cost_center_name,
+    code: row.code || row.cost_center_code
+  });
+  dialogVisible.value = true;
+};
+
+const handleSubmit = async () => {
+  try {
+    const submitData = {
+      name: form.name,
+      code: form.code
+    };
+    
+    if (form.id) {
+      await updateCostCenter(form.id, submitData);
+    } else {
+      await createCostCenter(submitData);
+    }
+    
+    dialogVisible.value = false;
+    await loadData();
+  } catch (error) {
+    console.error("提交失败:", error);
+  }
+};
+
 const handleAllocate = () => ElMessage.info("成本分配功能开发中...");
 const handleDetail = () => ElMessage.info("详情功能开发中...");
 
 const handleDelete = async (row) => {
   try {
-    await ElMessageBox.confirm(`确定要删除成本中心"${row.cost_center_name}"吗？`, "确认删除");
-    ElMessage.success("删除成功");
-    loadData();
-  } catch (error) {}
+    await ElMessageBox.confirm(`确定要删除成本中心"${row.name || row.cost_center_name}"吗？`, "确认删除");
+    await deleteCostCenter(row.id);
+    await loadData();
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error("删除失败:", error);
+    }
+  }
 };
 
 const getVarianceClass = (variance) => {

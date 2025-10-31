@@ -81,6 +81,50 @@
         </el-table-column>
       </el-table>
     </div>
+
+    <!-- 新增/编辑对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="form.id ? '编辑资产' : '新增资产'"
+      width="500px"
+    >
+      <el-form
+        :model="form"
+        label-width="100px"
+      >
+        <el-form-item label="资产名称" required>
+          <el-input v-model="form.name" placeholder="请输入资产名称" />
+        </el-form-item>
+        <el-form-item label="资产类别" required>
+          <el-input v-model="form.category" placeholder="请输入资产类别" />
+        </el-form-item>
+        <el-form-item label="购买价格" required>
+          <el-input-number
+            v-model="form.purchase_price"
+            :precision="2"
+            :min="0"
+            placeholder="请输入购买价格"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="购买日期" required>
+          <el-date-picker
+            v-model="form.purchase_date"
+            type="date"
+            placeholder="请选择购买日期"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            style="width: 100%"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmit">确定</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -88,6 +132,12 @@
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus } from "@element-plus/icons-vue";
+import {
+  getFixedAssets,
+  createFixedAsset,
+  updateFixedAsset,
+  deleteFixedAsset
+} from "@/api/finance";
 
 const loading = ref(false);
 const tableData = ref([]);
@@ -100,29 +150,12 @@ const searchForm = reactive({
 const loadData = async () => {
   loading.value = true;
   try {
-    const mockData = [
-      {
-        id: 1,
-        asset_code: "FA-001",
-        asset_name: "办公电脑",
-        category: "电子设备",
-        original_value: 5000,
-        depreciation: 1000,
-        net_value: 4000,
-        status: "active",
-      },
-      {
-        id: 2,
-        asset_code: "FA-002",
-        asset_name: "办公桌",
-        category: "办公家具",
-        original_value: 2000,
-        depreciation: 400,
-        net_value: 1600,
-        status: "active",
-      }
-    ];
-    tableData.value = mockData;
+    const params = {
+      keyword: searchForm.keyword,
+      status: searchForm.status
+    };
+    const response = await getFixedAssets(params);
+    tableData.value = response.data || [];
   } catch (error) {
     console.error("加载数据失败:", error);
     ElMessage.error("加载数据失败");
@@ -137,17 +170,72 @@ const handleReset = () => {
   searchForm.status = "";
   loadData();
 };
-const handleAdd = () => ElMessage.info("新增资产功能开发中...");
-const handleEdit = () => ElMessage.info("编辑功能开发中...");
+const dialogVisible = ref(false);
+const form = reactive({
+  id: null,
+  name: "",
+  category: "",
+  purchase_price: 0,
+  purchase_date: ""
+});
+
+const handleAdd = () => {
+  Object.assign(form, {
+    id: null,
+    name: "",
+    category: "",
+    purchase_price: 0,
+    purchase_date: new Date().toISOString().split('T')[0]
+  });
+  dialogVisible.value = true;
+};
+
+const handleEdit = (row) => {
+  Object.assign(form, {
+    id: row.id,
+    name: row.name || row.asset_name,
+    category: row.category,
+    purchase_price: row.purchase_price || row.original_value,
+    purchase_date: row.purchase_date || row.purchase_date
+  });
+  dialogVisible.value = true;
+};
+
+const handleSubmit = async () => {
+  try {
+    const submitData = {
+      name: form.name,
+      category: form.category,
+      purchase_price: parseFloat(form.purchase_price),
+      purchase_date: form.purchase_date
+    };
+    
+    if (form.id) {
+      await updateFixedAsset(form.id, submitData);
+    } else {
+      await createFixedAsset(submitData);
+    }
+    
+    dialogVisible.value = false;
+    await loadData();
+  } catch (error) {
+    console.error("提交失败:", error);
+  }
+};
+
 const handleDepreciation = () => ElMessage.info("计提折旧功能开发中...");
 const handleMaintenance = () => ElMessage.info("维护功能开发中...");
 
 const handleDelete = async (row) => {
   try {
-    await ElMessageBox.confirm(`确定要删除资产"${row.asset_name}"吗？`, "确认删除");
-    ElMessage.success("删除成功");
-    loadData();
-  } catch (error) {}
+    await ElMessageBox.confirm(`确定要删除资产"${row.name || row.asset_name}"吗？`, "确认删除");
+    await deleteFixedAsset(row.id);
+    await loadData();
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error("删除失败:", error);
+    }
+  }
 };
 
 const getStatusTagType = (status) => {

@@ -87,6 +87,50 @@
         </el-table-column>
       </el-table>
     </div>
+
+    <!-- 新增/编辑对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="form.id ? '编辑应付账' : '新增应付账'"
+      width="500px"
+    >
+      <el-form
+        :model="form"
+        label-width="100px"
+      >
+        <el-form-item label="发票号" required>
+          <el-input v-model="form.invoice_no" placeholder="请输入发票号" />
+        </el-form-item>
+        <el-form-item label="供应商名称" required>
+          <el-input v-model="form.supplier_name" placeholder="请输入供应商名称" />
+        </el-form-item>
+        <el-form-item label="应付金额" required>
+          <el-input-number
+            v-model="form.amount"
+            :precision="2"
+            :min="0"
+            placeholder="请输入应付金额"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="到期日期" required>
+          <el-date-picker
+            v-model="form.due_date"
+            type="date"
+            placeholder="请选择到期日期"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            style="width: 100%"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmit">确定</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -94,6 +138,13 @@
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus, CreditCard } from "@element-plus/icons-vue";
+import {
+  getAccountsPayable,
+  createAccountPayable,
+  updateAccountPayable,
+  deleteAccountPayable,
+  addPayablePayment
+} from "@/api/finance";
 
 const loading = ref(false);
 const tableData = ref([]);
@@ -106,29 +157,12 @@ const searchForm = reactive({
 const loadData = async () => {
   loading.value = true;
   try {
-    const mockData = [
-      {
-        id: 1,
-        invoice_no: "INV-SUP-001",
-        supplier_name: "供应商A",
-        amount: 25000,
-        paid_amount: 10000,
-        balance: 15000,
-        due_date: "2025-11-30",
-        status: "partial",
-      },
-      {
-        id: 2,
-        invoice_no: "INV-SUP-002",
-        supplier_name: "供应商B",
-        amount: 15000,
-        paid_amount: 15000,
-        balance: 0,
-        due_date: "2025-11-15",
-        status: "paid",
-      }
-    ];
-    tableData.value = mockData;
+    const params = {
+      keyword: searchForm.keyword,
+      status: searchForm.status
+    };
+    const response = await getAccountsPayable(params);
+    tableData.value = response.data || [];
   } catch (error) {
     console.error("加载数据失败:", error);
     ElMessage.error("加载数据失败");
@@ -147,16 +181,65 @@ const handleReset = () => {
   loadData();
 };
 
+const dialogVisible = ref(false);
+const form = reactive({
+  id: null,
+  invoice_no: "",
+  supplier_name: "",
+  amount: 0,
+  due_date: ""
+});
+
 const handleAdd = () => {
-  ElMessage.info("新增应付功能开发中...");
+  Object.assign(form, {
+    id: null,
+    invoice_no: "",
+    supplier_name: "",
+    amount: 0,
+    due_date: ""
+  });
+  dialogVisible.value = true;
 };
 
-const handleEdit = () => {
-  ElMessage.info("编辑功能开发中...");
+const handleEdit = (row) => {
+  Object.assign(form, {
+    id: row.id,
+    invoice_no: row.invoice_no,
+    supplier_name: row.supplier_name,
+    amount: row.amount,
+    due_date: row.due_date
+  });
+  dialogVisible.value = true;
 };
 
-const handlePay = () => {
+const handleSubmit = async () => {
+  try {
+    const submitData = {
+      invoice_no: form.invoice_no,
+      supplier_name: form.supplier_name,
+      amount: form.amount,
+      due_date: form.due_date
+    };
+    
+    if (form.id) {
+      await updateAccountPayable(form.id, submitData);
+    } else {
+      await createAccountPayable(submitData);
+    }
+    
+    dialogVisible.value = false;
+    await loadData();
+  } catch (error) {
+    console.error("提交失败:", error);
+  }
+};
+
+const currentPayableId = ref(null);
+
+const handlePay = (row) => {
+  currentPayableId.value = row.id;
   ElMessage.info("付款功能开发中...");
+  // TODO: 实现付款功能
 };
 
 const handleBatchPay = () => {
@@ -174,10 +257,12 @@ const handleDelete = async (row) => {
         type: "warning",
       }
     );
-    ElMessage.success("删除成功");
-    loadData();
+    await deleteAccountPayable(row.id);
+    await loadData();
   } catch (error) {
-    // 用户取消删除
+    if (error !== 'cancel') {
+      console.error("删除失败:", error);
+    }
   }
 };
 

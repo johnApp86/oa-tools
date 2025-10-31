@@ -250,6 +250,13 @@
 import { ref, reactive, onMounted, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus, CreditCard, Download } from "@element-plus/icons-vue";
+import {
+  getAccountsReceivable,
+  createAccountReceivable,
+  updateAccountReceivable,
+  deleteAccountReceivable,
+  addReceivablePayment
+} from "@/api/finance";
 
 // 响应式数据
 const loading = ref(false);
@@ -316,44 +323,21 @@ const dialogTitle = computed(() => (form.id ? "编辑应收账" : "新增应收�
 const loadData = async () => {
   loading.value = true;
   try {
-    // 模拟数据
-    const mockData = [
-      {
-        id: 1,
-        invoice_no: "INV-2025-001",
-        customer_name: "ABC公司",
-        amount: 50000,
-        received_amount: 20000,
-        balance: 30000,
-        due_date: "2025-11-30",
-        status: "partial",
-        created_at: "2025-10-30 17:00:00",
-      },
-      {
-        id: 2,
-        invoice_no: "INV-2025-002",
-        customer_name: "XYZ公司",
-        amount: 30000,
-        received_amount: 30000,
-        balance: 0,
-        due_date: "2025-11-15",
-        status: "paid",
-        created_at: "2025-10-30 17:00:00",
-      },
-      {
-        id: 3,
-        invoice_no: "INV-2025-003",
-        customer_name: "DEF公司",
-        amount: 80000,
-        received_amount: 0,
-        balance: 80000,
-        due_date: "2025-10-15",
-        status: "overdue",
-        created_at: "2025-10-30 17:00:00",
-      }
-    ];
-    tableData.value = mockData;
-    pagination.total = mockData.length;
+    const params = {
+      page: pagination.page,
+      limit: pagination.limit,
+      keyword: searchForm.keyword,
+      status: searchForm.status
+    };
+    
+    if (searchForm.dateRange && searchForm.dateRange.length === 2) {
+      params.date_start = searchForm.dateRange[0];
+      params.date_end = searchForm.dateRange[1];
+    }
+    
+    const response = await getAccountsReceivable(params);
+    tableData.value = response.data || [];
+    pagination.total = response.total || 0;
   } catch (error) {
     console.error("加载数据失败:", error);
     ElMessage.error("加载数据失败");
@@ -398,10 +382,13 @@ const handleEdit = (row) => {
   dialogVisible.value = true;
 };
 
+const currentReceivableId = ref(null);
+
 const handleReceive = (row) => {
+  currentReceivableId.value = row.id;
   Object.assign(receiveForm, {
-    amount: row.balance,
-    maxAmount: row.balance,
+    amount: row.balance || row.amount,
+    maxAmount: row.balance || row.amount,
     payment_method: "",
     receive_date: new Date().toISOString().split('T')[0],
     remark: "",
@@ -428,10 +415,12 @@ const handleDelete = async (row) => {
         type: "warning",
       }
     );
-    ElMessage.success("删除成功");
-    loadData();
+    await deleteAccountReceivable(row.id);
+    await loadData();
   } catch (error) {
-    // 用户取消删除
+    if (error !== 'cancel') {
+      console.error("删除失败:", error);
+    }
   }
 };
 
@@ -450,15 +439,24 @@ const handleSubmit = async () => {
     await formRef.value.validate();
     submitLoading.value = true;
     
-    // 模拟提交
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const submitData = {
+      invoice_no: form.invoice_no,
+      customer_name: form.customer_name,
+      amount: form.amount,
+      due_date: form.due_date,
+      remark: form.remark
+    };
     
-    ElMessage.success(form.id ? "更新成功" : "创建成功");
+    if (form.id) {
+      await updateAccountReceivable(form.id, submitData);
+    } else {
+      await createAccountReceivable(submitData);
+    }
+    
     dialogVisible.value = false;
-    loadData();
+    await loadData();
   } catch (error) {
     console.error("提交失败:", error);
-    ElMessage.error("操作失败");
   } finally {
     submitLoading.value = false;
   }
@@ -471,15 +469,24 @@ const handleReceiveSubmit = async () => {
     await receiveFormRef.value.validate();
     receiveLoading.value = true;
     
-    // 模拟提交
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    if (!currentReceivableId.value) {
+      ElMessage.error("未找到对应的应收账记录");
+      return;
+    }
     
-    ElMessage.success("收款成功");
+    const paymentData = {
+      amount: receiveForm.amount,
+      payment_date: receiveForm.receive_date,
+      payment_method: receiveForm.payment_method,
+      notes: receiveForm.remark
+    };
+    
+    await addReceivablePayment(currentReceivableId.value, paymentData);
     receiveDialogVisible.value = false;
-    loadData();
+    currentReceivableId.value = null;
+    await loadData();
   } catch (error) {
     console.error("收款失败:", error);
-    ElMessage.error("收款失败");
   } finally {
     receiveLoading.value = false;
   }

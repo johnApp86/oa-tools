@@ -76,6 +76,13 @@
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus } from "@element-plus/icons-vue";
+import {
+  getCashTransactions,
+  createCashTransaction,
+  updateCashTransaction,
+  deleteCashTransaction,
+  getCashBalances
+} from "@/api/finance";
 
 const loading = ref(false);
 const tableData = ref([]);
@@ -88,27 +95,12 @@ const searchForm = reactive({
 const loadData = async () => {
   loading.value = true;
   try {
-    const mockData = [
-      {
-        id: 1,
-        account_code: "CASH-001",
-        account_name: "现金账户",
-        account_type: "cash",
-        bank_name: "-",
-        balance: 10000,
-        status: 1,
-      },
-      {
-        id: 2,
-        account_code: "BANK-001",
-        account_name: "工商银行",
-        account_type: "bank",
-        bank_name: "中国工商银行",
-        balance: 500000,
-        status: 1,
-      }
-    ];
-    tableData.value = mockData;
+    const params = {
+      keyword: searchForm.keyword,
+      account: searchForm.accountType
+    };
+    const response = await getCashBalances(params);
+    tableData.value = response.data || [];
   } catch (error) {
     console.error("加载数据失败:", error);
     ElMessage.error("加载数据失败");
@@ -123,6 +115,8 @@ const handleReset = () => {
   searchForm.accountType = "";
   loadData();
 };
+// 注意：现金管理页面显示的是账户余额，不是交易记录
+// 如果需要编辑/删除账户，需要另外的接口
 const handleAdd = () => ElMessage.info("新增账户功能开发中...");
 const handleEdit = () => ElMessage.info("编辑功能开发中...");
 const handleTransfer = () => ElMessage.info("资金调拨功能开发中...");
@@ -130,10 +124,15 @@ const handleTransaction = () => ElMessage.info("交易记录功能开发中...")
 
 const handleDelete = async (row) => {
   try {
-    await ElMessageBox.confirm(`确定要删除账户"${row.account_name}"吗？`, "确认删除");
-    ElMessage.success("删除成功");
-    loadData();
-  } catch (error) {}
+    await ElMessageBox.confirm(`确定要删除账户"${row.account_name || row.name}"吗？`, "确认删除");
+    ElMessage.info("删除账户功能开发中...");
+    // await deleteAccount(row.id);
+    // await loadData();
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error("删除失败:", error);
+    }
+  }
 };
 
 const getBalanceClass = (balance) => {

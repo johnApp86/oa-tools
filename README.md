@@ -194,13 +194,16 @@ npm start
 - `GET /api/hr/recruitment/positions` - 获取招聘职位列表
 - `POST /api/hr/recruitment/positions` - 创建招聘职位
 - `DELETE /api/hr/recruitment/positions/:id` - 删除招聘职位
+- `GET /api/hr/recruitment/resumes` - 获取简历列表
+- `POST /api/hr/recruitment/resumes` - 提交简历
 - `GET /api/hr/onboarding/applications` - 获取入职申请列表
 - `POST /api/hr/onboarding/applications` - 创建入职申请
-- `GET /api/hr/offboarding/applications` - 获取离职申请列表
-- `POST /api/hr/offboarding/applications` - 创建离职申请
+- `GET /api/hr/onboarding/offboarding/applications` - 获取离职申请列表
+- `POST /api/hr/onboarding/offboarding/applications` - 创建离职申请
 - `GET /api/hr/attendance/records` - 获取考勤记录
-- `POST /api/hr/attendance/checkin` - 签到
-- `POST /api/hr/attendance/checkout` - 签退
+- `POST /api/hr/attendance/checkin` - 签到/签退（通过 type 参数区分）
+- `GET /api/hr/leave/applications` - 获取请假申请列表
+- `POST /api/hr/leave/applications` - 创建请假申请
 - `GET /api/hr/salary/records` - 获取薪酬记录
 - `POST /api/hr/salary/records` - 创建薪酬记录
 - `DELETE /api/hr/salary/records/:id` - 删除薪酬记录
@@ -209,6 +212,55 @@ npm start
 - `DELETE /api/hr/employee/files/:id` - 删除员工档案
 - `GET /api/hr/reports/attendance` - 获取考勤报表
 - `GET /api/hr/reports/salary` - 获取薪酬报表
+
+### 财务管理
+
+- `GET /api/finance/general-ledger/accounts` - 获取总账科目列表
+- `POST /api/finance/general-ledger/accounts` - 创建总账科目
+- `GET /api/finance/general-ledger/vouchers` - 获取总账凭证列表
+- `POST /api/finance/general-ledger/vouchers` - 创建总账凭证
+- `GET /api/finance/general-ledger/balances` - 获取总账余额
+- `GET /api/finance/accounts-receivable` - 获取应收账款列表
+- `POST /api/finance/accounts-receivable` - 创建应收账款
+- `PUT /api/finance/accounts-receivable/:id` - 更新应收账款
+- `DELETE /api/finance/accounts-receivable/:id` - 删除应收账款
+- `POST /api/finance/accounts-receivable/:id/payments` - 添加收款记录
+- `GET /api/finance/accounts-payable` - 获取应付账款列表
+- `POST /api/finance/accounts-payable` - 创建应付账款
+- `PUT /api/finance/accounts-payable/:id` - 更新应付账款
+- `DELETE /api/finance/accounts-payable/:id` - 删除应付账款
+- `POST /api/finance/accounts-payable/:id/payments` - 添加付款记录
+- `GET /api/finance/fixed-assets` - 获取固定资产列表
+- `POST /api/finance/fixed-assets` - 创建固定资产
+- `PUT /api/finance/fixed-assets/:id` - 更新固定资产
+- `DELETE /api/finance/fixed-assets/:id` - 删除固定资产
+- `POST /api/finance/fixed-assets/:id/depreciation` - 计提折旧
+- `GET /api/finance/cash-management/transactions` - 获取资金流水
+- `POST /api/finance/cash-management/transactions` - 创建资金流水
+- `GET /api/finance/cash-management/balances` - 获取账户余额
+- `POST /api/finance/cash-management/transfer` - 资金调拨
+- `GET /api/finance/cost-accounting/cost-centers` - 获取成本中心列表
+- `POST /api/finance/cost-accounting/cost-centers` - 创建成本中心
+- `GET /api/finance/cost-accounting/allocations` - 获取成本分配
+- `POST /api/finance/cost-accounting/allocations` - 创建成本分配
+- `GET /api/finance/budgeting` - 获取预算列表
+- `POST /api/finance/budgeting` - 创建预算
+- `PUT /api/finance/budgeting/:id` - 更新预算
+- `DELETE /api/finance/budgeting/:id` - 删除预算
+- `GET /api/finance/budgeting/:id/execution` - 获取预算执行情况
+- `GET /api/finance/financial-reporting/balance-sheet` - 获取资产负债表
+- `GET /api/finance/financial-reporting/income-statement` - 获取利润表
+- `GET /api/finance/financial-reporting/cash-flow` - 获取现金流量表
+- `GET /api/finance/financial-reporting/financial-ratios` - 获取财务指标
+- `GET /api/finance/tax-management/declarations` - 获取税务申报记录
+- `POST /api/finance/tax-management/declarations` - 创建税务申报
+- `PUT /api/finance/tax-management/:id` - 更新税务申报
+- `DELETE /api/finance/tax-management/:id` - 删除税务申报
+- `GET /api/finance/expense-management/applications` - 获取费用申请列表
+- `POST /api/finance/expense-management/applications` - 创建费用申请
+- `PUT /api/finance/expense-management/applications/:id/approve` - 审批费用申请
+- `PUT /api/finance/expense-management/applications/:id/reject` - 拒绝费用申请
+- `GET /api/finance/expense-management/statistics` - 获取费用统计
 
 ## 数据库设计
 

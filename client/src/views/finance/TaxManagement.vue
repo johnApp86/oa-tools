@@ -78,6 +78,40 @@
         </el-table-column>
       </el-table>
     </div>
+
+    <!-- 新增/编辑对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="form.id ? '编辑税务申报' : '新增税务申报'"
+      width="500px"
+    >
+      <el-form
+        :model="form"
+        label-width="100px"
+      >
+        <el-form-item label="税种" required>
+          <el-input v-model="form.tax_type" placeholder="请输入税种" />
+        </el-form-item>
+        <el-form-item label="申报期间" required>
+          <el-input v-model="form.period" placeholder="请输入申报期间，如：2025-10" />
+        </el-form-item>
+        <el-form-item label="税额" required>
+          <el-input-number
+            v-model="form.amount"
+            :precision="2"
+            :min="0"
+            placeholder="请输入税额"
+            style="width: 100%"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmit">确定</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -85,6 +119,12 @@
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus } from "@element-plus/icons-vue";
+import {
+  getTaxDeclarations,
+  createTaxDeclaration,
+  updateTaxDeclaration,
+  deleteTaxDeclaration
+} from "@/api/finance";
 
 const loading = ref(false);
 const tableData = ref([]);
@@ -97,31 +137,12 @@ const searchForm = reactive({
 const loadData = async () => {
   loading.value = true;
   try {
-    const mockData = [
-      {
-        id: 1,
-        tax_code: "TAX-001",
-        tax_name: "增值税",
-        tax_type: "vat",
-        taxable_amount: 100000,
-        tax_rate: 13,
-        tax_amount: 13000,
-        due_date: "2025-11-15",
-        status: "pending",
-      },
-      {
-        id: 2,
-        tax_code: "TAX-002",
-        tax_name: "企业所得税",
-        tax_type: "corporate_income",
-        taxable_amount: 500000,
-        tax_rate: 25,
-        tax_amount: 125000,
-        due_date: "2025-12-31",
-        status: "declared",
-      }
-    ];
-    tableData.value = mockData;
+    const params = {
+      keyword: searchForm.keyword,
+      tax_type: searchForm.taxType
+    };
+    const response = await getTaxDeclarations(params);
+    tableData.value = response.data || [];
   } catch (error) {
     console.error("加载数据失败:", error);
     ElMessage.error("加载数据失败");
@@ -136,17 +157,68 @@ const handleReset = () => {
   searchForm.taxType = "";
   loadData();
 };
-const handleAdd = () => ElMessage.info("新增税务功能开发中...");
-const handleEdit = () => ElMessage.info("编辑功能开发中...");
+const dialogVisible = ref(false);
+const form = reactive({
+  id: null,
+  tax_type: "",
+  period: "",
+  amount: 0
+});
+
+const handleAdd = () => {
+  Object.assign(form, {
+    id: null,
+    tax_type: "",
+    period: "",
+    amount: 0
+  });
+  dialogVisible.value = true;
+};
+
+const handleEdit = (row) => {
+  Object.assign(form, {
+    id: row.id,
+    tax_type: row.tax_type,
+    period: row.period,
+    amount: row.amount || row.tax_amount
+  });
+  dialogVisible.value = true;
+};
+
+const handleSubmit = async () => {
+  try {
+    const submitData = {
+      tax_type: form.tax_type,
+      period: form.period,
+      amount: parseFloat(form.amount)
+    };
+    
+    if (form.id) {
+      await updateTaxDeclaration(form.id, submitData);
+    } else {
+      await createTaxDeclaration(submitData);
+    }
+    
+    dialogVisible.value = false;
+    await loadData();
+  } catch (error) {
+    console.error("提交失败:", error);
+  }
+};
+
 const handleCalculate = () => ElMessage.info("计算税款功能开发中...");
 const handleDeclare = () => ElMessage.info("申报功能开发中...");
 
 const handleDelete = async (row) => {
   try {
-    await ElMessageBox.confirm(`确定要删除税务"${row.tax_name}"吗？`, "确认删除");
-    ElMessage.success("删除成功");
-    loadData();
-  } catch (error) {}
+    await ElMessageBox.confirm(`确定要删除税务"${row.tax_name || row.tax_type}"吗？`, "确认删除");
+    await deleteTaxDeclaration(row.id);
+    await loadData();
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error("删除失败:", error);
+    }
+  }
 };
 
 const getStatusTagType = (status) => {

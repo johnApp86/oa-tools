@@ -16,10 +16,17 @@
     "reset-db": "bat\\reset-db.bat",
     "menu": "bat\\menu.bat"
   },
-  "keywords": ["vue3", "express", "sqlite3", "oa", "management"],
+  "keywords": [
+    "vue3",
+    "express",
+    "sqlite3",
+    "oa",
+    "management"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "axios": "^1.13.1",
     "concurrently": "^8.2.2"
   }
 }

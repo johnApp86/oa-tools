@@ -20,7 +20,7 @@ export const getOrganizationList = (params) => {
 // 获取所有组织
 export const getAllOrganizations = () => {
   return request({
-    url: '/organizations/all',
+    url: '/system/organizations/all',
     method: 'get'
   })
 }

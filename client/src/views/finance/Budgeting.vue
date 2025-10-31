@@ -79,6 +79,46 @@
         </el-table-column>
       </el-table>
     </div>
+
+    <!-- 新增/编辑对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="form.id ? '编辑预算' : '新增预算'"
+      width="500px"
+    >
+      <el-form
+        :model="form"
+        label-width="100px"
+      >
+        <el-form-item label="预算名称" required>
+          <el-input v-model="form.name" placeholder="请输入预算名称" />
+        </el-form-item>
+        <el-form-item label="预算年度" required>
+          <el-input-number
+            v-model="form.year"
+            :min="2020"
+            :max="2100"
+            placeholder="请输入预算年度"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="预算金额" required>
+          <el-input-number
+            v-model="form.amount"
+            :precision="2"
+            :min="0"
+            placeholder="请输入预算金额"
+            style="width: 100%"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmit">确定</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -86,6 +126,12 @@
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus, Check } from "@element-plus/icons-vue";
+import {
+  getBudgets,
+  createBudget,
+  updateBudget,
+  deleteBudget
+} from "@/api/finance";
 
 const loading = ref(false);
 const tableData = ref([]);
@@ -98,31 +144,12 @@ const searchForm = reactive({
 const loadData = async () => {
   loading.value = true;
   try {
-    const mockData = [
-      {
-        id: 1,
-        budget_code: "BUD-2025-001",
-        budget_name: "办公用品预算",
-        department: "行政部",
-        budget_year: "2025",
-        budget_amount: 50000,
-        used_amount: 15000,
-        remaining_amount: 35000,
-        status: "approved",
-      },
-      {
-        id: 2,
-        budget_code: "BUD-2025-002",
-        budget_name: "设备采购预算",
-        department: "技术部",
-        budget_year: "2025",
-        budget_amount: 200000,
-        used_amount: 80000,
-        remaining_amount: 120000,
-        status: "approved",
-      }
-    ];
-    tableData.value = mockData;
+    const params = {
+      keyword: searchForm.keyword,
+      year: searchForm.year
+    };
+    const response = await getBudgets(params);
+    tableData.value = response.data || [];
   } catch (error) {
     console.error("加载数据失败:", error);
     ElMessage.error("加载数据失败");
@@ -137,17 +164,68 @@ const handleReset = () => {
   searchForm.year = "";
   loadData();
 };
-const handleAdd = () => ElMessage.info("新增预算功能开发中...");
-const handleEdit = () => ElMessage.info("编辑功能开发中...");
+const dialogVisible = ref(false);
+const form = reactive({
+  id: null,
+  name: "",
+  year: "",
+  amount: 0
+});
+
+const handleAdd = () => {
+  Object.assign(form, {
+    id: null,
+    name: "",
+    year: new Date().getFullYear().toString(),
+    amount: 0
+  });
+  dialogVisible.value = true;
+};
+
+const handleEdit = (row) => {
+  Object.assign(form, {
+    id: row.id,
+    name: row.name || row.budget_name,
+    year: row.year || row.budget_year,
+    amount: row.amount || row.budget_amount
+  });
+  dialogVisible.value = true;
+};
+
+const handleSubmit = async () => {
+  try {
+    const submitData = {
+      name: form.name,
+      year: parseInt(form.year),
+      amount: parseFloat(form.amount)
+    };
+    
+    if (form.id) {
+      await updateBudget(form.id, submitData);
+    } else {
+      await createBudget(submitData);
+    }
+    
+    dialogVisible.value = false;
+    await loadData();
+  } catch (error) {
+    console.error("提交失败:", error);
+  }
+};
+
 const handleApprove = () => ElMessage.info("预算审批功能开发中...");
 const handleDetail = () => ElMessage.info("详情功能开发中...");
 
 const handleDelete = async (row) => {
   try {
-    await ElMessageBox.confirm(`确定要删除预算"${row.budget_name}"吗？`, "确认删除");
-    ElMessage.success("删除成功");
-    loadData();
-  } catch (error) {}
+    await ElMessageBox.confirm(`确定要删除预算"${row.name || row.budget_name}"吗？`, "确认删除");
+    await deleteBudget(row.id);
+    await loadData();
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error("删除失败:", error);
+    }
+  }
 };
 
 const getStatusTagType = (status) => {

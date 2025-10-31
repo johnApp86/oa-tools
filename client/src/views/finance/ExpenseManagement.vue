@@ -74,6 +74,45 @@
         </el-table-column>
       </el-table>
     </div>
+
+    <!-- 新增/编辑对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="form.id ? '编辑费用申请' : '新增费用申请'"
+      width="500px"
+    >
+      <el-form
+        :model="form"
+        label-width="100px"
+      >
+        <el-form-item label="费用类别" required>
+          <el-input v-model="form.category" placeholder="请输入费用类别" />
+        </el-form-item>
+        <el-form-item label="费用金额" required>
+          <el-input-number
+            v-model="form.amount"
+            :precision="2"
+            :min="0"
+            placeholder="请输入费用金额"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="费用描述" required>
+          <el-input
+            v-model="form.description"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入费用描述"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmit">确定</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -81,6 +120,12 @@
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus, Check } from "@element-plus/icons-vue";
+import {
+  getExpenseApplications,
+  createExpenseApplication,
+  approveExpenseApplication,
+  rejectExpenseApplication
+} from "@/api/finance";
 
 const loading = ref(false);
 const tableData = ref([]);
@@ -93,31 +138,12 @@ const searchForm = reactive({
 const loadData = async () => {
   loading.value = true;
   try {
-    const mockData = [
-      {
-        id: 1,
-        expense_code: "EXP-001",
-        expense_name: "出差住宿费",
-        expense_type: "travel",
-        applicant: "张三",
-        amount: 2000,
-        approved_amount: 1800,
-        apply_date: "2025-10-25",
-        status: "approved",
-      },
-      {
-        id: 2,
-        expense_code: "EXP-002",
-        expense_name: "办公用品采购",
-        expense_type: "office",
-        applicant: "李四",
-        amount: 500,
-        approved_amount: 0,
-        apply_date: "2025-10-28",
-        status: "pending",
-      }
-    ];
-    tableData.value = mockData;
+    const params = {
+      keyword: searchForm.keyword,
+      expense_type: searchForm.expenseType
+    };
+    const response = await getExpenseApplications(params);
+    tableData.value = response.data || [];
   } catch (error) {
     console.error("加载数据失败:", error);
     ElMessage.error("加载数据失败");
@@ -132,17 +158,87 @@ const handleReset = () => {
   searchForm.expenseType = "";
   loadData();
 };
-const handleAdd = () => ElMessage.info("新增费用功能开发中...");
-const handleEdit = () => ElMessage.info("编辑功能开发中...");
-const handleApprove = () => ElMessage.info("费用审批功能开发中...");
+const dialogVisible = ref(false);
+const form = reactive({
+  id: null,
+  category: "",
+  amount: 0,
+  description: ""
+});
+
+const handleAdd = () => {
+  Object.assign(form, {
+    id: null,
+    category: "",
+    amount: 0,
+    description: ""
+  });
+  dialogVisible.value = true;
+};
+
+const handleEdit = (row) => {
+  Object.assign(form, {
+    id: row.id,
+    category: row.category || row.expense_type,
+    amount: row.amount,
+    description: row.description || row.expense_name
+  });
+  dialogVisible.value = true;
+};
+
+const handleSubmit = async () => {
+  try {
+    const submitData = {
+      category: form.category,
+      amount: parseFloat(form.amount),
+      description: form.description
+    };
+    
+    if (form.id) {
+      ElMessage.info("更新费用申请功能开发中...");
+      // TODO: 添加更新接口
+    } else {
+      await createExpenseApplication(submitData);
+      dialogVisible.value = false;
+      await loadData();
+    }
+  } catch (error) {
+    console.error("提交失败:", error);
+  }
+};
+
+const handleApprove = async (row) => {
+  try {
+    await approveExpenseApplication(row.id);
+    await loadData();
+  } catch (error) {
+    console.error("审批失败:", error);
+  }
+};
+
+const handleReject = async (row) => {
+  try {
+    await rejectExpenseApplication(row.id);
+    await loadData();
+  } catch (error) {
+    console.error("拒绝失败:", error);
+  }
+};
+
 const handleDetail = () => ElMessage.info("详情功能开发中...");
 
 const handleDelete = async (row) => {
   try {
-    await ElMessageBox.confirm(`确定要删除费用"${row.expense_name}"吗？`, "确认删除");
-    ElMessage.success("删除成功");
-    loadData();
-  } catch (error) {}
+    await ElMessageBox.confirm(`确定要删除费用"${row.description || row.expense_name}"吗？`, "确认删除");
+    ElMessage.info("删除费用申请功能开发中...");
+    // TODO: 添加删除接口
+    // await deleteExpenseApplication(row.id);
+    // await loadData();
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error("删除失败:", error);
+    }
+  }
 };
 
 const getStatusTagType = (status) => {

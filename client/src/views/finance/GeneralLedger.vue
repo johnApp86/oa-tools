@@ -186,6 +186,12 @@
 import { ref, reactive, onMounted, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus, Upload, Download } from "@element-plus/icons-vue";
+import { 
+  getGeneralLedgerAccounts, 
+  createGeneralLedgerAccount,
+  updateGeneralLedgerAccount,
+  deleteGeneralLedgerAccount
+} from "@/api/finance";
 
 // 响应式数据
 const loading = ref(false);
@@ -235,49 +241,28 @@ const dialogTitle = computed(() => {
 const loadData = async () => {
   loading.value = true;
   try {
-    // 模拟数据
-    const mockData = [
-      {
-        id: 1,
-        code: "1001",
-        name: "库存现金",
-        type: "asset",
-        parentId: 0,
-        balance: 10000,
-        debit_balance: 10000,
-        credit_balance: 0,
-        status: 1,
-        created_at: "2025-10-30 17:00:00",
-        children: []
-      },
-      {
-        id: 2,
-        code: "1002",
-        name: "银行存款",
-        type: "asset",
-        parentId: 0,
-        balance: 500000,
-        debit_balance: 500000,
-        credit_balance: 0,
-        status: 1,
-        created_at: "2025-10-30 17:00:00",
-        children: []
-      },
-      {
-        id: 3,
-        code: "2001",
-        name: "短期借款",
-        type: "liability",
-        parentId: 0,
-        balance: 200000,
-        debit_balance: 0,
-        credit_balance: 200000,
-        status: 1,
-        created_at: "2025-10-30 17:00:00",
-        children: []
-      }
-    ];
-    tableData.value = mockData;
+    const params = {
+      page: 1,
+      limit: 1000, // 获取所有数据
+      keyword: searchForm.keyword || '',
+      type: searchForm.accountType || ''
+    };
+    
+    const response = await getGeneralLedgerAccounts(params);
+    
+    // 转换数据格式
+    const accounts = response.data || [];
+    
+    // 将后端数据格式转换为前端需要的格式
+    tableData.value = accounts.map(account => ({
+      ...account,
+      parentId: account.parent_id || 0,
+      // 余额字段，如果后端没有返回，使用默认值0
+      balance: 0,
+      debit_balance: 0,
+      credit_balance: 0,
+      children: []
+    }));
   } catch (error) {
     console.error("加载数据失败:", error);
     ElMessage.error("加载数据失败");
@@ -288,27 +273,30 @@ const loadData = async () => {
 
 const loadAccountTree = async () => {
   try {
-    // 模拟数据
-    accountTree.value = [
-      {
-        id: 1,
-        name: "资产",
-        children: [
-          { id: 11, name: "流动资产" },
-          { id: 12, name: "非流动资产" }
-        ]
-      },
-      {
-        id: 2,
-        name: "负债",
-        children: [
-          { id: 21, name: "流动负债" },
-          { id: 22, name: "非流动负债" }
-        ]
-      }
-    ];
+    // 从账户列表构建树形结构
+    const response = await getGeneralLedgerAccounts({ page: 1, limit: 1000 });
+    const accounts = response.data || [];
+    
+    // 构建树形结构
+    const buildTree = (items, parentId = 0) => {
+      return items
+        .filter(item => (item.parent_id || 0) === parentId)
+        .map(item => ({
+          id: item.id,
+          name: `${item.code} - ${item.name}`,
+          children: buildTree(items, item.id)
+        }));
+    };
+    
+    accountTree.value = buildTree(accounts);
+    
+    // 如果没有数据，显示空数组
+    if (accountTree.value.length === 0) {
+      accountTree.value = [];
+    }
   } catch (error) {
     console.error("加载科目树失败:", error);
+    accountTree.value = [];
   }
 };
 
@@ -378,9 +366,12 @@ const handleDelete = async (row) => {
         type: "warning",
       }
     );
-    ElMessage.success("删除成功");
-    loadData();
+    await deleteGeneralLedgerAccount(row.id);
+    await loadData();
   } catch (error) {
+    if (error !== 'cancel') {
+      console.error("删除失败:", error);
+    }
     // 用户取消删除
   }
 };
@@ -400,15 +391,30 @@ const handleSubmit = async () => {
     await formRef.value.validate();
     submitLoading.value = true;
     
-    // 模拟提交
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // 准备提交数据
+    const submitData = {
+      code: form.code,
+      name: form.name,
+      type: form.type,
+      parent_id: form.parentId || 0,
+      level: form.parentId ? 2 : 1,
+      status: form.status || 1
+    };
     
-    ElMessage.success(form.id ? "更新成功" : "创建成功");
-    dialogVisible.value = false;
-    loadData();
+    if (form.id) {
+      // 更新逻辑
+      await updateGeneralLedgerAccount(form.id, submitData);
+      dialogVisible.value = false;
+      await loadData();
+    } else {
+      // 创建新科目
+      await createGeneralLedgerAccount(submitData);
+      dialogVisible.value = false;
+      await loadData();
+    }
   } catch (error) {
     console.error("提交失败:", error);
-    ElMessage.error("操作失败");
+    // ElMessage 会在 API 拦截器中自动显示，这里不需要再次显示
   } finally {
     submitLoading.value = false;
   }
