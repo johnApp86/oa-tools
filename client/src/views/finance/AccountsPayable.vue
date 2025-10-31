@@ -64,7 +64,11 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="due_date" label="到期日期" width="120" show-overflow-tooltip/>
+        <el-table-column prop="due_date" label="到期日期" width="120" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ formatDate(row.due_date) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="100" show-overflow-tooltip>
           <template #default="{ row }">
             <el-tag :type="getStatusTagType(row.status)">
@@ -267,6 +271,11 @@ const handleDelete = async (row) => {
 };
 
 const getStatusTagType = (status) => {
+  // 处理数字状态（1=已付款，0=未付款）
+  if (typeof status === 'number') {
+    return status === 1 ? "success" : "info";
+  }
+  // 处理字符串状态
   const statusMap = {
     unpaid: "info",
     partial: "warning",
@@ -277,13 +286,18 @@ const getStatusTagType = (status) => {
 };
 
 const getStatusLabel = (status) => {
+  // 处理数字状态（1=已付款，0=未付款）
+  if (typeof status === 'number') {
+    return status === 1 ? "已付款" : "未付款";
+  }
+  // 处理字符串状态
   const statusMap = {
     unpaid: "未付款",
     partial: "部分付款",
     paid: "已付款",
     overdue: "逾期"
   };
-  return statusMap[status] || status;
+  return statusMap[status] || status || "未知";
 };
 
 const getBalanceClass = (balance) => {
@@ -291,11 +305,24 @@ const getBalanceClass = (balance) => {
 };
 
 const formatCurrency = (amount) => {
-  if (amount === null || amount === undefined) return "0.00";
+  if (!amount && amount !== 0) return "0.00";
   return Number(amount).toLocaleString("zh-CN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
+};
+
+const formatDate = (date) => {
+  if (!date) return "-";
+  // 如果是 YYYY-MM-DD 格式，直接返回
+  if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}/)) {
+    return date.split('T')[0];
+  }
+  // 如果是日期对象，格式化
+  if (date instanceof Date) {
+    return date.toISOString().split('T')[0];
+  }
+  return date;
 };
 
 onMounted(() => {

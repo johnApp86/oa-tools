@@ -239,16 +239,31 @@ const handleDelete = async (row) => {
 };
 
 const getStatusTagType = (status) => {
+  // 处理数字状态（1=在用，0=闲置，2=报废）
+  if (typeof status === 'number') {
+    if (status === 1) return "success";
+    if (status === 2) return "danger";
+    return "warning";
+  }
+  // 处理字符串状态
   const statusMap = { active: "success", idle: "warning", scrapped: "danger" };
   return statusMap[status] || "info";
 };
 
 const getStatusLabel = (status) => {
+  // 处理数字状态（1=在用，0=闲置，2=报废）
+  if (typeof status === 'number') {
+    if (status === 1) return "在用";
+    if (status === 2) return "报废";
+    return "闲置";
+  }
+  // 处理字符串状态
   const statusMap = { active: "在用", idle: "闲置", scrapped: "报废" };
-  return statusMap[status] || status;
+  return statusMap[status] || status || "未知";
 };
 
 const formatCurrency = (amount) => {
+  if (!amount && amount !== 0) return "0.00";
   return Number(amount).toLocaleString("zh-CN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2

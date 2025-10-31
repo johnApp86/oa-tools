@@ -140,6 +140,7 @@ const getBalanceClass = (balance) => {
 };
 
 const formatCurrency = (amount) => {
+  if (!amount && amount !== 0) return "0.00";
   return Number(amount).toLocaleString("zh-CN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2

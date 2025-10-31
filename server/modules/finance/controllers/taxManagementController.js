@@ -71,52 +71,79 @@ exports.getTaxDeclarations = (req, res) => {
 exports.createTaxDeclaration = [
   body('tax_type').notEmpty().withMessage('税种不能为空'),
   body('period').notEmpty().withMessage('申报期间不能为空'),
-  body('amount').isNumeric().withMessage('税额必须是数字'),
+  body('amount').custom((value) => {
+    if (value === undefined || value === null || value === '') {
+      throw new Error('税额不能为空');
+    }
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    if (isNaN(numValue) || numValue <= 0) {
+      throw new Error('税额必须是大于0的数字');
+    }
+    return true;
+  }).withMessage('税额必须是数字'),
   (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ message: errors.array()[0].msg });
     }
 
-    const { tax_type, period, amount, declaration_date, due_date, description, status = 1 } = req.body;
+    try {
+      const { tax_type, period, amount, declaration_date, due_date, description, status = 1 } = req.body;
 
-    db.run(
-      `INSERT INTO tax_declarations (tax_type, period, amount, declaration_date, due_date, description, status, created_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-      [tax_type, period, amount, declaration_date, due_date, description, status],
-      function(err) {
-        if (err) {
-          return res.status(500).json({ message: '创建失败' });
+      // 确保amount是数字类型
+      const amountValue = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
+
+      db.run(
+        `INSERT INTO tax_declarations (tax_type, period, amount, declaration_date, due_date, description, status, created_at) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [tax_type, period, amountValue, declaration_date || null, due_date || null, description || null, status],
+        function(err) {
+          if (err) {
+            console.error('创建税务申报失败:', err);
+            return res.status(500).json({ message: '创建失败', error: err.message });
+          }
+
+          res.json({ message: '创建成功', id: this.lastID });
         }
-
-        res.json({ message: '创建成功', id: this.lastID });
-      }
-    );
+      );
+    } catch (error) {
+      console.error('创建税务申报异常:', error);
+      res.status(500).json({ message: '服务器错误', error: error.message });
+    }
   }
 ];
 
 // 更新税务申报
 exports.updateTaxDeclaration = (req, res) => {
-  const { id } = req.params;
-  const { tax_type, period, amount, declaration_date, due_date, description, status } = req.body;
+  try {
+    const { id } = req.params;
+    const { tax_type, period, amount, declaration_date, due_date, description, status } = req.body;
 
-  db.run(
-    `UPDATE tax_declarations SET tax_type = ?, period = ?, amount = ?, 
-     declaration_date = ?, due_date = ?, description = ?, status = ?, updated_at = CURRENT_TIMESTAMP 
-     WHERE id = ?`,
-    [tax_type, period, amount, declaration_date, due_date, description, status, id],
-    function(err) {
-      if (err) {
-        return res.status(500).json({ message: '更新失败' });
+    // 确保amount是数字类型
+    const amountValue = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
+
+    db.run(
+      `UPDATE tax_declarations SET tax_type = ?, period = ?, amount = ?, 
+       declaration_date = ?, due_date = ?, description = ?, status = ?, updated_at = CURRENT_TIMESTAMP 
+       WHERE id = ?`,
+      [tax_type, period, amountValue, declaration_date || null, due_date || null, description || null, status || 1, id],
+      function(err) {
+        if (err) {
+          console.error('更新税务申报失败:', err);
+          return res.status(500).json({ message: '更新失败', error: err.message });
+        }
+
+        if (this.changes === 0) {
+          return res.status(404).json({ message: '记录不存在' });
+        }
+
+        res.json({ message: '更新成功' });
       }
-
-      if (this.changes === 0) {
-        return res.status(404).json({ message: '记录不存在' });
-      }
-
-      res.json({ message: '更新成功' });
-    }
-  );
+    );
+  } catch (error) {
+    console.error('更新税务申报异常:', error);
+    res.status(500).json({ message: '服务器错误', error: error.message });
+  }
 };
 
 // 删除税务申报

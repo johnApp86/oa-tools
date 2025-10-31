@@ -54,7 +54,11 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="created_at" label="生成时间" width="180" show-overflow-tooltip/>
+        <el-table-column prop="created_at" label="生成时间" width="180" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ formatDate(row.created_at) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="280" show-overflow-tooltipfixed="right">
           <template #default="{ row }">
             <div class="operation-buttons">
@@ -138,6 +142,13 @@ const handleDelete = async (row) => {
 };
 
 const getStatusTagType = (status) => {
+  // 处理数字状态（1=已完成，0=生成中，2=生成失败）
+  if (typeof status === 'number') {
+    if (status === 1) return "success";
+    if (status === 2) return "danger";
+    return "warning";
+  }
+  // 处理字符串状态
   const statusMap = {
     generating: "warning",
     completed: "success",
@@ -147,12 +158,32 @@ const getStatusTagType = (status) => {
 };
 
 const getStatusLabel = (status) => {
+  // 处理数字状态（1=已完成，0=生成中，2=生成失败）
+  if (typeof status === 'number') {
+    if (status === 1) return "已完成";
+    if (status === 2) return "生成失败";
+    return "生成中";
+  }
+  // 处理字符串状态
   const statusMap = {
     generating: "生成中",
     completed: "已完成",
     failed: "生成失败"
   };
-  return statusMap[status] || status;
+  return statusMap[status] || status || "未知";
+};
+
+const formatDate = (date) => {
+  if (!date) return "-";
+  // 如果是 YYYY-MM-DD 格式，直接返回
+  if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}/)) {
+    return date.split('T')[0];
+  }
+  // 如果是日期对象，格式化
+  if (date instanceof Date) {
+    return date.toISOString().split('T')[0];
+  }
+  return date;
 };
 
 onMounted(() => loadData());

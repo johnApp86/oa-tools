@@ -68,7 +68,7 @@ npm install
 npm run dev
 ```
 
-开发服务器将在 `http://localhost:3000` 启动，并自动代理API请求到后端服务器 `http://localhost:3001`。
+开发服务器将在 `http://localhost:3000` 启动，并自动代理 API 请求到后端服务器 `http://localhost:3001`。
 
 ### 构建生产版本
 
@@ -78,39 +78,39 @@ npm run build
 
 构建产物将输出到 `dist/` 目录。
 
-## API请求封装
+## API 请求封装
 
 ### 请求配置
 
-所有API请求都通过 `src/api/request.js` 封装，配置了：
+所有 API 请求都通过 `src/api/request.js` 封装，配置了：
 
-- 基础URL: `/api`
-- 请求超时: 10秒
-- 自动添加Authorization token
+- 基础 URL: `/api`
+- 请求超时: 10 秒
+- 自动添加 Authorization token
 - 统一错误处理
 - 响应拦截
 
 ### 使用示例
 
 ```javascript
-import request from '@/api/request'
+import request from "@/api/request";
 
 // GET请求
 export const getUsers = () => {
   return request({
-    url: '/system/users',
-    method: 'get'
-  })
-}
+    url: "/system/users",
+    method: "get",
+  });
+};
 
 // POST请求
 export const createUser = (data) => {
   return request({
-    url: '/system/users',
-    method: 'post',
-    data
-  })
-}
+    url: "/system/users",
+    method: "post",
+    data,
+  });
+};
 ```
 
 ## 状态管理
@@ -124,12 +124,12 @@ export const createUser = (data) => {
 ### 使用示例
 
 ```javascript
-import { useUserStore } from '@/stores/user'
+import { useUserStore } from "@/stores/user";
 
-const userStore = useUserStore()
+const userStore = useUserStore();
 
 // 获取用户信息
-const user = userStore.user
+const user = userStore.user;
 
 // 检查是否已登录
 if (userStore.isLoggedIn) {
@@ -143,7 +143,7 @@ if (userStore.isLoggedIn) {
 
 - 登录/注册路由
 - 系统管理路由
-- HR管理路由
+- HR 管理路由
 - 财务管理路由
 
 ### 路由守卫
@@ -168,17 +168,109 @@ if (userStore.isLoggedIn) {
 
 ## 开发建议
 
-1. **API调用**: 所有API调用都应在对应的 `src/api/` 文件中封装
-2. **状态管理**: 全局状态使用Pinia管理，组件内部状态使用 `ref` 或 `reactive`
+1. **API 调用**: 所有 API 调用都应在对应的 `src/api/` 文件中封装，不要直接使用 `fetch` 调用
+2. **状态管理**: 全局状态使用 Pinia 管理，组件内部状态使用 `ref` 或 `reactive`
 3. **组件复用**: 可复用的逻辑应抽取为公共组件或组合式函数
-4. **错误处理**: API调用错误已在request.js中统一处理，组件中可根据需要进行额外处理
-5. **代码规范**: 遵循Vue 3组合式API的编码规范
+4. **错误处理**: API 调用错误已在 request.js 中统一处理，组件中可根据需要进行额外处理
+5. **代码规范**: 遵循 Vue 3 组合式 API 的编码规范
+
+## 数据格式化
+
+### 状态显示
+
+所有状态字段都应使用状态映射函数来显示中文标签，支持数字和字符串两种格式：
+
+```javascript
+// 状态标签函数示例
+const getStatusLabel = (status) => {
+  // 处理数字状态（兼容数据库INTEGER类型）
+  if (typeof status === "number") {
+    return status === 1 ? "已启用" : "已禁用";
+  }
+  // 处理字符串状态
+  const statusMap = {
+    active: "已启用",
+    inactive: "已禁用",
+  };
+  return statusMap[status] || status || "未知";
+};
+```
+
+### 日期格式化
+
+所有日期字段都应使用 `formatDate()` 函数格式化显示：
+
+```javascript
+const formatDate = (date) => {
+  if (!date) return "-";
+  // 如果是 YYYY-MM-DD 格式，直接返回
+  if (typeof date === "string" && date.match(/^\d{4}-\d{2}-\d{2}/)) {
+    return date.split("T")[0];
+  }
+  // 如果是日期对象，格式化
+  if (date instanceof Date) {
+    return date.toISOString().split("T")[0];
+  }
+  return date;
+};
+```
+
+### 数字格式化
+
+所有金额和数字字段都应使用 `formatCurrency()` 函数格式化显示：
+
+```javascript
+const formatCurrency = (amount) => {
+  if (!amount && amount !== 0) return "0.00";
+  return Number(amount).toLocaleString("zh-CN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+```
+
+### 日期选择器
+
+表单中的日期字段应使用 Element Plus 的 `el-date-picker` 组件：
+
+```vue
+<el-date-picker
+  v-model="form.date"
+  type="date"
+  placeholder="请选择日期"
+  format="YYYY-MM-DD"
+  value-format="YYYY-MM-DD"
+  style="width: 100%"
+/>
+```
+
+## 已修复的问题
+
+### 状态显示问题
+
+- ✅ 所有财务模块页面已支持数字状态显示（兼容数据库 INTEGER 类型）
+- ✅ 状态标签统一处理，支持数字和字符串两种格式
+
+### 日期显示问题
+
+- ✅ 所有日期字段统一使用 `formatDate()` 函数格式化
+- ✅ 空值日期统一显示为 "-"
+
+### 数字显示问题
+
+- ✅ 所有金额字段统一使用 `formatCurrency()` 函数格式化
+- ✅ 统一处理空值和零值，避免显示异常
+
+### API 路径更新
+
+- ✅ 系统管理模块 API 路径统一使用 `/api/system/*` 前缀
+- ✅ 所有前端 API 文件已更新为新的路径结构
 
 ## 常见问题
 
 ### 代理配置
 
-开发环境的API代理配置在 `vite.config.js` 中：
+开发环境的 API 代理配置在 `vite.config.js` 中：
 
 ```javascript
 server: {
@@ -193,9 +285,8 @@ server: {
 
 ### 跨域问题
 
-开发环境通过Vite代理解决，生产环境需要后端配置CORS。
+开发环境通过 Vite 代理解决，生产环境需要后端配置 CORS。
 
-### Token过期
+### Token 过期
 
-Token过期时会自动清除登录状态并跳转到登录页。
-
+Token 过期时会自动清除登录状态并跳转到登录页。

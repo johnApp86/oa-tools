@@ -37,25 +37,28 @@
       <el-table :data="tableData" v-loading="loading" stripe border
         style="width: 100%"
         table-layout="fixed">
-        <el-table-column prop="tax_code" label="税务编号" width="150" show-overflow-tooltip/>
-        <el-table-column prop="tax_name" label="税种名称" width="150" show-overflow-tooltip/>
-        <el-table-column prop="tax_type" label="税种类型" width="120" show-overflow-tooltip/>
-        <el-table-column prop="taxable_amount" label="应税金额" width="120" show-overflow-tooltipalign="right">
+        <el-table-column prop="id" label="ID" width="80" show-overflow-tooltip/>
+        <el-table-column prop="tax_type" label="税种" width="150" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ formatCurrency(row.taxable_amount) }}
+            {{ getTaxTypeLabel(row.tax_type) }}
           </template>
         </el-table-column>
-        <el-table-column prop="tax_rate" label="税率" width="100" show-overflow-tooltipalign="right">
+        <el-table-column prop="period" label="申报期间" width="120" show-overflow-tooltip/>
+        <el-table-column prop="amount" label="税额" width="120" align="right" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ row.tax_rate }}%
+            {{ formatCurrency(row.amount) }}
           </template>
         </el-table-column>
-        <el-table-column prop="tax_amount" label="税额" width="120" show-overflow-tooltipalign="right">
+        <el-table-column prop="declaration_date" label="申报日期" width="120" show-overflow-tooltip>
           <template #default="{ row }">
-            {{ formatCurrency(row.tax_amount) }}
+            {{ formatDate(row.declaration_date) }}
           </template>
         </el-table-column>
-        <el-table-column prop="due_date" label="申报期限" width="120" show-overflow-tooltip/>
+        <el-table-column prop="due_date" label="截止日期" width="120" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ formatDate(row.due_date) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="100" show-overflow-tooltip>
           <template #default="{ row }">
             <el-tag :type="getStatusTagType(row.status)">
@@ -89,19 +92,61 @@
         :model="form"
         label-width="100px"
       >
-        <el-form-item label="税种" required>
-          <el-input v-model="form.tax_type" placeholder="请输入税种" />
+        <el-form-item label="税种" prop="tax_type" required>
+          <el-select v-model="form.tax_type" placeholder="请选择税种" style="width: 100%">
+            <el-option label="增值税" value="vat" />
+            <el-option label="企业所得税" value="corporate_income" />
+            <el-option label="个人所得税" value="personal_income" />
+            <el-option label="印花税" value="stamp" />
+            <el-option label="城市维护建设税" value="urban_maintenance" />
+            <el-option label="教育费附加" value="education_surcharge" />
+          </el-select>
         </el-form-item>
-        <el-form-item label="申报期间" required>
-          <el-input v-model="form.period" placeholder="请输入申报期间，如：2025-10" />
+        <el-form-item label="申报期间" prop="period" required>
+          <el-date-picker
+            v-model="form.period"
+            type="month"
+            placeholder="请选择申报期间"
+            format="YYYY-MM"
+            value-format="YYYY-MM"
+            style="width: 100%"
+          />
         </el-form-item>
-        <el-form-item label="税额" required>
+        <el-form-item label="税额" prop="amount" required>
           <el-input-number
             v-model="form.amount"
             :precision="2"
             :min="0"
             placeholder="请输入税额"
             style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="申报日期" prop="declaration_date">
+          <el-date-picker
+            v-model="form.declaration_date"
+            type="date"
+            placeholder="请选择申报日期"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="截止日期" prop="due_date">
+          <el-date-picker
+            v-model="form.due_date"
+            type="date"
+            placeholder="请选择截止日期"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="描述" prop="description">
+          <el-input
+            v-model="form.description"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入描述"
           />
         </el-form-item>
       </el-form>
@@ -162,7 +207,10 @@ const form = reactive({
   id: null,
   tax_type: "",
   period: "",
-  amount: 0
+  amount: 0,
+  declaration_date: "",
+  due_date: "",
+  description: ""
 });
 
 const handleAdd = () => {
@@ -170,7 +218,10 @@ const handleAdd = () => {
     id: null,
     tax_type: "",
     period: "",
-    amount: 0
+    amount: 0,
+    declaration_date: "",
+    due_date: "",
+    description: ""
   });
   dialogVisible.value = true;
 };
@@ -178,31 +229,53 @@ const handleAdd = () => {
 const handleEdit = (row) => {
   Object.assign(form, {
     id: row.id,
-    tax_type: row.tax_type,
-    period: row.period,
-    amount: row.amount || row.tax_amount
+    tax_type: row.tax_type || "",
+    period: row.period || "",
+    amount: row.amount || row.tax_amount || 0,
+    declaration_date: row.declaration_date || "",
+    due_date: row.due_date || "",
+    description: row.description || ""
   });
   dialogVisible.value = true;
 };
 
 const handleSubmit = async () => {
   try {
+    if (!form.tax_type) {
+      ElMessage.warning("请选择税种");
+      return;
+    }
+    if (!form.period) {
+      ElMessage.warning("请选择申报期间");
+      return;
+    }
+    if (!form.amount || form.amount <= 0) {
+      ElMessage.warning("请输入有效的税额");
+      return;
+    }
+
     const submitData = {
       tax_type: form.tax_type,
       period: form.period,
-      amount: parseFloat(form.amount)
+      amount: parseFloat(form.amount),
+      declaration_date: form.declaration_date || null,
+      due_date: form.due_date || null,
+      description: form.description || ""
     };
     
     if (form.id) {
       await updateTaxDeclaration(form.id, submitData);
+      ElMessage.success("更新成功");
     } else {
       await createTaxDeclaration(submitData);
+      ElMessage.success("创建成功");
     }
     
     dialogVisible.value = false;
     await loadData();
   } catch (error) {
     console.error("提交失败:", error);
+    ElMessage.error(error.message || "操作失败");
   }
 };
 
@@ -222,28 +295,68 @@ const handleDelete = async (row) => {
 };
 
 const getStatusTagType = (status) => {
+  // 处理数字状态（1=已申报，0=待申报）
+  if (typeof status === 'number') {
+    return status === 1 ? "success" : "warning";
+  }
+  // 处理字符串状态
   const statusMap = {
     pending: "warning",
     declared: "success",
-    overdue: "danger"
+    approved: "success",
+    overdue: "danger",
+    rejected: "danger"
   };
   return statusMap[status] || "info";
 };
 
 const getStatusLabel = (status) => {
+  // 处理数字状态（1=已申报，0=待申报）
+  if (typeof status === 'number') {
+    return status === 1 ? "已申报" : "待申报";
+  }
+  // 处理字符串状态
   const statusMap = {
     pending: "待申报",
     declared: "已申报",
-    overdue: "逾期"
+    approved: "已审批",
+    overdue: "逾期",
+    rejected: "已拒绝"
   };
-  return statusMap[status] || status;
+  return statusMap[status] || status || "未知";
+};
+
+const getTaxTypeLabel = (taxType) => {
+  const taxTypeMap = {
+    vat: "增值税",
+    corporate_income: "企业所得税",
+    personal_income: "个人所得税",
+    stamp: "印花税",
+    urban_maintenance: "城市维护建设税",
+    education_surcharge: "教育费附加"
+  };
+  return taxTypeMap[taxType] || taxType || "未知";
 };
 
 const formatCurrency = (amount) => {
+  if (!amount && amount !== 0) return "0.00";
   return Number(amount).toLocaleString("zh-CN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
+};
+
+const formatDate = (date) => {
+  if (!date) return "-";
+  // 如果是 YYYY-MM-DD 格式，直接返回
+  if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}/)) {
+    return date.split('T')[0];
+  }
+  // 如果是日期对象，格式化
+  if (date instanceof Date) {
+    return date.toISOString().split('T')[0];
+  }
+  return date;
 };
 
 onMounted(() => loadData());

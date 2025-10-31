@@ -94,7 +94,11 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="created_at" label="创建时间" width="180" show-overflow-tooltip />
+        <el-table-column prop="created_at" label="创建时间" width="180" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ formatDate(row.created_at) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
             <div class="operation-buttons">
@@ -451,11 +455,24 @@ const getBalanceClass = (balance) => {
 };
 
 const formatCurrency = (amount) => {
-  if (amount === null || amount === undefined) return "0.00";
+  if (!amount && amount !== 0) return "0.00";
   return Number(amount).toLocaleString("zh-CN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
+};
+
+const formatDate = (date) => {
+  if (!date) return "-";
+  // 如果是 YYYY-MM-DD 格式，直接返回
+  if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}/)) {
+    return date.split('T')[0];
+  }
+  // 如果是日期对象，格式化
+  if (date instanceof Date) {
+    return date.toISOString().split('T')[0];
+  }
+  return date;
 };
 
 onMounted(() => {

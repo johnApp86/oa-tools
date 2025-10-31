@@ -91,7 +91,16 @@ exports.getExpenseApplications = (req, res) => {
 // 创建费用申请
 exports.createExpenseApplication = [
   body('category').notEmpty().withMessage('费用类别不能为空'),
-  body('amount').isNumeric().withMessage('费用金额必须是数字'),
+  body('amount').custom((value) => {
+    if (value === undefined || value === null || value === '') {
+      throw new Error('费用金额不能为空');
+    }
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    if (isNaN(numValue) || numValue <= 0) {
+      throw new Error('费用金额必须是大于0的数字');
+    }
+    return true;
+  }).withMessage('费用金额必须是数字'),
   body('description').notEmpty().withMessage('费用描述不能为空'),
   (req, res) => {
     const errors = validationResult(req);
@@ -99,20 +108,33 @@ exports.createExpenseApplication = [
       return res.status(400).json({ message: errors.array()[0].msg });
     }
 
-    const { user_id, category, amount, application_date, description, attachments, notes } = req.body;
+    try {
+      const { user_id, category, amount, application_date, description, attachments, notes } = req.body;
 
-    db.run(
-      `INSERT INTO expense_applications (user_id, category, amount, application_date, description, attachments, notes, status, created_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP)`,
-      [user_id, category, amount, application_date || new Date().toISOString().split('T')[0], description, attachments, notes],
-      function(err) {
-        if (err) {
-          return res.status(500).json({ message: '创建失败' });
+      // user_id 可以为空，如果没有提供则设置为默认值（例如从token中获取）
+      // 这里先设置为1作为默认值，实际应该从认证token中获取
+      const userId = user_id || 1;
+
+      // 确保amount是数字类型
+      const amountValue = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
+
+      db.run(
+        `INSERT INTO expense_applications (user_id, category, amount, application_date, description, attachments, notes, status, created_at) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP)`,
+        [userId, category, amountValue, application_date || new Date().toISOString().split('T')[0], description || '', attachments || null, notes || null],
+        function(err) {
+          if (err) {
+            console.error('创建费用申请失败:', err);
+            return res.status(500).json({ message: '创建失败', error: err.message });
+          }
+
+          res.json({ message: '创建成功', id: this.lastID });
         }
-
-        res.json({ message: '创建成功', id: this.lastID });
-      }
-    );
+      );
+    } catch (error) {
+      console.error('创建费用申请异常:', error);
+      res.status(500).json({ message: '服务器错误', error: error.message });
+    }
   }
 ];
 

@@ -229,6 +229,14 @@ const handleDelete = async (row) => {
 };
 
 const getStatusTagType = (status) => {
+  // 处理数字状态（1=已批准，0=草稿，2=待审批，3=已拒绝）
+  if (typeof status === 'number') {
+    if (status === 1) return "success";
+    if (status === 3) return "danger";
+    if (status === 2) return "warning";
+    return "info";
+  }
+  // 处理字符串状态
   const statusMap = {
     draft: "info",
     pending: "warning",
@@ -239,13 +247,21 @@ const getStatusTagType = (status) => {
 };
 
 const getStatusLabel = (status) => {
+  // 处理数字状态（1=已批准，0=草稿，2=待审批，3=已拒绝）
+  if (typeof status === 'number') {
+    if (status === 1) return "已批准";
+    if (status === 3) return "已拒绝";
+    if (status === 2) return "待审批";
+    return "草稿";
+  }
+  // 处理字符串状态
   const statusMap = {
     draft: "草稿",
     pending: "待审批",
     approved: "已批准",
     rejected: "已拒绝"
   };
-  return statusMap[status] || status;
+  return statusMap[status] || status || "未知";
 };
 
 const getRemainingClass = (amount) => {
@@ -253,6 +269,7 @@ const getRemainingClass = (amount) => {
 };
 
 const formatCurrency = (amount) => {
+  if (!amount && amount !== 0) return "0.00";
   return Number(amount).toLocaleString("zh-CN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
