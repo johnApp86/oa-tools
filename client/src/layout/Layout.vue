@@ -35,6 +35,7 @@
             <el-icon><House /></el-icon>
             <span>首页</span>
           </el-menu-item>
+          
           <el-sub-menu index="/system">
             <template #title>
               <el-icon><Setting /></el-icon>
@@ -56,6 +57,88 @@
               <el-icon><Menu /></el-icon>
               <span>菜单管理</span>
             </el-menu-item>
+            <el-menu-item index="/system/role">
+              <el-icon><UserFilled /></el-icon>
+              <span>角色管理</span>
+            </el-menu-item>
+          </el-sub-menu>
+
+          <el-sub-menu index="/hr">
+            <template #title>
+              <el-icon><UserFilled /></el-icon>
+              <span>HR管理</span>
+            </template>
+            <el-menu-item index="/hr/recruitment">
+              <el-icon><Plus /></el-icon>
+              <span>招聘管理</span>
+            </el-menu-item>
+            <el-menu-item index="/hr/onboarding">
+              <el-icon><Check /></el-icon>
+              <span>入职离职管理</span>
+            </el-menu-item>
+            <el-menu-item index="/hr/attendance">
+              <el-icon><Clock /></el-icon>
+              <span>考勤、请假</span>
+            </el-menu-item>
+            <el-menu-item index="/hr/salary">
+              <el-icon><Wallet /></el-icon>
+              <span>薪酬福利管理</span>
+            </el-menu-item>
+            <el-menu-item index="/hr/employee">
+              <el-icon><Document /></el-icon>
+              <span>档案管理</span>
+            </el-menu-item>
+            <el-menu-item index="/hr/reports">
+              <el-icon><DataAnalysis /></el-icon>
+              <span>报表分析</span>
+            </el-menu-item>
+          </el-sub-menu>
+
+          <el-sub-menu index="/finance">
+            <template #title>
+              <el-icon><Money /></el-icon>
+              <span>财务管理</span>
+            </template>
+            <el-menu-item index="/finance/general-ledger">
+              <el-icon><Document /></el-icon>
+              <span>总账</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/accounts-receivable">
+              <el-icon><CreditCard /></el-icon>
+              <span>应收账款</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/accounts-payable">
+              <el-icon><CreditCard /></el-icon>
+              <span>应付账款</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/fixed-assets">
+              <el-icon><OfficeBuilding /></el-icon>
+              <span>固定资产</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/cash-management">
+              <el-icon><Wallet /></el-icon>
+              <span>资金管理</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/cost-accounting">
+              <el-icon><Document /></el-icon>
+              <span>成本管理</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/budgeting">
+              <el-icon><DataAnalysis /></el-icon>
+              <span>预算管理</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/tax-management">
+              <el-icon><Document /></el-icon>
+              <span>税务管理</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/expense-management">
+              <el-icon><Document /></el-icon>
+              <span>费用管理</span>
+            </el-menu-item>
+            <el-menu-item index="/finance/financial-reporting">
+              <el-icon><Document /></el-icon>
+              <span>报表与分析</span>
+            </el-menu-item>
           </el-sub-menu>
         </el-menu>
       </aside>
@@ -71,6 +154,23 @@
 <script setup>
 import { computed } from "vue";
 import { useRoute } from "vue-router";
+import { 
+  House, 
+  Setting, 
+  OfficeBuilding, 
+  User, 
+  Avatar, 
+  Menu,
+  UserFilled, 
+  Plus, 
+  Check, 
+  Clock, 
+  Wallet, 
+  Document, 
+  DataAnalysis,
+  Money,
+  CreditCard
+} from '@element-plus/icons-vue';
 
 const route = useRoute();
 const activeMenu = computed(() => route.path);
@@ -84,20 +184,24 @@ const activeMenu = computed(() => route.path);
 }
 
 .layout-header {
-  height: 60px;
-  background: #409eff;
+  height: 64px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 0 24px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  position: relative;
+  z-index: 1000;
 }
 
 .header-left .logo {
   margin: 0;
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .header-right .user-info {
@@ -121,10 +225,11 @@ const activeMenu = computed(() => route.path);
 }
 
 .layout-sidebar {
-  width: 200px;
-  background: #f5f5f5;
-  border-right: 1px solid #e6e6e6;
+  width: 260px;
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
   overflow-y: auto;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 .sidebar-menu {
@@ -134,8 +239,29 @@ const activeMenu = computed(() => route.path);
 
 .layout-content {
   flex: 1;
-  background: #ffffff;
+  background: #f8fafc;
   overflow-y: auto;
-  padding: 20px;
+  padding: 24px;
+}
+
+/* 确保菜单图标正确显示 */
+:deep(.el-sub-menu__title) {
+  display: flex;
+  align-items: center;
+}
+
+:deep(.el-sub-menu__title .el-icon) {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+:deep(.el-menu-item) {
+  display: flex;
+  align-items: center;
+}
+
+:deep(.el-menu-item .el-icon) {
+  margin-right: 8px;
+  font-size: 16px;
 }
 </style>

@@ -3,7 +3,7 @@ import request from './request'
 // 获取角色列表
 export const getRoleList = (params) => {
   return request({
-    url: '/roles',
+    url: '/system/roles',
     method: 'get',
     params
   })
@@ -12,7 +12,7 @@ export const getRoleList = (params) => {
 // 获取所有角色
 export const getAllRoles = () => {
   return request({
-    url: '/roles/all',
+    url: '/system/roles/all',
     method: 'get'
   })
 }
@@ -20,7 +20,7 @@ export const getAllRoles = () => {
 // 获取角色详情
 export const getRoleDetail = (id) => {
   return request({
-    url: `/roles/${id}`,
+    url: `/system/roles/${id}`,
     method: 'get'
   })
 }
@@ -28,7 +28,7 @@ export const getRoleDetail = (id) => {
 // 创建角色
 export const createRole = (data) => {
   return request({
-    url: '/roles',
+    url: '/system/roles',
     method: 'post',
     data
   })
@@ -37,7 +37,7 @@ export const createRole = (data) => {
 // 更新角色
 export const updateRole = (id, data) => {
   return request({
-    url: `/roles/${id}`,
+    url: `/system/roles/${id}`,
     method: 'put',
     data
   })
@@ -46,7 +46,7 @@ export const updateRole = (id, data) => {
 // 删除角色
 export const deleteRole = (id) => {
   return request({
-    url: `/roles/${id}`,
+    url: `/system/roles/${id}`,
     method: 'delete'
   })
 }

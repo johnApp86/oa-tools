@@ -1,18 +1,14 @@
 <template>
   <div class="menu-management">
-    <div class="page-header">
-      <h2>菜单管理</h2>
-    </div>
-
-    <!-- 搜索区域 -->
-    <div class="search-section">
+    <!-- 搜索表单 -->
+    <div class="search-form">
       <el-form :model="searchForm" inline>
         <el-form-item label="关键词">
           <el-input
             v-model="searchForm.keyword"
             placeholder="请输入菜单名称或路径"
             clearable
-            style="width: 300px"
+            @keyup.enter="handleSearch"
           />
         </el-form-item>
         <el-form-item>
@@ -22,42 +18,43 @@
       </el-form>
     </div>
 
-    <!-- 操作区域 -->
-    <div class="action-section">
+    <!-- 操作按钮 -->
+    <div class="button-group">
       <el-button type="primary" @click="handleAdd">
         <el-icon><Plus /></el-icon>
         新增菜单
       </el-button>
     </div>
 
-    <!-- 表格区域 -->
-    <div class="table-section">
+    <!-- 菜单表格 -->
+    <div class="table-container">
       <el-table
         :data="tableData"
         v-loading="loading"
         border
         style="width: 100%"
-      >
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="菜单名称" width="120" />
-        <el-table-column prop="path" label="路径" width="200" />
-        <el-table-column prop="icon" label="图标" width="100" />
-        <el-table-column prop="level" label="级别" width="80" />
-        <el-table-column prop="sort_order" label="排序" width="80" />
-        <el-table-column label="操作" width="200" fixed="right">
+      
+        table-layout="fixed">
+        <el-table-column prop="id" label="ID" width="80" show-overflow-tooltip/>
+        <el-table-column prop="name" label="菜单名称" width="120" show-overflow-tooltip/>
+        <el-table-column prop="path" label="路径" width="200" show-overflow-tooltip/>
+        <el-table-column prop="icon" label="图标" width="100" show-overflow-tooltip/>
+        <el-table-column prop="level" label="级别" width="80" show-overflow-tooltip/>
+        <el-table-column prop="sort_order" label="排序" width="80" show-overflow-tooltip/>
+        <el-table-column label="操作" width="280" show-overflow-tooltipfixed="right">
           <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handleEdit(row)">
-              编辑
-            </el-button>
-            <el-button type="danger" size="small" @click="handleDelete(row)">
-              删除
-            </el-button>
+            <div class="operation-buttons">
+              <el-button size="small" @click="handleEdit(row)">编辑</el-button>
+              <el-button size="small" type="danger" @click="handleDelete(row)">
+                删除
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
 
       <!-- 分页 -->
-      <div class="pagination-section">
+      <div class="pagination">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.limit"
@@ -144,6 +141,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { getMenuList, createMenu, updateMenu, deleteMenu } from "@/api/menu";
 
 // 响应式数据
 const loading = ref(false);
@@ -199,8 +197,7 @@ const loadData = async () => {
       keyword: searchForm.keyword,
     };
     
-    const response = await fetch(`/api/menus?${new URLSearchParams(params)}`);
-    const result = await response.json();
+    const result = await getMenuList(params);
     
     tableData.value = result.data;
     pagination.total = result.total;
@@ -227,9 +224,8 @@ const handleReset = () => {
 // 加载菜单选项
 const loadMenuOptions = async () => {
   try {
-    const response = await fetch('/api/menus');
-    const result = await response.json();
-    menuOptions.value = result.data || result;
+    const result = await getMenuList({ page: 1, limit: 1000 });
+    menuOptions.value = result.data || [];
   } catch (error) {
     console.error("加载菜单选项失败:", error);
   }
@@ -274,21 +270,13 @@ const handleDelete = async (row) => {
       }
     );
 
-    const response = await fetch(`/api/menus/${row.id}`, {
-      method: 'DELETE'
-    });
-
-    if (response.ok) {
-      ElMessage.success("删除成功");
-      loadData();
-    } else {
-      const error = await response.json();
-      ElMessage.error(error.message || "删除失败");
-    }
+    await deleteMenu(row.id);
+    ElMessage.success("删除成功");
+    loadData();
   } catch (error) {
     if (error !== "cancel") {
       console.error("删除失败:", error);
-      ElMessage.error("删除失败");
+      ElMessage.error(error.message || "删除失败");
     }
   }
 };
@@ -313,38 +301,21 @@ const handleSubmit = async () => {
       status: form.status,
     };
 
-    let response;
     if (form.id) {
       // 更新菜单
-      response = await fetch(`/api/menus/${form.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(menuData),
-      });
+      await updateMenu(form.id, menuData);
+      ElMessage.success("更新成功");
     } else {
       // 创建菜单
-      response = await fetch('/api/menus', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(menuData),
-      });
+      await createMenu(menuData);
+      ElMessage.success("创建成功");
     }
-
-    if (response.ok) {
-      ElMessage.success(form.id ? "更新成功" : "创建成功");
-      dialogVisible.value = false;
-      loadData();
-    } else {
-      const error = await response.json();
-      ElMessage.error(error.message || "操作失败");
-    }
+    
+    dialogVisible.value = false;
+    loadData();
   } catch (error) {
     console.error("提交失败:", error);
-    ElMessage.error("操作失败");
+    ElMessage.error(error.message || "操作失败");
   } finally {
     submitLoading.value = false;
   }
@@ -392,37 +363,78 @@ onMounted(() => {
 
 <style scoped>
 .menu-management {
-  padding: 20px;
+  padding: 0;
 }
 
-.page-header {
-  margin-bottom: 20px;
+.search-form {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #f7fafc;
 }
 
-.page-header h2 {
-  margin: 0;
-  color: #303133;
+.button-group {
+  margin-bottom: 24px;
 }
 
-.search-section {
-  background: #f5f5f5;
-  padding: 20px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-}
-
-.action-section {
-  margin-bottom: 20px;
-}
-
-.table-section {
-  background: white;
-  border-radius: 4px;
+.table-container {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  border: 1px solid #f7fafc;
   overflow: hidden;
 }
 
-.pagination-section {
-  padding: 20px;
+.pagination {
+  margin-top: 20px;
   text-align: right;
+}
+
+/* 操作按钮组样式 */
+.operation-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100% !important;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 </style>

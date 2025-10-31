@@ -35,28 +35,31 @@
         border
         row-key="id"
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-      >
-        <el-table-column prop="name" label="组织名称" width="200" />
-        <el-table-column prop="code" label="组织代码" width="150" />
-        <el-table-column prop="level" label="层级" width="80" />
-        <el-table-column prop="sort_order" label="排序" width="80" />
-        <el-table-column prop="status" label="状态" width="100">
+      
+        table-layout="fixed">
+        <el-table-column prop="name" label="组织名称" width="200" show-overflow-tooltip/>
+        <el-table-column prop="code" label="组织代码" width="150" show-overflow-tooltip/>
+        <el-table-column prop="level" label="层级" width="80" show-overflow-tooltip/>
+        <el-table-column prop="sort_order" label="排序" width="80" show-overflow-tooltip/>
+        <el-table-column prop="status" label="状态" width="100" show-overflow-tooltip>
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">
               {{ row.status === 1 ? "启用" : "禁用" }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="created_at" label="创建时间" width="180" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column prop="created_at" label="创建时间" width="180" show-overflow-tooltip/>
+        <el-table-column label="操作" width="280" show-overflow-tooltipfixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="handleEdit(row)">编辑</el-button>
-            <el-button size="small" type="primary" @click="handleAddChild(row)">
-              添加子组织
-            </el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">
-              删除
-            </el-button>
+            <div class="operation-buttons">
+              <el-button size="small" @click="handleEdit(row)">编辑</el-button>
+              <el-button size="small" type="primary" @click="handleAddChild(row)">
+                添加子组织
+              </el-button>
+              <el-button size="small" type="danger" @click="handleDelete(row)">
+                删除
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -252,21 +255,14 @@ const handleDelete = async (row) => {
       type: "warning",
     });
 
-    const response = await fetch(`/api/organizations/${row.id}`, {
-      method: 'DELETE'
-    });
-
-    if (response.ok) {
-      ElMessage.success("删除成功");
-      loadData();
-    } else {
-      const error = await response.json();
-      ElMessage.error(error.message || "删除失败");
-    }
+    await deleteOrganization(row.id);
+    ElMessage.success("删除成功");
+    loadData();
+    loadTree();
   } catch (error) {
     if (error !== "cancel") {
       console.error("删除失败:", error);
-      ElMessage.error("删除失败");
+      ElMessage.error(error.message || "删除失败");
     }
   }
 };
@@ -287,39 +283,22 @@ const handleSubmit = async () => {
       status: form.status,
     };
 
-    let response;
     if (form.id) {
       // 更新组织
-      response = await fetch(`/api/organizations/${form.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orgData),
-      });
+      await updateOrganization(form.id, orgData);
+      ElMessage.success("更新成功");
     } else {
       // 创建组织
-      response = await fetch('/api/organizations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orgData),
-      });
+      await createOrganization(orgData);
+      ElMessage.success("创建成功");
     }
-
-    if (response.ok) {
-      ElMessage.success(form.id ? "更新成功" : "创建成功");
-      dialogVisible.value = false;
-      loadData();
-      loadTree();
-    } else {
-      const error = await response.json();
-      ElMessage.error(error.message || "操作失败");
-    }
+    
+    dialogVisible.value = false;
+    loadData();
+    loadTree();
   } catch (error) {
     console.error("提交失败:", error);
-    ElMessage.error("操作失败");
+    ElMessage.error(error.message || "操作失败");
   } finally {
     submitLoading.value = false;
   }
@@ -337,25 +316,176 @@ onMounted(() => {
 
 <style scoped>
 .organization-management {
-  padding: 20px;
+  padding: 0;
 }
 
 .search-form {
   background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
-  margin-bottom: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #f7fafc;
 }
 
 .button-group {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .table-container {
   background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  border: 1px solid #f7fafc;
+  overflow: hidden;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  overflow: hidden;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
+}
+
+/* 按钮样式优化 */
+:deep(.el-button) {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-button--primary) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+:deep(.el-button--primary:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+}
+
+:deep(.el-button--danger) {
+  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+  border: none;
+  box-shadow: 0 2px 4px rgba(245, 101, 101, 0.3);
+}
+
+:deep(.el-button--danger:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(245, 101, 101, 0.4);
+}
+
+/* 标签样式优化 */
+:deep(.el-tag) {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+:deep(.el-tag--success) {
+  background: linear-gradient(135deg, #68d391 0%, #48bb78 100%);
+  border: none;
+  color: white;
+}
+
+:deep(.el-tag--danger) {
+  background: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
+  border: none;
+  color: white;
+}
+
+/* 输入框样式优化 */
+:deep(.el-input__wrapper) {
+  border-radius: 6px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-input__wrapper:hover) {
+  border-color: #cbd5e0;
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* 对话框样式优化 */
+:deep(.el-dialog) {
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+:deep(.el-dialog__header) {
+  background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+  border-radius: 12px 12px 0 0;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+:deep(.el-dialog__title) {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+/* 操作按钮组样式 */
+.operation-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100% !important;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 </style>

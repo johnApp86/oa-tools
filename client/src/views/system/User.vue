@@ -1,18 +1,14 @@
 <template>
   <div class="user-management">
-    <div class="page-header">
-      <h2>用户管理</h2>
-    </div>
-
-    <!-- 搜索区域 -->
-    <div class="search-section">
+    <!-- 搜索表单 -->
+    <div class="search-form">
       <el-form :model="searchForm" inline>
         <el-form-item label="关键词">
           <el-input
             v-model="searchForm.keyword"
             placeholder="请输入用户名、姓名或邮箱"
             clearable
-            style="width: 300px"
+            @keyup.enter="handleSearch"
           />
         </el-form-item>
         <el-form-item>
@@ -22,51 +18,52 @@
       </el-form>
     </div>
 
-    <!-- 操作区域 -->
-    <div class="action-section">
+    <!-- 操作按钮 -->
+    <div class="button-group">
       <el-button type="primary" @click="handleAdd">
         <el-icon><Plus /></el-icon>
         新增用户
       </el-button>
     </div>
 
-    <!-- 表格区域 -->
-    <div class="table-section">
+    <!-- 用户表格 -->
+    <div class="table-container">
       <el-table
         :data="tableData"
         v-loading="loading"
         border
         style="width: 100%"
+        table-layout="fixed"
       >
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="username" label="用户名" width="120" />
-        <el-table-column prop="real_name" label="真实姓名" width="120" />
-        <el-table-column prop="email" label="邮箱" width="200" />
-        <el-table-column prop="phone" label="手机号" width="120" />
-        <el-table-column prop="org_name" label="组织" width="120" />
-        <el-table-column prop="position_name" label="岗位" width="120" />
-        <el-table-column prop="status" label="状态" width="80">
+        <el-table-column prop="id" label="ID" width="80" show-overflow-tooltip />
+        <el-table-column prop="username" label="用户名" width="120" show-overflow-tooltip />
+        <el-table-column prop="real_name" label="真实姓名" width="120" show-overflow-tooltip />
+        <el-table-column prop="email" label="邮箱" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="phone" label="手机号" width="120" show-overflow-tooltip />
+        <el-table-column prop="org_name" label="组织" width="120" show-overflow-tooltip />
+        <el-table-column prop="position_name" label="岗位" width="120" show-overflow-tooltip />
+        <el-table-column prop="status" label="状态" width="80" show-overflow-tooltip>
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">
               {{ row.status === 1 ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="created_at" label="创建时间" width="160" />
+        <el-table-column prop="created_at" label="创建时间" width="160" show-overflow-tooltip />
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handleEdit(row)">
-              编辑
-            </el-button>
-            <el-button type="danger" size="small" @click="handleDelete(row)">
-              删除
-            </el-button>
+            <div class="operation-buttons">
+              <el-button size="small" @click="handleEdit(row)">编辑</el-button>
+              <el-button size="small" type="danger" @click="handleDelete(row)">
+                删除
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
 
       <!-- 分页 -->
-      <div class="pagination-section">
+      <div class="pagination">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.limit"
@@ -156,6 +153,9 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { getUserList, createUser, updateUser, deleteUser } from "@/api/user";
+import { getAllOrganizations } from "@/api/organization";
+import { getPositionList } from "@/api/position";
 
 // 响应式数据
 const loading = ref(false);
@@ -220,8 +220,7 @@ const loadData = async () => {
       keyword: searchForm.keyword,
     };
     
-    const response = await fetch(`/api/users?${new URLSearchParams(params)}`);
-    const result = await response.json();
+    const result = await getUserList(params);
     
     tableData.value = result.data;
     pagination.total = result.total;
@@ -248,16 +247,12 @@ const handleReset = () => {
 // 加载选项数据
 const loadOptions = async () => {
   try {
-    const [orgRes, posRes] = await Promise.all([
-      fetch('/api/organizations/all'),
-      fetch('/api/positions')
-    ]);
-    const [orgs, positions] = await Promise.all([
-      orgRes.json(),
-      posRes.json()
+    const [orgs, posResult] = await Promise.all([
+      getAllOrganizations(),
+      getPositionList({ page: 1, limit: 1000 })
     ]);
     organizations.value = orgs;
-    positions.value = positions.data || positions;
+    positions.value = posResult.data || [];
   } catch (error) {
     console.error("加载选项数据失败:", error);
   }
@@ -266,9 +261,8 @@ const loadOptions = async () => {
 // 加载岗位数据
 const loadPositions = async (organizationId) => {
   try {
-    const response = await fetch(`/api/positions?organizationId=${organizationId}`);
-    const result = await response.json();
-    positions.value = result.data || result;
+    const result = await getPositionList({ organizationId, page: 1, limit: 1000 });
+    positions.value = result.data || [];
   } catch (error) {
     console.error("加载岗位数据失败:", error);
   }
@@ -314,21 +308,13 @@ const handleDelete = async (row) => {
       }
     );
 
-    const response = await fetch(`/api/users/${row.id}`, {
-      method: 'DELETE'
-    });
-
-    if (response.ok) {
-      ElMessage.success("删除成功");
-      loadData();
-    } else {
-      const error = await response.json();
-      ElMessage.error(error.message || "删除失败");
-    }
+    await deleteUser(row.id);
+    ElMessage.success("删除成功");
+    loadData();
   } catch (error) {
     if (error !== "cancel") {
       console.error("删除失败:", error);
-      ElMessage.error("删除失败");
+      ElMessage.error(error.message || "删除失败");
     }
   }
 };
@@ -343,46 +329,29 @@ const handleSubmit = async () => {
 
     const userData = {
       username: form.username,
-      real_name: form.realName,
+      realName: form.realName,
       email: form.email,
       phone: form.phone,
-      organization_id: form.organizationId,
-      position_id: form.positionId,
+      organizationId: form.organizationId,
+      positionId: form.positionId,
       status: form.status,
     };
 
-    let response;
     if (form.id) {
       // 更新用户
-      response = await fetch(`/api/users/${form.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
+      await updateUser(form.id, userData);
+      ElMessage.success("更新成功");
     } else {
       // 创建用户
-      response = await fetch('/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
+      await createUser(userData);
+      ElMessage.success("创建成功");
     }
-
-    if (response.ok) {
-      ElMessage.success(form.id ? "更新成功" : "创建成功");
-      dialogVisible.value = false;
-      loadData();
-    } else {
-      const error = await response.json();
-      ElMessage.error(error.message || "操作失败");
-    }
+    
+    dialogVisible.value = false;
+    loadData();
   } catch (error) {
     console.error("提交失败:", error);
-    ElMessage.error("操作失败");
+    ElMessage.error(error.message || "操作失败");
   } finally {
     submitLoading.value = false;
   }
@@ -439,37 +408,75 @@ onMounted(() => {
 
 <style scoped>
 .user-management {
-  padding: 20px;
+  padding: 0;
 }
 
-.page-header {
-  margin-bottom: 20px;
+.search-form {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #f7fafc;
 }
 
-.page-header h2 {
-  margin: 0;
-  color: #303133;
+.button-group {
+  margin-bottom: 24px;
 }
 
-.search-section {
-  background: #f5f5f5;
-  padding: 20px;
-  border-radius: 4px;
-  margin-bottom: 20px;
-}
-
-.action-section {
-  margin-bottom: 20px;
-}
-
-.table-section {
-  background: white;
-  border-radius: 4px;
+.table-container {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  border: 1px solid #f7fafc;
   overflow: hidden;
 }
 
-.pagination-section {
-  padding: 20px;
+.pagination {
+  margin-top: 20px;
   text-align: right;
+}
+
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100% !important;
+}
+
+:deep(.el-table th) {
+  background-color: #f8fafc;
+  color: #4a5568;
+  font-weight: 600;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid #f7fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:deep(.el-table tr:hover > td) {
+  background-color: #f7fafc;
+}
+
+/* 操作按钮组样式 */
+.operation-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.operation-buttons .el-button {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 </style>
