@@ -270,19 +270,33 @@ const testSystemModule = async () => {
     const orgList = orgs.data?.data || orgs.data || [];
     log.success(`查询组织成功: 共${Array.isArray(orgList) ? orgList.length : 0}条记录`);
     
+    // 使用时间戳生成唯一代码
+    const timestamp = Date.now();
+    const orgCode = `TEST_DEPT_${timestamp}`;
+    
     // 创建
     const newOrg = await api.post('/system/organizations', {
-      name: '测试部门',
-      code: 'TEST_DEPT',
+      name: `测试部门_${timestamp}`,
+      code: orgCode,
       parent_id: 1,
       level: 2
     });
-    const orgId = newOrg.data?.data?.id || newOrg.data?.id || newOrg.data;
+    // 提取ID：可能是 organizationId 或 id
+    const orgId = newOrg.data?.organizationId || newOrg.data?.data?.organizationId || newOrg.data?.data?.id || newOrg.data?.id;
+    if (!orgId || typeof orgId !== 'number') {
+      log.error(`创建组织失败: 无法获取ID，响应: ${JSON.stringify(newOrg.data)}`);
+      throw new Error('无法获取组织ID');
+    }
     log.success(`创建组织成功: ID=${orgId}`);
     
-    // 更新
+    // 更新时需要提供完整字段
     await api.put(`/system/organizations/${orgId}`, {
-      name: '测试部门（已更新）'
+      name: `测试部门（已更新）_${timestamp}`,
+      code: orgCode,
+      parentId: 1,
+      level: 2,
+      sortOrder: 0,
+      status: 1
     });
     log.success('更新组织成功');
     
@@ -304,19 +318,35 @@ const testSystemModule = async () => {
     const userList = users.data?.data || users.data || [];
     log.success(`查询用户成功: 共${Array.isArray(userList) ? userList.length : 0}条记录`);
     
+    // 使用时间戳生成唯一用户名
+    const timestamp = Date.now();
+    const username = `testuser_${timestamp}`;
+    
     const newUser = await api.post('/system/users', {
-      username: 'testuser',
-      real_name: '测试用户',
-      email: 'testuser@example.com',
+      username: username,
+      real_name: `测试用户_${timestamp}`,
+      email: `testuser_${timestamp}@example.com`,
       password: '123456',
       organization_id: 1,
       position_id: 2
     });
-    const userId = newUser.data?.data?.id || newUser.data?.id || newUser.data;
+    // 提取ID：可能是 userId 或 id
+    const userId = newUser.data?.userId || newUser.data?.data?.userId || newUser.data?.data?.id || newUser.data?.id;
+    if (!userId || typeof userId !== 'number') {
+      log.error(`创建用户失败: 无法获取ID，响应: ${JSON.stringify(newUser.data)}`);
+      throw new Error('无法获取用户ID');
+    }
     log.success(`创建用户成功: ID=${userId}`);
     
+    // 更新时需要提供完整字段
     await api.put(`/system/users/${userId}`, {
-      real_name: '测试用户（已更新）'
+      username: username,  // 必须提供username
+      realName: `测试用户（已更新）_${timestamp}`,
+      email: `testuser_${timestamp}@example.com`,
+      phone: null,
+      organizationId: 1,
+      positionId: 2,
+      status: 1
     });
     log.success('更新用户成功');
     
@@ -342,8 +372,9 @@ const testHRModule = async () => {
     const positionList = positions.data?.data || positions.data || [];
     log.success(`查询招聘职位成功: 共${Array.isArray(positionList) ? positionList.length : 0}条记录`);
     
+    const timestamp = Date.now();
     const newPosition = await api.post('/hr/recruitment/positions', {
-      title: '测试职位',
+      title: `测试职位_${timestamp}`,
       position_id: 2,
       org_id: 1,
       description: '这是一个测试职位',
@@ -354,11 +385,7 @@ const testHRModule = async () => {
     const positionId = newPosition.data?.data?.id || newPosition.data?.id || newPosition.data;
     log.success(`创建招聘职位成功: ID=${positionId}`);
     
-    await api.put(`/hr/recruitment/positions/${positionId}`, {
-      title: '测试职位（已更新）'
-    });
-    log.success('更新招聘职位成功');
-    
+    // 注意：招聘管理没有PUT更新接口，只有DELETE
     await api.delete(`/hr/recruitment/positions/${positionId}`);
     log.success('删除招聘职位成功');
   } catch (error) {
@@ -378,6 +405,7 @@ const testHRModule = async () => {
     
     const today = new Date().toISOString().split('T')[0];
     const checkin = await api.post('/hr/attendance/checkin', {
+      user_id: 1,  // 添加必需的user_id
       type: 'checkin',
       date: today,
       time: `${today} 09:00:00`,
@@ -435,18 +463,27 @@ const testFinanceModule = async () => {
     const accountList = accounts.data?.data || accounts.data || [];
     log.success(`查询总账科目成功: 共${Array.isArray(accountList) ? accountList.length : 0}条记录`);
     
+    // 使用时间戳生成唯一代码
+    const timestamp = Date.now();
+    const accountCode = `999${timestamp.toString().slice(-6)}`;
+    
     const newAccount = await api.post('/finance/general-ledger/accounts', {
-      code: '9999',
-      name: '测试科目',
-      type: 'expense',
+      code: accountCode,
+      name: `测试科目_${timestamp}`,
+      type: 'expense',  // 允许的类型: asset, liability, equity, revenue, expense
       parent_id: 0,
       level: 1
     });
     const accountId = newAccount.data?.data?.id || newAccount.data?.id || newAccount.data;
     log.success(`创建总账科目成功: ID=${accountId}`);
     
+    // 更新时需要提供完整字段，包括type
     await api.put(`/finance/general-ledger/accounts/${accountId}`, {
-      name: '测试科目（已更新）'
+      name: `测试科目（已更新）_${timestamp}`,
+      type: 'expense',  // 必须提供type字段
+      parent_id: 0,
+      level: 1,
+      status: 1
     });
     log.success('更新总账科目成功');
     
@@ -467,17 +504,26 @@ const testFinanceModule = async () => {
     const receivableList = receivables.data?.data || receivables.data || [];
     log.success(`查询应收账款成功: 共${Array.isArray(receivableList) ? receivableList.length : 0}条记录`);
     
+    const timestamp = Date.now();
+    const invoiceNumber = `INV-TEST-${timestamp}`;
+    
     const newReceivable = await api.post('/finance/accounts-receivable', {
-      customer_name: '测试客户',
-      invoice_number: 'INV-TEST-001',
+      customer_name: `测试客户_${timestamp}`,
+      invoice_number: invoiceNumber,
       amount: 10000.00,
       due_date: '2025-12-31'
     });
     const receivableId = newReceivable.data?.data?.id || newReceivable.data?.id || newReceivable.data;
     log.success(`创建应收账款成功: ID=${receivableId}`);
     
+    // 更新时需要提供完整字段，不能只更新一个字段
     await api.put(`/finance/accounts-receivable/${receivableId}`, {
-      customer_name: '测试客户（已更新）'
+      customer_name: `测试客户（已更新）_${timestamp}`,
+      invoice_number: invoiceNumber,
+      amount: 10000.00,
+      due_date: '2025-12-31',
+      description: null,
+      status: 1
     });
     log.success('更新应收账款成功');
     
@@ -498,17 +544,26 @@ const testFinanceModule = async () => {
     const payableList = payables.data?.data || payables.data || [];
     log.success(`查询应付账款成功: 共${Array.isArray(payableList) ? payableList.length : 0}条记录`);
     
+    const timestamp = Date.now();
+    const invoiceNumber = `INV-SUP-TEST-${timestamp}`;
+    
     const newPayable = await api.post('/finance/accounts-payable', {
-      supplier_name: '测试供应商',
-      invoice_number: 'INV-SUP-TEST-001',
+      supplier_name: `测试供应商_${timestamp}`,
+      invoice_number: invoiceNumber,
       amount: 5000.00,
       due_date: '2025-12-31'
     });
     const payableId = newPayable.data?.data?.id || newPayable.data?.id || newPayable.data;
     log.success(`创建应付账款成功: ID=${payableId}`);
     
+    // 更新时需要提供完整字段
     await api.put(`/finance/accounts-payable/${payableId}`, {
-      supplier_name: '测试供应商（已更新）'
+      supplier_name: `测试供应商（已更新）_${timestamp}`,
+      invoice_number: invoiceNumber,
+      amount: 5000.00,
+      due_date: '2025-12-31',
+      description: null,
+      status: 1
     });
     log.success('更新应付账款成功');
     
@@ -529,18 +584,31 @@ const testFinanceModule = async () => {
     const assetList = assets.data?.data || assets.data || [];
     log.success(`查询固定资产成功: 共${Array.isArray(assetList) ? assetList.length : 0}条记录`);
     
+    const timestamp = Date.now();
+    const assetCode = `FA-TEST-${timestamp}`;
+    
     const newAsset = await api.post('/finance/fixed-assets', {
-      name: '测试资产',
-      code: 'FA-TEST-001',
+      name: `测试资产_${timestamp}`,
+      code: assetCode,
       category: '电子设备',
       purchase_price: 5000.00,
-      purchase_date: '2025-01-01'
+      purchase_date: '2025-01-01',
+      depreciation_method: 'straight_line',
+      useful_life: 5,
+      description: '测试资产描述'
     });
     const assetId = newAsset.data?.data?.id || newAsset.data?.id || newAsset.data;
     log.success(`创建固定资产成功: ID=${assetId}`);
     
     await api.put(`/finance/fixed-assets/${assetId}`, {
-      name: '测试资产（已更新）'
+      name: `测试资产（已更新）_${timestamp}`,
+      code: assetCode,
+      category: '电子设备',
+      purchase_price: 5000.00,
+      purchase_date: '2025-01-01',
+      depreciation_method: 'straight_line',
+      useful_life: 5,
+      description: '测试资产描述（已更新）'
     });
     log.success('更新固定资产成功');
     
@@ -561,18 +629,28 @@ const testFinanceModule = async () => {
     const budgetList = budgets.data?.data || budgets.data || [];
     log.success(`查询预算成功: 共${Array.isArray(budgetList) ? budgetList.length : 0}条记录`);
     
+    const timestamp = Date.now();
     const newBudget = await api.post('/finance/budgeting', {
-      name: '测试预算',
+      name: `测试预算_${timestamp}`,
       year: 2025,
       amount: 100000.00,
       department: '测试部门',
-      category: '管理费用'
+      category: '管理费用',
+      description: '测试预算描述',
+      status: 1
     });
     const budgetId = newBudget.data?.data?.id || newBudget.data?.id || newBudget.data;
     log.success(`创建预算成功: ID=${budgetId}`);
     
+    // 更新时需要提供完整字段
     await api.put(`/finance/budgeting/${budgetId}`, {
-      name: '测试预算（已更新）'
+      name: `测试预算（已更新）_${timestamp}`,
+      year: 2025,
+      amount: 100000.00,
+      department: '测试部门',
+      category: '管理费用',
+      description: '测试预算描述（已更新）',
+      status: 1
     });
     log.success('更新预算成功');
     
@@ -593,15 +671,25 @@ const testFinanceModule = async () => {
     const costCenterList = costCenters.data?.data || costCenters.data || [];
     log.success(`查询成本中心成功: 共${Array.isArray(costCenterList) ? costCenterList.length : 0}条记录`);
     
+    const timestamp = Date.now();
+    const costCenterCode = `CC-TEST-${timestamp}`;
+    
     const newCostCenter = await api.post('/finance/cost-accounting/cost-centers', {
-      name: '测试成本中心',
-      code: 'CC-TEST-001'
+      name: `测试成本中心_${timestamp}`,
+      code: costCenterCode,
+      description: '测试成本中心描述',
+      parent_id: null,
+      status: 1
     });
     const costCenterId = newCostCenter.data?.data?.id || newCostCenter.data?.id || newCostCenter.data;
     log.success(`创建成本中心成功: ID=${costCenterId}`);
     
     await api.put(`/finance/cost-accounting/cost-centers/${costCenterId}`, {
-      name: '测试成本中心（已更新）'
+      name: `测试成本中心（已更新）_${timestamp}`,
+      code: costCenterCode,
+      description: '测试成本中心描述（已更新）',
+      parent_id: null,
+      status: 1
     });
     log.success('更新成本中心成功');
     
@@ -630,8 +718,15 @@ const testFinanceModule = async () => {
     const taxId = newTax.data?.data?.id || newTax.data?.id || newTax.data;
     log.success(`创建税务申报成功: ID=${taxId}`);
     
+    // 更新时需要提供完整字段
     await api.put(`/finance/tax-management/${taxId}`, {
-      amount: 6000.00
+      tax_type: 'vat',
+      period: '2025-01',
+      amount: 6000.00,
+      declaration_date: null,
+      due_date: null,
+      description: null,
+      status: 1
     });
     log.success('更新税务申报成功');
     
