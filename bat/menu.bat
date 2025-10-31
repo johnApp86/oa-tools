@@ -12,10 +12,11 @@ echo 3. 重置数据库
 echo 4. 清理项目
 echo 5. 启动系统
 echo 6. 停止服务
-echo 7. 退出
+echo 7. 测试CRUD功能
+echo 8. 退出
 echo.
 
-set /p choice=请输入选择 (1-7): 
+set /p choice=请输入选择 (1-8): 
 
 if "%choice%"=="1" goto install
 if "%choice%"=="2" goto init_db
@@ -23,7 +24,8 @@ if "%choice%"=="3" goto reset_db
 if "%choice%"=="4" goto clean
 if "%choice%"=="5" goto start
 if "%choice%"=="6" goto stop
-if "%choice%"=="7" goto exit
+if "%choice%"=="7" goto test_crud
+if "%choice%"=="8" goto exit
 echo 无效选择，请重新输入
 pause
 goto menu
@@ -66,8 +68,15 @@ goto menu
 :stop
 echo.
 echo 正在停止服务...
-taskkill /f /im node.exe 2>nul || echo 没有运行的Node.js进程
+taskkill /f /im node.js 2>nul || echo 没有运行的Node.js进程
 echo 服务已停止
+pause
+goto menu
+
+:test_crud
+echo.
+echo 正在运行CRUD测试...
+call bat\test-crud.bat
 pause
 goto menu
 
