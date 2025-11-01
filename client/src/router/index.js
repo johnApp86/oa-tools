@@ -147,4 +147,35 @@ const router = createRouter({
   routes
 })
 
+// 添加路由错误处理，防止组件加载失败导致页面刷新
+router.onError((error) => {
+  console.error('路由加载错误:', error)
+  const pattern = /Loading chunk (\w)+ failed/g
+  const isChunkLoadError = error.message && error.message.match(pattern)
+  
+  if (isChunkLoadError) {
+    // 如果是 chunk 加载失败，尝试重新加载路由（仅在这种情况下刷新）
+    console.warn('Chunk 加载失败，重新加载页面')
+    setTimeout(() => {
+      window.location.reload()
+    }, 100)
+  } else {
+    // 其他错误不刷新，只记录日志
+    console.error('路由错误详情:', error)
+  }
+})
+
+// 添加路由守卫，处理导航错误
+router.beforeEach((to, from, next) => {
+  // 确保路由正常导航
+  next()
+})
+
+// 添加路由导航后的错误处理
+router.afterEach((to, from, failure) => {
+  if (failure) {
+    console.error('路由导航失败:', failure)
+  }
+})
+
 export default router
