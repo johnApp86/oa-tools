@@ -45,7 +45,11 @@
         table-layout="fixed">
         <el-table-column prop="report_code" label="报表编号" width="150" show-overflow-tooltip/>
         <el-table-column prop="report_name" label="报表名称" width="200" show-overflow-tooltip/>
-        <el-table-column prop="report_type" label="报表类型" width="150" show-overflow-tooltip/>
+        <el-table-column prop="report_type" label="报表类型" width="150" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ getReportTypeLabel(row.report_type) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="period" label="报表期间" width="120" show-overflow-tooltip/>
         <el-table-column prop="status" label="状态" width="100" show-overflow-tooltip>
           <template #default="{ row }">
@@ -171,6 +175,16 @@ const getStatusLabel = (status) => {
     failed: "生成失败"
   };
   return statusMap[status] || status || "未知";
+};
+
+const getReportTypeLabel = (reportType) => {
+  const typeMap = {
+    balance_sheet: "资产负债表",
+    income_statement: "利润表",
+    cash_flow: "现金流量表",
+    equity_change: "所有者权益变动表"
+  };
+  return typeMap[reportType] || reportType || "未知";
 };
 
 const formatDate = (date) => {
