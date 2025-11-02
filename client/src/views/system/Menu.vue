@@ -31,19 +31,38 @@
       <el-table
         :data="tableData"
         v-loading="loading"
+        stripe
         border
+        row-key="id"
+        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+        :default-expand-all="false"
         style="width: 100%"
-      
-        table-layout="fixed">
-        <el-table-column prop="id" label="ID" width="80" show-overflow-tooltip/>
-        <el-table-column prop="name" label="菜单名称" width="120" show-overflow-tooltip/>
+        table-layout="fixed"
+      >
+        <el-table-column prop="name" label="菜单名称" min-width="150" show-overflow-tooltip/>
         <el-table-column prop="path" label="路径" width="200" show-overflow-tooltip/>
         <el-table-column prop="icon" label="图标" width="100" show-overflow-tooltip/>
+        <el-table-column prop="component" label="组件" width="180" show-overflow-tooltip/>
         <el-table-column prop="level" label="级别" width="80" show-overflow-tooltip/>
         <el-table-column prop="sort_order" label="排序" width="80" show-overflow-tooltip/>
-        <el-table-column label="操作" width="280" show-overflow-tooltipfixed="right">
+        <el-table-column prop="type" label="类型" width="80" show-overflow-tooltip>
+          <template #default="{ row }">
+            <el-tag :type="row.type === 1 ? 'primary' : 'info'" size="small">
+              {{ row.type === 1 ? '菜单' : '按钮' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" width="100" show-overflow-tooltip>
+          <template #default="{ row }">
+            <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
+              {{ row.status === 1 ? '启用' : '禁用' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="280" fixed="right" show-overflow-tooltip>
           <template #default="{ row }">
             <div class="operation-buttons">
+              <el-button size="small" @click="handleAddChild(row)" v-if="row.type === 1">添加子菜单</el-button>
               <el-button size="small" @click="handleEdit(row)">编辑</el-button>
               <el-button size="small" type="danger" @click="handleDelete(row)">
                 删除
@@ -52,19 +71,6 @@
           </template>
         </el-table-column>
       </el-table>
-
-      <!-- 分页 -->
-      <div class="pagination">
-        <el-pagination
-          v-model:current-page="pagination.page"
-          v-model:page-size="pagination.limit"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="pagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
     </div>
 
     <!-- 菜单表单对话框 -->
@@ -156,13 +162,6 @@ const searchForm = reactive({
   keyword: "",
 });
 
-// 分页
-const pagination = reactive({
-  page: 1,
-  limit: 10,
-  total: 0,
-});
-
 // 表单数据
 const form = reactive({
   id: null,
@@ -187,23 +186,30 @@ const formRules = {
 // 计算属性
 const dialogTitle = computed(() => (form.id ? "编辑菜单" : "新增菜单"));
 
-// 加载数据
+// 加载数据（树形结构）
 const loadData = async () => {
   loading.value = true;
   try {
     const params = {
-      page: pagination.page,
-      limit: pagination.limit,
       keyword: searchForm.keyword,
+      tree: true, // 请求树形结构数据
     };
     
     const result = await getMenuList(params);
     
-    tableData.value = result.data;
-    pagination.total = result.total;
+    // 确保每个节点都有children数组
+    const processTree = (nodes) => {
+      return nodes.map(node => ({
+        ...node,
+        children: node.children && node.children.length > 0 ? processTree(node.children) : []
+      }));
+    };
+    
+    tableData.value = processTree(result.data || []);
   } catch (error) {
     console.error("加载数据失败:", error);
     ElMessage.error("加载数据失败");
+    tableData.value = [];
   } finally {
     loading.value = false;
   }
@@ -211,7 +217,6 @@ const loadData = async () => {
 
 // 搜索
 const handleSearch = () => {
-  pagination.page = 1;
   loadData();
 };
 
@@ -221,19 +226,47 @@ const handleReset = () => {
   handleSearch();
 };
 
-// 加载菜单选项
+// 加载菜单选项（扁平化树形结构）
 const loadMenuOptions = async () => {
   try {
-    const result = await getMenuList({ page: 1, limit: 1000 });
-    menuOptions.value = result.data || [];
+    const result = await getMenuList({ tree: true });
+    
+    // 扁平化树形结构，用于下拉选择
+    const flattenTree = (nodes, result = []) => {
+      nodes.forEach(node => {
+        result.push({
+          id: node.id,
+          name: node.name,
+          level: node.level
+        });
+        if (node.children && node.children.length > 0) {
+          flattenTree(node.children, result);
+        }
+      });
+      return result;
+    };
+    
+    menuOptions.value = flattenTree(result.data || []);
   } catch (error) {
     console.error("加载菜单选项失败:", error);
+    menuOptions.value = [];
   }
 };
 
 // 新增
 const handleAdd = () => {
   resetForm();
+  form.parentId = 0;
+  form.level = 1;
+  dialogVisible.value = true;
+  loadMenuOptions();
+};
+
+// 添加子菜单
+const handleAddChild = (row) => {
+  resetForm();
+  form.parentId = row.id;
+  form.level = row.level + 1;
   dialogVisible.value = true;
   loadMenuOptions();
 };
@@ -344,16 +377,6 @@ const resetForm = () => {
   });
 };
 
-// 分页
-const handleSizeChange = (val) => {
-  pagination.limit = val;
-  loadData();
-};
-
-const handleCurrentChange = (val) => {
-  pagination.page = val;
-  loadData();
-};
 
 // 初始化
 onMounted(() => {

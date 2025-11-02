@@ -14,9 +14,12 @@
           <el-select v-model="searchForm.accountType" placeholder="请选择类型" clearable
             style="width: 200px"
             :popper-append-to-body="false">
-            <el-option label="现金" value="cash" />
-            <el-option label="银行存款" value="bank" />
-            <el-option label="其他" value="other" />
+            <el-option 
+              v-for="option in accountTypeOptions" 
+              :key="option.value"
+              :label="option.label" 
+              :value="option.value" 
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -111,9 +114,12 @@
         </el-form-item>
         <el-form-item label="账户类型" prop="account_type" required>
           <el-select v-model="form.account_type" placeholder="请选择账户类型" style="width: 100%">
-            <el-option label="现金" value="cash" />
-            <el-option label="银行存款" value="bank" />
-            <el-option label="其他" value="other" />
+            <el-option 
+              v-for="option in accountTypeOptions" 
+              :key="option.value"
+              :label="option.label" 
+              :value="option.value" 
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="开户银行" prop="bank_name">
@@ -149,9 +155,35 @@ import {
   updateCashAccount,
   deleteCashAccount
 } from "@/api/finance";
+import { getDictionary, getDictOptions } from '@/utils/dictionary';
 
 const loading = ref(false);
 const tableData = ref([]);
+
+// 账户类型字典
+const accountTypeDict = ref({});
+const accountTypeOptions = ref([]);
+
+// 加载账户类型字典
+const loadAccountTypeDict = async () => {
+  try {
+    accountTypeDict.value = await getDictionary('finance_account_type_cash');
+    accountTypeOptions.value = await getDictOptions('finance_account_type_cash');
+  } catch (error) {
+    console.error('加载账户类型字典失败:', error);
+    // 使用默认值
+    accountTypeDict.value = {
+      cash: "现金",
+      bank: "银行存款",
+      other: "其他"
+    };
+    accountTypeOptions.value = [
+      { label: "现金", value: "cash" },
+      { label: "银行存款", value: "bank" },
+      { label: "其他", value: "other" }
+    ];
+  }
+};
 
 const searchForm = reactive({
   keyword: "",
@@ -295,6 +327,12 @@ const getBalanceClass = (balance) => {
 };
 
 const getAccountTypeLabel = (type) => {
+  if (!type) return '-';
+  // 优先使用字典
+  if (accountTypeDict.value[type]) {
+    return accountTypeDict.value[type];
+  }
+  // 回退到默认值
   const typeMap = {
     cash: "现金",
     bank: "银行存款",
@@ -311,7 +349,10 @@ const formatCurrency = (amount) => {
   });
 };
 
-onMounted(() => loadData());
+onMounted(() => {
+  loadAccountTypeDict();
+  loadData();
+});
 </script>
 
 <style scoped>

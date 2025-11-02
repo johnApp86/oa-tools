@@ -85,6 +85,7 @@
 import { ref, reactive, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { DocumentAdd, Download } from "@element-plus/icons-vue";
+import { getDictionary } from '@/utils/dictionary';
 
 const loading = ref(false);
 const tableData = ref([]);
@@ -177,14 +178,40 @@ const getStatusLabel = (status) => {
   return statusMap[status] || status || "未知";
 };
 
+// 报表类型字典缓存
+const reportTypeDict = ref({});
+
+// 加载报表类型字典
+const loadReportTypeDict = async () => {
+  try {
+    const dict = await getDictionary('finance_report_type');
+    reportTypeDict.value = dict;
+  } catch (error) {
+    console.error('加载报表类型字典失败:', error);
+    // 使用默认值
+    reportTypeDict.value = {
+      balance_sheet: "资产负债表",
+      income_statement: "利润表",
+      cash_flow: "现金流量表",
+      equity_change: "所有者权益变动表"
+    };
+  }
+};
+
 const getReportTypeLabel = (reportType) => {
-  const typeMap = {
+  if (!reportType) return "未知";
+  // 优先使用字典
+  if (reportTypeDict.value[reportType]) {
+    return reportTypeDict.value[reportType];
+  }
+  // 回退到默认值
+  const defaultMap = {
     balance_sheet: "资产负债表",
     income_statement: "利润表",
     cash_flow: "现金流量表",
     equity_change: "所有者权益变动表"
   };
-  return typeMap[reportType] || reportType || "未知";
+  return defaultMap[reportType] || reportType || "未知";
 };
 
 const formatDate = (date) => {
@@ -200,7 +227,10 @@ const formatDate = (date) => {
   return date;
 };
 
-onMounted(() => loadData());
+onMounted(() => {
+  loadData();
+  loadReportTypeDict();
+});
 </script>
 
 <style scoped>

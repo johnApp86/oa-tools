@@ -144,8 +144,31 @@ const initDatabase = (callback) => {
                   return callback && callback(err);
                 }
 
-                // 所有表创建完成，插入初始数据
-                insertInitialData(callback);
+                // 字典表
+                db.run(`
+                  CREATE TABLE IF NOT EXISTS dictionaries (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    dict_code VARCHAR(100) NOT NULL,
+                    dict_name VARCHAR(100) NOT NULL,
+                    dict_type VARCHAR(50) NOT NULL,
+                    dict_value VARCHAR(100) NOT NULL,
+                    dict_label VARCHAR(100) NOT NULL,
+                    sort_order INTEGER DEFAULT 0,
+                    status INTEGER DEFAULT 1,
+                    remark TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(dict_code, dict_value)
+                  )
+                `, (err) => {
+                  if (err) {
+                    console.error('创建字典表失败:', err);
+                    return callback && callback(err);
+                  }
+
+                  // 所有表创建完成，插入初始数据
+                  insertInitialData(callback);
+                });
               });
             });
           });

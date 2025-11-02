@@ -42,6 +42,12 @@ const routes = [
         meta: { title: '角色管理' }
       },
       {
+        path: 'system/dictionary',
+        name: 'Dictionary',
+        component: () => import('../views/system/Dictionary.vue'),
+        meta: { title: '字典管理' }
+      },
+      {
         path: 'hr/recruitment',
         name: 'Recruitment',
         component: () => import('../views/hr/Recruitment.vue'),

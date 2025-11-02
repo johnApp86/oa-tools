@@ -9,10 +9,12 @@
           <el-select v-model="searchForm.expenseType" placeholder="请选择类型" clearable
             style="width: 200px"
             :popper-append-to-body="false">
-            <el-option label="差旅费" value="travel" />
-            <el-option label="办公费" value="office" />
-            <el-option label="通讯费" value="communication" />
-            <el-option label="培训费" value="training" />
+            <el-option 
+              v-for="option in expenseTypeOptions" 
+              :key="option.value"
+              :label="option.label" 
+              :value="option.value" 
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -39,7 +41,11 @@
         table-layout="fixed">
         <el-table-column prop="expense_code" label="费用编号" width="150" show-overflow-tooltip/>
         <el-table-column prop="expense_name" label="费用名称" width="200" show-overflow-tooltip/>
-        <el-table-column prop="expense_type" label="费用类型" width="120" show-overflow-tooltip/>
+        <el-table-column prop="expense_type" label="费用类型" width="120" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ getExpenseTypeLabel(row.expense_type) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="applicant" label="申请人" width="120" show-overflow-tooltip/>
         <el-table-column prop="amount" label="申请金额" width="120" show-overflow-tooltipalign="right">
           <template #default="{ row }">
@@ -83,25 +89,45 @@
     <el-dialog
       v-model="dialogVisible"
       :title="form.id ? '编辑费用申请' : '新增费用申请'"
-      width="500px"
+      width="600px"
+      @close="handleDialogClose"
     >
       <el-form
+        ref="formRef"
         :model="form"
+        :rules="formRules"
         label-width="100px"
       >
-        <el-form-item label="费用类别" required>
-          <el-input v-model="form.category" placeholder="请输入费用类别" />
+        <el-form-item label="费用类型" prop="expense_type" required>
+          <el-select v-model="form.expense_type" placeholder="请选择费用类型" style="width: 100%">
+            <el-option 
+              v-for="option in expenseTypeOptions" 
+              :key="option.value"
+              :label="option.label" 
+              :value="option.value" 
+            />
+          </el-select>
         </el-form-item>
-        <el-form-item label="费用金额" required>
+        <el-form-item label="申请金额" prop="amount" required>
           <el-input-number
             v-model="form.amount"
             :precision="2"
             :min="0"
-            placeholder="请输入费用金额"
+            placeholder="请输入申请金额"
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="费用描述" required>
+        <el-form-item label="申请日期" prop="application_date" required>
+          <el-date-picker
+            v-model="form.application_date"
+            type="date"
+            placeholder="请选择申请日期"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="费用描述" prop="description" required>
           <el-input
             v-model="form.description"
             type="textarea"
@@ -109,11 +135,19 @@
             placeholder="请输入费用描述"
           />
         </el-form-item>
+        <el-form-item label="备注">
+          <el-input
+            v-model="form.notes"
+            type="textarea"
+            :rows="2"
+            placeholder="请输入备注（可选）"
+          />
+        </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">确定</el-button>
+          <el-button type="primary" @click="handleSubmit" :loading="submitLoading">确定</el-button>
         </div>
       </template>
     </el-dialog>
@@ -130,9 +164,54 @@ import {
   approveExpenseApplication,
   rejectExpenseApplication
 } from "@/api/finance";
+import { getDictionary, getDictOptions } from '@/utils/dictionary';
 
 const loading = ref(false);
 const tableData = ref([]);
+
+// 费用类型字典
+const expenseTypeDict = ref({});
+const expenseTypeOptions = ref([]);
+
+// 加载费用类型字典
+const loadExpenseTypeDict = async () => {
+  try {
+    expenseTypeDict.value = await getDictionary('finance_expense_type');
+    expenseTypeOptions.value = await getDictOptions('finance_expense_type');
+  } catch (error) {
+    console.error('加载费用类型字典失败:', error);
+    // 使用默认值
+    expenseTypeDict.value = {
+      travel: "差旅费",
+      office: "办公费",
+      communication: "通讯费",
+      training: "培训费"
+    };
+    expenseTypeOptions.value = [
+      { label: "差旅费", value: "travel" },
+      { label: "办公费", value: "office" },
+      { label: "通讯费", value: "communication" },
+      { label: "培训费", value: "training" }
+    ];
+  }
+};
+
+// 获取费用类型标签
+const getExpenseTypeLabel = (type) => {
+  if (!type) return '-';
+  // 优先使用字典
+  if (expenseTypeDict.value[type]) {
+    return expenseTypeDict.value[type];
+  }
+  // 回退到默认值
+  const typeMap = {
+    travel: "差旅费",
+    office: "办公费",
+    communication: "通讯费",
+    training: "培训费"
+  };
+  return typeMap[type] || type || '-';
+};
 
 const searchForm = reactive({
   keyword: "",
@@ -163,51 +242,112 @@ const handleReset = () => {
   loadData();
 };
 const dialogVisible = ref(false);
+const submitLoading = ref(false);
+const formRef = ref();
 const form = reactive({
   id: null,
-  category: "",
+  expense_type: "",
   amount: 0,
-  description: ""
+  application_date: "",
+  description: "",
+  notes: ""
 });
 
+// 表单验证规则
+const formRules = {
+  expense_type: [{ required: true, message: "请选择费用类型", trigger: "change" }],
+  amount: [
+    { required: true, message: "请输入申请金额", trigger: "blur" },
+    { type: "number", min: 0.01, message: "申请金额必须大于0", trigger: "blur" }
+  ],
+  application_date: [{ required: true, message: "请选择申请日期", trigger: "change" }],
+  description: [{ required: true, message: "请输入费用描述", trigger: "blur" }]
+};
+
 const handleAdd = () => {
-  Object.assign(form, {
-    id: null,
-    category: "",
-    amount: 0,
-    description: ""
-  });
+  resetForm();
+  form.application_date = new Date().toISOString().split('T')[0];
   dialogVisible.value = true;
 };
 
 const handleEdit = (row) => {
+  resetForm();
+  // 尝试从category反向查找费用类型代码
+  let expenseType = '';
+  if (row.expense_type && expenseTypeDict.value) {
+    // 如果expense_type是代码，直接使用
+    if (expenseTypeDict.value[row.expense_type]) {
+      expenseType = row.expense_type;
+    } else {
+      // 否则尝试从字典值中查找匹配的代码
+      const foundType = expenseTypeOptions.value.find(opt => opt.label === row.expense_type || opt.label === row.category);
+      expenseType = foundType ? foundType.value : '';
+    }
+  }
+  
   Object.assign(form, {
     id: row.id,
-    category: row.category || row.expense_type,
-    amount: row.amount,
-    description: row.description || row.expense_name
+    expense_type: expenseType || row.expense_type || '',
+    amount: row.amount || 0,
+    application_date: row.apply_date || row.application_date || new Date().toISOString().split('T')[0],
+    description: row.description || row.expense_name || '',
+    notes: row.notes || ''
   });
   dialogVisible.value = true;
 };
 
+const resetForm = () => {
+  formRef.value?.resetFields();
+  Object.assign(form, {
+    id: null,
+    expense_type: "",
+    amount: 0,
+    application_date: "",
+    description: "",
+    notes: ""
+  });
+};
+
+const handleDialogClose = () => {
+  formRef.value?.resetFields();
+};
+
 const handleSubmit = async () => {
+  if (!formRef.value) return;
+  
   try {
+    await formRef.value.validate();
+    submitLoading.value = true;
+    
+    // category字段存储费用类型的中文标签（用于列表显示）
+    // 后端查询会将category同时映射为expense_name和expense_type
+    const expenseTypeLabel = getExpenseTypeLabel(form.expense_type);
     const submitData = {
-      category: form.category,
+      category: expenseTypeLabel, // 存储费用类型标签
       amount: parseFloat(form.amount),
-      description: form.description
+      application_date: form.application_date,
+      description: form.description || expenseTypeLabel, // 费用描述
+      notes: form.notes || null
     };
     
     if (form.id) {
       ElMessage.info("更新费用申请功能开发中...");
       // TODO: 添加更新接口
+      // await updateExpenseApplication(form.id, submitData);
+      // dialogVisible.value = false;
+      // await loadData();
     } else {
       await createExpenseApplication(submitData);
+      ElMessage.success("创建成功");
       dialogVisible.value = false;
       await loadData();
     }
   } catch (error) {
-    console.error("提交失败:", error);
+    if (error !== false) { // 验证失败时返回false
+      console.error("提交失败:", error);
+    }
+  } finally {
+    submitLoading.value = false;
   }
 };
 
@@ -296,7 +436,10 @@ const formatDate = (date) => {
   return date;
 };
 
-onMounted(() => loadData());
+onMounted(() => {
+  loadExpenseTypeDict();
+  loadData();
+});
 </script>
 
 <style scoped>

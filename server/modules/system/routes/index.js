@@ -7,6 +7,7 @@ const positionRoutes = require('./positions');
 const userRoutes = require('./users');
 const menuRoutes = require('./menus');
 const roleRoutes = require('./roles');
+const dictionaryRoutes = require('./dictionaries');
 
 // 注册子路由（正常路径：/api/system/...）
 router.use('/organizations', organizationRoutes);
@@ -14,5 +15,6 @@ router.use('/positions', positionRoutes);
 router.use('/users', userRoutes);
 router.use('/menus', menuRoutes);
 router.use('/roles', roleRoutes);
+router.use('/dictionaries', dictionaryRoutes);
 
 module.exports = router;

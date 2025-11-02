@@ -112,10 +112,12 @@
         </el-form-item>
         <el-form-item label="预算类别" prop="category">
           <el-select v-model="form.category" placeholder="请选择预算类别" style="width: 100%">
-            <el-option label="收入预算" value="收入预算" />
-            <el-option label="支出预算" value="支出预算" />
-            <el-option label="资本预算" value="资本预算" />
-            <el-option label="其他" value="其他" />
+            <el-option 
+              v-for="option in budgetCategoryOptions" 
+              :key="option.value"
+              :label="option.label" 
+              :value="option.value" 
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="预算金额" prop="amount" required>
@@ -164,9 +166,37 @@ import {
   updateBudget,
   deleteBudget
 } from "@/api/finance";
+import { getDictionary, getDictOptions } from '@/utils/dictionary';
 
 const loading = ref(false);
 const tableData = ref([]);
+
+// 预算类别字典
+const budgetCategoryDict = ref({});
+const budgetCategoryOptions = ref([]);
+
+// 加载预算类别字典
+const loadBudgetCategoryDict = async () => {
+  try {
+    budgetCategoryDict.value = await getDictionary('finance_budget_category');
+    budgetCategoryOptions.value = await getDictOptions('finance_budget_category');
+  } catch (error) {
+    console.error('加载预算类别字典失败:', error);
+    // 使用默认值（需要映射旧的中文值到新的值）
+    budgetCategoryDict.value = {
+      income: "收入预算",
+      expense: "支出预算",
+      capital: "资本预算",
+      other: "其他"
+    };
+    budgetCategoryOptions.value = [
+      { label: "收入预算", value: "income" },
+      { label: "支出预算", value: "expense" },
+      { label: "资本预算", value: "capital" },
+      { label: "其他", value: "other" }
+    ];
+  }
+};
 
 const searchForm = reactive({
   keyword: "",
@@ -362,7 +392,10 @@ const formatCurrency = (amount) => {
   });
 };
 
-onMounted(() => loadData());
+onMounted(() => {
+  loadBudgetCategoryDict();
+  loadData();
+});
 </script>
 
 <style scoped>

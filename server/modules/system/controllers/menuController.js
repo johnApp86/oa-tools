@@ -4,95 +4,73 @@ class MenuController {
   // 获取菜单树
   async getMenuTree(req, res) {
     try {
-      const menus = [
-        {
-          id: 1,
-          name: '系统管理',
-          path: '/system',
-          icon: 'Setting',
-          children: [
-            {
-              id: 2,
-              name: '组织管理',
-              path: '/system/organization',
-              icon: 'OfficeBuilding'
-            },
-            {
-              id: 3,
-              name: '岗位管理',
-              path: '/system/position',
-              icon: 'User'
-            },
-            {
-              id: 4,
-              name: '用户管理',
-              path: '/system/user',
-              icon: 'Avatar'
-            },
-            {
-              id: 5,
-              name: '菜单管理',
-              path: '/system/menu',
-              icon: 'Menu'
+      // 从数据库获取所有启用的菜单
+      db.all(
+        `SELECT * FROM menus WHERE status = 1 ORDER BY level, sort_order, id`,
+        [],
+        (err, menus) => {
+          if (err) {
+            console.error('查询菜单失败:', err);
+            return res.status(500).json({ message: '查询失败', error: err.message });
+          }
+
+          // 构建菜单树
+          const menuMap = new Map();
+          const menuTree = [];
+
+          // 第一遍：创建所有菜单的映射
+          menus.forEach(menu => {
+            menuMap.set(menu.id, {
+              id: menu.id,
+              name: menu.name,
+              path: menu.path,
+              component: menu.component,
+              icon: menu.icon,
+              parent_id: menu.parent_id,
+              level: menu.level,
+              sort_order: menu.sort_order,
+              children: []
+            });
+          });
+
+          // 第二遍：构建树形结构
+          menus.forEach(menu => {
+            const menuItem = menuMap.get(menu.id);
+            if (menu.parent_id === 0 || menu.parent_id === null) {
+              // 顶级菜单
+              menuTree.push(menuItem);
+            } else {
+              // 子菜单
+              const parent = menuMap.get(menu.parent_id);
+              if (parent) {
+                parent.children.push(menuItem);
+              }
             }
-          ]
-        },
-        {
-          id: 6,
-          name: 'HR管理',
-          path: '/hr',
-          icon: 'UserGroup',
-          children: [
-            {
-              id: 7,
-              name: '招聘管理',
-              path: '/hr/recruitment',
-              icon: 'UserPlus'
-            },
-            {
-              id: 8,
-              name: '入职离职管理',
-              path: '/hr/onboarding',
-              icon: 'UserCheck'
-            },
-            {
-              id: 9,
-              name: '考勤、请假',
-              path: '/hr/attendance',
-              icon: 'Clock'
-            },
-            {
-              id: 10,
-              name: '薪酬福利管理',
-              path: '/hr/salary',
-              icon: 'CurrencyDollar'
-            },
-            {
-              id: 11,
-              name: '档案管理',
-              path: '/hr/employee',
-              icon: 'DocumentText'
-            },
-            {
-              id: 12,
-              name: '报表分析',
-              path: '/hr/reports',
-              icon: 'ChartBar'
+          });
+
+          // 对每个节点的子菜单进行排序
+          const sortChildren = (node) => {
+            if (node.children && node.children.length > 0) {
+              node.children.sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+              node.children.forEach(sortChildren);
             }
-          ]
+          };
+
+          menuTree.forEach(sortChildren);
+          menuTree.sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+
+          res.json(menuTree);
         }
-      ];
-      res.json(menus);
+      );
     } catch (error) {
-      res.status(500).json({ message: '服务器错误' });
+      res.status(500).json({ message: '服务器错误', error: error.message });
     }
   }
 
-  // 获取菜单列表
+  // 获取菜单列表（树形结构）
   async getMenus(req, res) {
     try {
-      const { page = 1, limit = 10, keyword = '' } = req.query;
-      const offset = (page - 1) * limit;
+      const { keyword = '', tree = false } = req.query;
 
       let sql = `SELECT * FROM menus WHERE 1=1`;
       const params = [];
@@ -102,8 +80,7 @@ class MenuController {
         params.push(`%${keyword}%`, `%${keyword}%`);
       }
 
-      sql += ` ORDER BY level, sort_order LIMIT ? OFFSET ?`;
-      params.push(parseInt(limit), parseInt(offset));
+      sql += ` ORDER BY level, sort_order, id`;
 
       db.all(sql, params, (err, menus) => {
         if (err) {
@@ -111,31 +88,68 @@ class MenuController {
           return res.status(500).json({ message: '查询失败', error: err.message });
         }
 
-        // 获取总数
-        let countSql = `SELECT COUNT(*) as total FROM menus WHERE 1=1`;
-        const countParams = [];
-        
-        if (keyword) {
-          countSql += ` AND (name LIKE ? OR path LIKE ?)`;
-          countParams.push(`%${keyword}%`, `%${keyword}%`);
-        }
+        if (tree === 'true' || tree === true) {
+          // 返回树形结构
+          const menuMap = new Map();
+          const menuTree = [];
 
-        db.get(countSql, countParams, (err, countResult) => {
-          if (err) {
-            console.error('查询菜单总数失败:', err);
-            return res.status(500).json({ message: '查询失败', error: err.message });
-          }
+          // 第一遍：创建所有菜单的映射
+          menus.forEach(menu => {
+            menuMap.set(menu.id, {
+              id: menu.id,
+              name: menu.name,
+              path: menu.path,
+              component: menu.component,
+              icon: menu.icon,
+              parent_id: menu.parent_id,
+              level: menu.level,
+              sort_order: menu.sort_order,
+              type: menu.type,
+              status: menu.status,
+              children: []
+            });
+          });
+
+          // 第二遍：构建树形结构
+          menus.forEach(menu => {
+            const menuItem = menuMap.get(menu.id);
+            if (menu.parent_id === 0 || menu.parent_id === null) {
+              // 顶级菜单
+              menuTree.push(menuItem);
+            } else {
+              // 子菜单
+              const parent = menuMap.get(menu.parent_id);
+              if (parent) {
+                parent.children.push(menuItem);
+              }
+            }
+          });
+
+          // 对每个节点的子菜单进行排序
+          const sortChildren = (node) => {
+            if (node.children && node.children.length > 0) {
+              node.children.sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+              node.children.forEach(sortChildren);
+            }
+          };
+
+          menuTree.forEach(sortChildren);
+          menuTree.sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
 
           res.json({
-            data: menus,
-            total: countResult.total,
-            page: parseInt(page),
-            limit: parseInt(limit)
+            data: menuTree,
+            total: menus.length
           });
-        });
+        } else {
+          // 返回扁平列表（兼容旧代码）
+          res.json({
+            data: menus,
+            total: menus.length
+          });
+        }
       });
     } catch (error) {
-      res.status(500).json({ message: '服务器错误' });
+      res.status(500).json({ message: '服务器错误', error: error.message });
     }
   }
 

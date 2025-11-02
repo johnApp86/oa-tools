@@ -26,120 +26,32 @@
       <!-- 侧边栏 -->
       <aside class="layout-sidebar">
         <el-menu
+          v-loading="loading"
           :default-active="activeMenu"
           class="sidebar-menu"
           router
           :collapse="false"
         >
-          <el-menu-item index="/">
-            <el-icon><House /></el-icon>
-            <span>首页</span>
-          </el-menu-item>
-          
-          <el-sub-menu index="/system">
-            <template #title>
-              <el-icon><Setting /></el-icon>
-              <span>系统管理</span>
-            </template>
-            <el-menu-item index="/system/organization">
-              <el-icon><OfficeBuilding /></el-icon>
-              <span>组织管理</span>
+          <template v-for="item in menuTree" :key="item.id">
+            <el-sub-menu v-if="item.children && item.children.length > 0" :index="item.path">
+              <template #title>
+                <el-icon><component :is="getIconComponent(item.icon)" /></el-icon>
+                <span>{{ item.name }}</span>
+              </template>
+              <el-menu-item 
+                v-for="child in item.children" 
+                :key="child.id" 
+                :index="child.path"
+              >
+                <el-icon><component :is="getIconComponent(child.icon)" /></el-icon>
+                <span>{{ child.name }}</span>
+              </el-menu-item>
+            </el-sub-menu>
+            <el-menu-item v-else :index="item.path">
+              <el-icon><component :is="getIconComponent(item.icon)" /></el-icon>
+              <span>{{ item.name }}</span>
             </el-menu-item>
-            <el-menu-item index="/system/position">
-              <el-icon><User /></el-icon>
-              <span>岗位管理</span>
-            </el-menu-item>
-            <el-menu-item index="/system/user">
-              <el-icon><Avatar /></el-icon>
-              <span>用户管理</span>
-            </el-menu-item>
-            <el-menu-item index="/system/menu">
-              <el-icon><Menu /></el-icon>
-              <span>菜单管理</span>
-            </el-menu-item>
-            <el-menu-item index="/system/role">
-              <el-icon><UserFilled /></el-icon>
-              <span>角色管理</span>
-            </el-menu-item>
-          </el-sub-menu>
-
-          <el-sub-menu index="/hr">
-            <template #title>
-              <el-icon><UserFilled /></el-icon>
-              <span>HR管理</span>
-            </template>
-            <el-menu-item index="/hr/recruitment">
-              <el-icon><Plus /></el-icon>
-              <span>招聘管理</span>
-            </el-menu-item>
-            <el-menu-item index="/hr/onboarding">
-              <el-icon><Check /></el-icon>
-              <span>入职离职管理</span>
-            </el-menu-item>
-            <el-menu-item index="/hr/attendance">
-              <el-icon><Clock /></el-icon>
-              <span>考勤、请假</span>
-            </el-menu-item>
-            <el-menu-item index="/hr/salary">
-              <el-icon><Wallet /></el-icon>
-              <span>薪酬福利管理</span>
-            </el-menu-item>
-            <el-menu-item index="/hr/employee">
-              <el-icon><Document /></el-icon>
-              <span>档案管理</span>
-            </el-menu-item>
-            <el-menu-item index="/hr/reports">
-              <el-icon><DataAnalysis /></el-icon>
-              <span>报表分析</span>
-            </el-menu-item>
-          </el-sub-menu>
-
-          <el-sub-menu index="/finance">
-            <template #title>
-              <el-icon><Money /></el-icon>
-              <span>财务管理</span>
-            </template>
-            <el-menu-item index="/finance/general-ledger">
-              <el-icon><Document /></el-icon>
-              <span>总账</span>
-            </el-menu-item>
-            <el-menu-item index="/finance/accounts-receivable">
-              <el-icon><CreditCard /></el-icon>
-              <span>应收账款</span>
-            </el-menu-item>
-            <el-menu-item index="/finance/accounts-payable">
-              <el-icon><CreditCard /></el-icon>
-              <span>应付账款</span>
-            </el-menu-item>
-            <el-menu-item index="/finance/fixed-assets">
-              <el-icon><OfficeBuilding /></el-icon>
-              <span>固定资产</span>
-            </el-menu-item>
-            <el-menu-item index="/finance/cash-management">
-              <el-icon><Wallet /></el-icon>
-              <span>资金管理</span>
-            </el-menu-item>
-            <el-menu-item index="/finance/cost-accounting">
-              <el-icon><Document /></el-icon>
-              <span>成本管理</span>
-            </el-menu-item>
-            <el-menu-item index="/finance/budgeting">
-              <el-icon><DataAnalysis /></el-icon>
-              <span>预算管理</span>
-            </el-menu-item>
-            <el-menu-item index="/finance/tax-management">
-              <el-icon><Document /></el-icon>
-              <span>税务管理</span>
-            </el-menu-item>
-            <el-menu-item index="/finance/expense-management">
-              <el-icon><Document /></el-icon>
-              <span>费用管理</span>
-            </el-menu-item>
-            <el-menu-item index="/finance/financial-reporting">
-              <el-icon><Document /></el-icon>
-              <span>报表与分析</span>
-            </el-menu-item>
-          </el-sub-menu>
+          </template>
         </el-menu>
       </aside>
 
@@ -152,28 +64,41 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { 
-  House, 
-  Setting, 
-  OfficeBuilding, 
-  User, 
-  Avatar, 
-  Menu,
-  UserFilled, 
-  Plus, 
-  Check, 
-  Clock, 
-  Wallet, 
-  Document, 
-  DataAnalysis,
-  Money,
-  CreditCard
-} from '@element-plus/icons-vue';
+import { getMenuTree } from "@/api/menu";
+import * as Icons from '@element-plus/icons-vue';
 
 const route = useRoute();
 const activeMenu = computed(() => route.path);
+const menuTree = ref([]);
+const loading = ref(true);
+
+// 动态获取图标组件
+const getIconComponent = (iconName) => {
+  if (!iconName) return Icons.Document;
+  const IconComponent = Icons[iconName] || Icons.Document;
+  return IconComponent;
+};
+
+
+// 加载菜单
+const loadMenus = async () => {
+  loading.value = true;
+  try {
+    const result = await getMenuTree();
+    menuTree.value = result.data || result || [];
+  } catch (error) {
+    console.error('加载菜单失败:', error);
+    menuTree.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  loadMenus();
+});
 </script>
 
 <style scoped>

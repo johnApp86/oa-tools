@@ -19,11 +19,12 @@
             style="width: 200px"
             :popper-append-to-body="false"
           >
-            <el-option label="资产" value="asset" />
-            <el-option label="负债" value="liability" />
-            <el-option label="所有者权益" value="equity" />
-            <el-option label="收入" value="revenue" />
-            <el-option label="费用" value="expense" />
+            <el-option 
+              v-for="option in accountTypeOptions" 
+              :key="option.value"
+              :label="option.label" 
+              :value="option.value" 
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -135,12 +136,13 @@
           <el-input v-model="form.name" placeholder="请输入科目名称" />
         </el-form-item>
         <el-form-item label="科目类型" prop="type">
-          <el-select v-model="form.type" placeholder="请选择科目类型">
-            <el-option label="资产" value="asset" />
-            <el-option label="负债" value="liability" />
-            <el-option label="所有者权益" value="equity" />
-            <el-option label="收入" value="revenue" />
-            <el-option label="费用" value="expense" />
+          <el-select v-model="form.type" placeholder="请选择科目类型" style="width: 100%">
+            <el-option 
+              v-for="option in accountTypeOptions" 
+              :key="option.value"
+              :label="option.label" 
+              :value="option.value" 
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="父级科目" prop="parentId">
@@ -196,6 +198,7 @@ import {
   updateGeneralLedgerAccount,
   deleteGeneralLedgerAccount
 } from "@/api/finance";
+import { getDictionary, getDictOptions, getDictLabelSync } from '@/utils/dictionary';
 
 // 响应式数据
 const loading = ref(false);
@@ -439,15 +442,50 @@ const getTypeTagType = (type) => {
   return typeMap[type] || "info";
 };
 
+// 科目类型字典缓存
+const accountTypeDict = ref({});
+const accountTypeOptions = ref([]);
+
+// 加载科目类型字典
+const loadAccountTypeDict = async () => {
+  try {
+    accountTypeDict.value = await getDictionary('finance_account_type');
+    accountTypeOptions.value = await getDictOptions('finance_account_type');
+  } catch (error) {
+    console.error('加载科目类型字典失败:', error);
+    // 使用默认值
+    accountTypeDict.value = {
+      asset: "资产",
+      liability: "负债",
+      equity: "所有者权益",
+      revenue: "收入",
+      expense: "费用"
+    };
+    accountTypeOptions.value = [
+      { label: "资产", value: "asset" },
+      { label: "负债", value: "liability" },
+      { label: "所有者权益", value: "equity" },
+      { label: "收入", value: "revenue" },
+      { label: "费用", value: "expense" }
+    ];
+  }
+};
+
 const getTypeLabel = (type) => {
-  const typeMap = {
+  if (!type) return type || '-';
+  // 优先使用字典
+  if (accountTypeDict.value[type]) {
+    return accountTypeDict.value[type];
+  }
+  // 回退到默认值
+  const defaultMap = {
     asset: "资产",
     liability: "负债",
     equity: "所有者权益",
     revenue: "收入",
     expense: "费用"
   };
-  return typeMap[type] || type;
+  return defaultMap[type] || type;
 };
 
 const getBalanceClass = (balance) => {
@@ -476,6 +514,7 @@ const formatDate = (date) => {
 };
 
 onMounted(() => {
+  loadAccountTypeDict();
   loadData();
   loadAccountTree();
 });

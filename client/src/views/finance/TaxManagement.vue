@@ -9,10 +9,12 @@
           <el-select v-model="searchForm.taxType" placeholder="请选择税种" clearable
             style="width: 200px"
             :popper-append-to-body="false">
-            <el-option label="增值税" value="vat" />
-            <el-option label="企业所得税" value="corporate_income" />
-            <el-option label="个人所得税" value="personal_income" />
-            <el-option label="印花税" value="stamp" />
+            <el-option 
+              v-for="option in taxTypeOptions" 
+              :key="option.value"
+              :label="option.label" 
+              :value="option.value" 
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -94,12 +96,12 @@
       >
         <el-form-item label="税种" prop="tax_type" required>
           <el-select v-model="form.tax_type" placeholder="请选择税种" style="width: 100%">
-            <el-option label="增值税" value="vat" />
-            <el-option label="企业所得税" value="corporate_income" />
-            <el-option label="个人所得税" value="personal_income" />
-            <el-option label="印花税" value="stamp" />
-            <el-option label="城市维护建设税" value="urban_maintenance" />
-            <el-option label="教育费附加" value="education_surcharge" />
+            <el-option 
+              v-for="option in taxTypeOptions" 
+              :key="option.value"
+              :label="option.label" 
+              :value="option.value" 
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="申报期间" prop="period" required>
@@ -170,9 +172,41 @@ import {
   updateTaxDeclaration,
   deleteTaxDeclaration
 } from "@/api/finance";
+import { getDictionary, getDictOptions } from '@/utils/dictionary';
 
 const loading = ref(false);
 const tableData = ref([]);
+
+// 税种字典
+const taxTypeDict = ref({});
+const taxTypeOptions = ref([]);
+
+// 加载税种字典
+const loadTaxTypeDict = async () => {
+  try {
+    taxTypeDict.value = await getDictionary('finance_tax_type');
+    taxTypeOptions.value = await getDictOptions('finance_tax_type');
+  } catch (error) {
+    console.error('加载税种字典失败:', error);
+    // 使用默认值
+    taxTypeDict.value = {
+      vat: "增值税",
+      corporate_income: "企业所得税",
+      personal_income: "个人所得税",
+      stamp: "印花税",
+      urban_maintenance: "城市维护建设税",
+      education_surcharge: "教育费附加"
+    };
+    taxTypeOptions.value = [
+      { label: "增值税", value: "vat" },
+      { label: "企业所得税", value: "corporate_income" },
+      { label: "个人所得税", value: "personal_income" },
+      { label: "印花税", value: "stamp" },
+      { label: "城市维护建设税", value: "urban_maintenance" },
+      { label: "教育费附加", value: "education_surcharge" }
+    ];
+  }
+};
 
 const searchForm = reactive({
   keyword: "",
@@ -327,6 +361,12 @@ const getStatusLabel = (status) => {
 };
 
 const getTaxTypeLabel = (taxType) => {
+  if (!taxType) return '-';
+  // 优先使用字典
+  if (taxTypeDict.value[taxType]) {
+    return taxTypeDict.value[taxType];
+  }
+  // 回退到默认值
   const taxTypeMap = {
     vat: "增值税",
     corporate_income: "企业所得税",
@@ -359,7 +399,10 @@ const formatDate = (date) => {
   return date;
 };
 
-onMounted(() => loadData());
+onMounted(() => {
+  loadTaxTypeDict();
+  loadData();
+});
 </script>
 
 <style scoped>

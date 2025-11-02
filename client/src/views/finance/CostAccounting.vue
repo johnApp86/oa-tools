@@ -9,10 +9,12 @@
           <el-select v-model="searchForm.costType" placeholder="请选择类型" clearable
             style="width: 200px"
             :popper-append-to-body="false">
-            <el-option label="直接材料" value="direct_material" />
-            <el-option label="直接人工" value="direct_labor" />
-            <el-option label="制造费用" value="manufacturing" />
-            <el-option label="间接费用" value="indirect" />
+            <el-option 
+              v-for="option in costTypeOptions" 
+              :key="option.value"
+              :label="option.label" 
+              :value="option.value" 
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -99,10 +101,12 @@
         </el-form-item>
         <el-form-item label="成本类型" prop="cost_type">
           <el-select v-model="form.cost_type" placeholder="请选择成本类型" style="width: 100%">
-            <el-option label="直接材料" value="direct_material" />
-            <el-option label="直接人工" value="direct_labor" />
-            <el-option label="制造费用" value="manufacturing" />
-            <el-option label="间接费用" value="indirect" />
+            <el-option 
+              v-for="option in costTypeOptions" 
+              :key="option.value"
+              :label="option.label" 
+              :value="option.value" 
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="描述" prop="description">
@@ -148,9 +152,37 @@ import {
   updateCostCenter,
   deleteCostCenter
 } from "@/api/finance";
+import { getDictionary, getDictOptions } from '@/utils/dictionary';
 
 const loading = ref(false);
 const tableData = ref([]);
+
+// 成本类型字典
+const costTypeDict = ref({});
+const costTypeOptions = ref([]);
+
+// 加载成本类型字典
+const loadCostTypeDict = async () => {
+  try {
+    costTypeDict.value = await getDictionary('finance_cost_type');
+    costTypeOptions.value = await getDictOptions('finance_cost_type');
+  } catch (error) {
+    console.error('加载成本类型字典失败:', error);
+    // 使用默认值
+    costTypeDict.value = {
+      direct_material: "直接材料",
+      direct_labor: "直接人工",
+      manufacturing: "制造费用",
+      indirect: "间接费用"
+    };
+    costTypeOptions.value = [
+      { label: "直接材料", value: "direct_material" },
+      { label: "直接人工", value: "direct_labor" },
+      { label: "制造费用", value: "manufacturing" },
+      { label: "间接费用", value: "indirect" }
+    ];
+  }
+};
 
 const searchForm = reactive({
   keyword: "",
@@ -304,6 +336,12 @@ const formatCurrency = (amount) => {
 
 // 获取成本类型标签
 const getCostTypeLabel = (type) => {
+  if (!type) return '-';
+  // 优先使用字典
+  if (costTypeDict.value[type]) {
+    return costTypeDict.value[type];
+  }
+  // 回退到默认值
   const typeMap = {
     direct_material: "直接材料",
     direct_labor: "直接人工",
@@ -313,7 +351,10 @@ const getCostTypeLabel = (type) => {
   return typeMap[type] || type || "-";
 };
 
-onMounted(() => loadData());
+onMounted(() => {
+  loadCostTypeDict();
+  loadData();
+});
 </script>
 
 <style scoped>

@@ -14,7 +14,8 @@
     "clean": "bat\\clean.bat",
     "init-db": "bat\\init-db.bat",
     "reset-db": "bat\\reset-db.bat",
-    "menu": "bat\\menu.bat"
+    "menu": "bat\\menu.bat",
+    "fix-menus": "node server/core/database/fix-menus.js"
   },
   "keywords": [
     "vue3",

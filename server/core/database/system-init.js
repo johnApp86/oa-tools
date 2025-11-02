@@ -120,8 +120,15 @@ const insertSystemSampleData = () => {
                 { id: 1, name: '首页', path: '/', component: 'Dashboard', icon: 'House', parent_id: 0, level: 1, sort_order: 1, type: 1, status: 1 },
                 { id: 7, name: 'HR管理', path: '/hr', component: 'Layout', icon: 'User', parent_id: 0, level: 1, sort_order: 3, type: 1, status: 1 },
                 { id: 15, name: '财务管理', path: '/finance', component: 'Layout', icon: 'Money', parent_id: 0, level: 1, sort_order: 4, type: 1, status: 1 },
-                // 系统管理子菜单（已由db-connection.js创建）
-                // HR管理子菜单（通过菜单管理或API创建）
+                // 系统管理子菜单 - 字典管理
+                { id: 26, name: '字典管理', path: '/system/dictionary', component: 'system/Dictionary', icon: 'Notebook', parent_id: 2, level: 2, sort_order: 5, type: 1, status: 1 },
+                // HR管理子菜单
+                { id: 8, name: '招聘管理', path: '/hr/recruitment', component: 'hr/Recruitment', icon: 'UserPlus', parent_id: 7, level: 2, sort_order: 1, type: 1, status: 1 },
+                { id: 9, name: '入职离职管理', path: '/hr/onboarding', component: 'hr/Onboarding', icon: 'UserCheck', parent_id: 7, level: 2, sort_order: 2, type: 1, status: 1 },
+                { id: 10, name: '考勤、请假', path: '/hr/attendance', component: 'hr/Attendance', icon: 'Clock', parent_id: 7, level: 2, sort_order: 3, type: 1, status: 1 },
+                { id: 11, name: '薪酬福利管理', path: '/hr/salary', component: 'hr/Salary', icon: 'CurrencyDollar', parent_id: 7, level: 2, sort_order: 4, type: 1, status: 1 },
+                { id: 12, name: '档案管理', path: '/hr/employee', component: 'hr/Employee', icon: 'DocumentText', parent_id: 7, level: 2, sort_order: 5, type: 1, status: 1 },
+                { id: 13, name: '报表分析', path: '/hr/reports', component: 'hr/Report', icon: 'ChartBar', parent_id: 7, level: 2, sort_order: 6, type: 1, status: 1 },
                 // 财务子菜单
                 { id: 16, name: '总账', path: '/finance/general-ledger', component: 'finance/GeneralLedger', icon: 'Document', parent_id: 15, level: 2, sort_order: 1, type: 1, status: 1 },
                 { id: 17, name: '应收账款', path: '/finance/accounts-receivable', component: 'finance/AccountsReceivable', icon: 'CreditCard', parent_id: 15, level: 2, sort_order: 2, type: 1, status: 1 },
@@ -161,6 +168,96 @@ const insertSystemSampleData = () => {
             });
           });
         });
+      });
+    });
+  });
+};
+
+// 插入字典示例数据
+const insertDictionarySampleData = () => {
+  return new Promise((resolve, reject) => {
+    console.log('正在插入字典示例数据...');
+    
+    const dictionaries = [
+      // 财务模块字典 - 财务报表类型
+      { dict_code: 'finance_report_type', dict_name: '财务报表类型', dict_type: 'finance', dict_value: 'balance_sheet', dict_label: '资产负债表', sort_order: 1, status: 1, remark: '财务报表类型' },
+      { dict_code: 'finance_report_type', dict_name: '财务报表类型', dict_type: 'finance', dict_value: 'income_statement', dict_label: '利润表', sort_order: 2, status: 1, remark: '财务报表类型' },
+      { dict_code: 'finance_report_type', dict_name: '财务报表类型', dict_type: 'finance', dict_value: 'cash_flow', dict_label: '现金流量表', sort_order: 3, status: 1, remark: '财务报表类型' },
+      { dict_code: 'finance_report_type', dict_name: '财务报表类型', dict_type: 'finance', dict_value: 'equity_change', dict_label: '所有者权益变动表', sort_order: 4, status: 1, remark: '财务报表类型' },
+      // 财务模块字典 - 科目类型
+      { dict_code: 'finance_account_type', dict_name: '科目类型', dict_type: 'finance', dict_value: 'asset', dict_label: '资产', sort_order: 1, status: 1, remark: '总账科目类型' },
+      { dict_code: 'finance_account_type', dict_name: '科目类型', dict_type: 'finance', dict_value: 'liability', dict_label: '负债', sort_order: 2, status: 1, remark: '总账科目类型' },
+      { dict_code: 'finance_account_type', dict_name: '科目类型', dict_type: 'finance', dict_value: 'equity', dict_label: '所有者权益', sort_order: 3, status: 1, remark: '总账科目类型' },
+      { dict_code: 'finance_account_type', dict_name: '科目类型', dict_type: 'finance', dict_value: 'revenue', dict_label: '收入', sort_order: 4, status: 1, remark: '总账科目类型' },
+      { dict_code: 'finance_account_type', dict_name: '科目类型', dict_type: 'finance', dict_value: 'expense', dict_label: '费用', sort_order: 5, status: 1, remark: '总账科目类型' },
+      // 财务模块字典 - 资产类别
+      { dict_code: 'finance_asset_category', dict_name: '资产类别', dict_type: 'finance', dict_value: 'electronics', dict_label: '电子设备', sort_order: 1, status: 1, remark: '固定资产类别' },
+      { dict_code: 'finance_asset_category', dict_name: '资产类别', dict_type: 'finance', dict_value: 'furniture', dict_label: '办公家具', sort_order: 2, status: 1, remark: '固定资产类别' },
+      { dict_code: 'finance_asset_category', dict_name: '资产类别', dict_type: 'finance', dict_value: 'machinery', dict_label: '机械设备', sort_order: 3, status: 1, remark: '固定资产类别' },
+      { dict_code: 'finance_asset_category', dict_name: '资产类别', dict_type: 'finance', dict_value: 'vehicle', dict_label: '车辆', sort_order: 4, status: 1, remark: '固定资产类别' },
+      { dict_code: 'finance_asset_category', dict_name: '资产类别', dict_type: 'finance', dict_value: 'building', dict_label: '房屋建筑物', sort_order: 5, status: 1, remark: '固定资产类别' },
+      { dict_code: 'finance_asset_category', dict_name: '资产类别', dict_type: 'finance', dict_value: 'other', dict_label: '其他', sort_order: 6, status: 1, remark: '固定资产类别' },
+      // 财务模块字典 - 账户类型（资金管理）
+      { dict_code: 'finance_account_type_cash', dict_name: '账户类型', dict_type: 'finance', dict_value: 'cash', dict_label: '现金', sort_order: 1, status: 1, remark: '资金管理账户类型' },
+      { dict_code: 'finance_account_type_cash', dict_name: '账户类型', dict_type: 'finance', dict_value: 'bank', dict_label: '银行存款', sort_order: 2, status: 1, remark: '资金管理账户类型' },
+      { dict_code: 'finance_account_type_cash', dict_name: '账户类型', dict_type: 'finance', dict_value: 'other', dict_label: '其他', sort_order: 3, status: 1, remark: '资金管理账户类型' },
+      // 财务模块字典 - 成本类型
+      { dict_code: 'finance_cost_type', dict_name: '成本类型', dict_type: 'finance', dict_value: 'direct_material', dict_label: '直接材料', sort_order: 1, status: 1, remark: '成本管理类型' },
+      { dict_code: 'finance_cost_type', dict_name: '成本类型', dict_type: 'finance', dict_value: 'direct_labor', dict_label: '直接人工', sort_order: 2, status: 1, remark: '成本管理类型' },
+      { dict_code: 'finance_cost_type', dict_name: '成本类型', dict_type: 'finance', dict_value: 'manufacturing', dict_label: '制造费用', sort_order: 3, status: 1, remark: '成本管理类型' },
+      { dict_code: 'finance_cost_type', dict_name: '成本类型', dict_type: 'finance', dict_value: 'indirect', dict_label: '间接费用', sort_order: 4, status: 1, remark: '成本管理类型' },
+      // 财务模块字典 - 预算类别
+      { dict_code: 'finance_budget_category', dict_name: '预算类别', dict_type: 'finance', dict_value: 'income', dict_label: '收入预算', sort_order: 1, status: 1, remark: '预算管理类别' },
+      { dict_code: 'finance_budget_category', dict_name: '预算类别', dict_type: 'finance', dict_value: 'expense', dict_label: '支出预算', sort_order: 2, status: 1, remark: '预算管理类别' },
+      { dict_code: 'finance_budget_category', dict_name: '预算类别', dict_type: 'finance', dict_value: 'capital', dict_label: '资本预算', sort_order: 3, status: 1, remark: '预算管理类别' },
+      { dict_code: 'finance_budget_category', dict_name: '预算类别', dict_type: 'finance', dict_value: 'other', dict_label: '其他', sort_order: 4, status: 1, remark: '预算管理类别' },
+      // 财务模块字典 - 税种
+      { dict_code: 'finance_tax_type', dict_name: '税种', dict_type: 'finance', dict_value: 'vat', dict_label: '增值税', sort_order: 1, status: 1, remark: '税务管理税种' },
+      { dict_code: 'finance_tax_type', dict_name: '税种', dict_type: 'finance', dict_value: 'corporate_income', dict_label: '企业所得税', sort_order: 2, status: 1, remark: '税务管理税种' },
+      { dict_code: 'finance_tax_type', dict_name: '税种', dict_type: 'finance', dict_value: 'personal_income', dict_label: '个人所得税', sort_order: 3, status: 1, remark: '税务管理税种' },
+      { dict_code: 'finance_tax_type', dict_name: '税种', dict_type: 'finance', dict_value: 'stamp', dict_label: '印花税', sort_order: 4, status: 1, remark: '税务管理税种' },
+      { dict_code: 'finance_tax_type', dict_name: '税种', dict_type: 'finance', dict_value: 'urban_maintenance', dict_label: '城市维护建设税', sort_order: 5, status: 1, remark: '税务管理税种' },
+      { dict_code: 'finance_tax_type', dict_name: '税种', dict_type: 'finance', dict_value: 'education_surcharge', dict_label: '教育费附加', sort_order: 6, status: 1, remark: '税务管理税种' },
+      // 财务模块字典 - 费用类型
+      { dict_code: 'finance_expense_type', dict_name: '费用类型', dict_type: 'finance', dict_value: 'travel', dict_label: '差旅费', sort_order: 1, status: 1, remark: '费用管理类型' },
+      { dict_code: 'finance_expense_type', dict_name: '费用类型', dict_type: 'finance', dict_value: 'office', dict_label: '办公费', sort_order: 2, status: 1, remark: '费用管理类型' },
+      { dict_code: 'finance_expense_type', dict_name: '费用类型', dict_type: 'finance', dict_value: 'communication', dict_label: '通讯费', sort_order: 3, status: 1, remark: '费用管理类型' },
+      { dict_code: 'finance_expense_type', dict_name: '费用类型', dict_type: 'finance', dict_value: 'training', dict_label: '培训费', sort_order: 4, status: 1, remark: '费用管理类型' },
+      // HR模块字典
+      { dict_code: 'hr_status', dict_name: 'HR状态', dict_type: 'hr', dict_value: '1', dict_label: '待审核', sort_order: 1, status: 1, remark: 'HR申请状态' },
+      { dict_code: 'hr_status', dict_name: 'HR状态', dict_type: 'hr', dict_value: '2', dict_label: '已通过', sort_order: 2, status: 1, remark: 'HR申请状态' },
+      { dict_code: 'hr_status', dict_name: 'HR状态', dict_type: 'hr', dict_value: '3', dict_label: '已拒绝', sort_order: 3, status: 1, remark: 'HR申请状态' },
+      { dict_code: 'hr_leave_type', dict_name: '请假类型', dict_type: 'hr', dict_value: '1', dict_label: '年假', sort_order: 1, status: 1, remark: '请假类型' },
+      { dict_code: 'hr_leave_type', dict_name: '请假类型', dict_type: 'hr', dict_value: '2', dict_label: '病假', sort_order: 2, status: 1, remark: '请假类型' },
+      { dict_code: 'hr_leave_type', dict_name: '请假类型', dict_type: 'hr', dict_value: '3', dict_label: '事假', sort_order: 3, status: 1, remark: '请假类型' },
+      { dict_code: 'hr_leave_type', dict_name: '请假类型', dict_type: 'hr', dict_value: '4', dict_label: '调休', sort_order: 4, status: 1, remark: '请假类型' },
+      { dict_code: 'hr_contract_type', dict_name: '合同类型', dict_type: 'hr', dict_value: 'formal', dict_label: '正式合同', sort_order: 1, status: 1, remark: '合同类型' },
+      { dict_code: 'hr_contract_type', dict_name: '合同类型', dict_type: 'hr', dict_value: 'intern', dict_label: '实习合同', sort_order: 2, status: 1, remark: '合同类型' },
+      { dict_code: 'hr_contract_type', dict_name: '合同类型', dict_type: 'hr', dict_value: 'temporary', dict_label: '临时合同', sort_order: 3, status: 1, remark: '合同类型' },
+    ];
+    
+    let count = 0;
+    let hasError = false;
+    
+    dictionaries.forEach(dict => {
+      db.run(`
+        INSERT OR REPLACE INTO dictionaries (dict_code, dict_name, dict_type, dict_value, dict_label, sort_order, status, remark) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `, [dict.dict_code, dict.dict_name, dict.dict_type, dict.dict_value, dict.dict_label, dict.sort_order, dict.status, dict.remark], (err) => {
+        count++;
+        if (err) {
+          console.error(`插入字典 "${dict.dict_label}" 失败:`, err.message);
+          hasError = true;
+        }
+        
+        if (count === dictionaries.length) {
+          if (hasError) {
+            console.warn('⚠️ 部分字典插入失败，但不影响主流程');
+          } else {
+            console.log(`✓ 成功插入${dictionaries.length}条字典数据`);
+          }
+          resolve();
+        }
       });
     });
   });
@@ -385,94 +482,70 @@ const insertHRSampleData = () => {
                   });
                 }
                 
-              console.log(`💰 正在生成薪酬记录数据（共 ${salaryRecords.length} 条）...`);
-              
-              // 分批插入薪酬记录（避免SQL语句过长）
-              const salaryBatchSize = 500;
-              let salaryInsertedCount = 0;
-              
-              const insertSalaryBatch = (batchIndex) => {
-                const start = batchIndex * salaryBatchSize;
-                const end = Math.min(start + salaryBatchSize, salaryRecords.length);
-                const batch = salaryRecords.slice(start, end);
+                console.log(`💰 正在生成薪酬记录数据（共 ${salaryRecords.length} 条）...`);
                 
-                if (batch.length === 0) {
-                  console.log(`✓ 薪酬记录插入完成（共 ${salaryInsertedCount} 条）`);
+                // 分批插入薪酬记录（避免SQL语句过长）
+                const salaryBatchSize = 500;
+                let salaryInsertedCount = 0;
+                
+                const insertSalaryBatch = (batchIndex) => {
+                  const start = batchIndex * salaryBatchSize;
+                  const end = Math.min(start + salaryBatchSize, salaryRecords.length);
+                  const batch = salaryRecords.slice(start, end);
                   
-                  // 继续插入员工档案
+                  if (batch.length === 0) {
+                    console.log(`✓ 薪酬记录插入完成（共 ${salaryInsertedCount} 条）`);
+                    
+                    // 继续插入员工档案
+                    db.run(`
+                      INSERT OR REPLACE INTO employee_files 
+                      (id, user_id, employee_id, position_id, org_id, department, personal_info, work_info, education_info, family_info) VALUES
+                      (1, 2, 'EMP001', 2, 6, '技术部-前端组', '{"age": 28, "gender": "男", "marital_status": "未婚", "id_card": "110101199001011234"}', 
+                       '{"join_date": "2024-01-15", "work_years": 5, "contract_type": "formal"}', 
+                       '{"education": "本科", "school": "XX大学", "major": "计算机科学"}', '{"spouse": "", "children": []}'),
+                      (2, 3, 'EMP002', 3, 7, '技术部-后端组', '{"age": 26, "gender": "女", "marital_status": "已婚", "id_card": "110101199501011234"}', 
+                       '{"join_date": "2024-02-01", "work_years": 4, "contract_type": "formal"}', 
+                       '{"education": "本科", "school": "YY大学", "major": "软件工程"}', '{"spouse": "XXX", "children": []}'),
+                      (3, 4, 'EMP003', 5, 3, '销售部', '{"age": 30, "gender": "男", "marital_status": "已婚", "id_card": "110101199001011234"}', 
+                       '{"join_date": "2023-06-01", "work_years": 3, "contract_type": "formal"}', 
+                       '{"education": "大专", "school": "ZZ大学", "major": "市场营销"}', '{"spouse": "YYY", "children": ["孩子1"]}')
+                    `, (err) => {
+                      if (err) {
+                        console.error('插入员工档案失败:', err.message);
+                        return reject(err);
+                      }
+                      
+                      console.log('✓ HR模块完整示例数据插入完成');
+                      resolve();
+                    });
+                    return;
+                  }
+                  
                   db.run(`
-                    INSERT OR REPLACE INTO employee_files 
-                    (id, user_id, employee_id, position_id, org_id, department, personal_info, work_info, education_info, family_info) VALUES
-                    (1, 2, 'EMP001', 2, 6, '技术部-前端组', '{"age": 28, "gender": "男", "marital_status": "未婚", "id_card": "110101199001011234"}', 
-                     '{"join_date": "2024-01-15", "work_years": 5, "contract_type": "formal"}', 
-                     '{"education": "本科", "school": "XX大学", "major": "计算机科学"}', '{"spouse": "", "children": []}'),
-                    (2, 3, 'EMP002', 3, 7, '技术部-后端组', '{"age": 26, "gender": "女", "marital_status": "已婚", "id_card": "110101199501011234"}', 
-                     '{"join_date": "2024-02-01", "work_years": 4, "contract_type": "formal"}', 
-                     '{"education": "本科", "school": "YY大学", "major": "软件工程"}', '{"spouse": "XXX", "children": []}'),
-                    (3, 4, 'EMP003', 5, 3, '销售部', '{"age": 30, "gender": "男", "marital_status": "已婚", "id_card": "110101199001011234"}', 
-                     '{"join_date": "2023-06-01", "work_years": 3, "contract_type": "formal"}', 
-                     '{"education": "大专", "school": "ZZ大学", "major": "市场营销"}', '{"spouse": "YYY", "children": ["孩子1"]}')
+                    INSERT OR REPLACE INTO salary_records 
+                    (id, user_id, year, month, base_salary, bonus, allowance, deduction, notes)
+                    VALUES ${batch.join(',')}
                   `, (err) => {
                     if (err) {
-                      console.error('插入员工档案失败:', err.message);
+                      console.error(`插入薪酬记录批次 ${batchIndex + 1} 失败:`, err.message);
                       return reject(err);
                     }
-                    
-                    console.log('✓ HR模块完整示例数据插入完成');
-                    resolve();
+                    salaryInsertedCount += batch.length;
+                    const progress = Math.round((salaryInsertedCount / salaryRecords.length) * 100);
+                    process.stdout.write(`\r  进度: ${salaryInsertedCount}/${salaryRecords.length} (${progress}%)`);
+                    insertSalaryBatch(batchIndex + 1);
                   });
-                  return;
-                }
-                
-                db.run(`
-                  INSERT OR REPLACE INTO salary_records 
-                  (id, user_id, year, month, base_salary, bonus, allowance, deduction, notes)
-                  VALUES ${batch.join(',')}
-                `, (err) => {
-                  if (err) {
-                    console.error(`插入薪酬记录批次 ${batchIndex + 1} 失败:`, err.message);
-                    return reject(err);
-                  }
-                  salaryInsertedCount += batch.length;
-                  process.stdout.write(`\r  进度: ${salaryInsertedCount}/${salaryRecords.length} (${Math.round(salaryInsertedCount/salaryRecords.length*100)}%)`);
-                  insertSalaryBatch(batchIndex + 1);
-                });
-              };
+                };
               
-              // 开始分批插入薪酬记录
-              insertSalaryBatch(0);
+                // 开始分批插入薪酬记录
+                insertSalaryBatch(0);
+              });
             };
             
             // 开始分批插入考勤记录
             insertBatch(0);
             
             // 注意：薪酬记录和员工档案的插入会在考勤记录插入完成后自动执行
-                  
-                  // 插入员工档案
-                  db.run(`
-                    INSERT OR REPLACE INTO employee_files 
-                    (id, user_id, employee_id, position_id, org_id, department, personal_info, work_info, education_info, family_info) VALUES
-                    (1, 2, 'EMP001', 2, 6, '技术部-前端组', '{"age": 28, "gender": "男", "marital_status": "未婚", "id_card": "110101199001011234"}', 
-                     '{"join_date": "2024-01-15", "work_years": 5, "contract_type": "formal"}', 
-                     '{"education": "本科", "school": "XX大学", "major": "计算机科学"}', '{"spouse": "", "children": []}'),
-                    (2, 3, 'EMP002', 3, 7, '技术部-后端组', '{"age": 26, "gender": "女", "marital_status": "已婚", "id_card": "110101199501011234"}', 
-                     '{"join_date": "2024-02-01", "work_years": 4, "contract_type": "formal"}', 
-                     '{"education": "本科", "school": "YY大学", "major": "软件工程"}', '{"spouse": "XXX", "children": []}'),
-                    (3, 4, 'EMP003', 5, 3, '销售部', '{"age": 30, "gender": "男", "marital_status": "已婚", "id_card": "110101199001011234"}', 
-                     '{"join_date": "2023-06-01", "work_years": 3, "contract_type": "formal"}', 
-                     '{"education": "大专", "school": "ZZ大学", "major": "市场营销"}', '{"spouse": "YYY", "children": ["孩子1"]}')
-                  `, (err) => {
-                    if (err) {
-                      console.error('插入员工档案失败:', err.message);
-                      return reject(err);
-                    }
-                    
-                    console.log('✓ HR模块完整示例数据插入完成');
-                    resolve();
-                  });
-                });
-              });
-            });
           });
         });
       });
@@ -593,7 +666,7 @@ const insertFinanceSampleData = () => {
                     const dateStr = date.toISOString().split('T')[0];
                     const amount = Math.random() * 10000 + 1000;
                     const type = Math.random() > 0.5 ? 'income' : 'expense';
-                    transactions.push(`(1, '${type}', ${amount.toFixed(2)}, '${dateStr}', '${type === 'income' ? '销售收入' : '办公费用'}', '${type === 'income' ? '销售收入' : '管理费用'}', '日常交易')`);
+                    transactions.push(`(${i + 1}, 1, '${type}', ${amount.toFixed(2)}, '${dateStr}', '${type === 'income' ? '销售收入' : '办公费用'}', '${type === 'income' ? '销售收入' : '管理费用'}', '日常交易')`);
                   }
                   
                   db.run(`
@@ -849,6 +922,10 @@ const runInit = async () => {
     // 等待财务模块示例数据插入完成，然后插入更多数据
     await new Promise(resolve => setTimeout(resolve, 1000));
     await insertFinanceSampleData();
+    console.log('');
+    
+    // 插入字典示例数据
+    await insertDictionarySampleData();
     console.log('');
     
     // 再等待一小段时间确保数据插入完成

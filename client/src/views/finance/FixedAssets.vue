@@ -52,7 +52,11 @@
             {{ row.name || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="category" label="资产类别" width="120" show-overflow-tooltip/>
+        <el-table-column prop="category" label="资产类别" width="120" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ getCategoryLabel(row.category) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="purchase_price" label="购买价格" width="120" align="right" show-overflow-tooltip>
           <template #default="{ row }">
             {{ formatCurrency(row.purchase_price) }}
@@ -111,12 +115,12 @@
         </el-form-item>
         <el-form-item label="资产类别" prop="category" required>
           <el-select v-model="form.category" placeholder="请选择资产类别" style="width: 100%">
-            <el-option label="电子设备" value="电子设备" />
-            <el-option label="办公家具" value="办公家具" />
-            <el-option label="机械设备" value="机械设备" />
-            <el-option label="车辆" value="车辆" />
-            <el-option label="房屋建筑物" value="房屋建筑物" />
-            <el-option label="其他" value="其他" />
+            <el-option 
+              v-for="option in assetCategoryOptions" 
+              :key="option.value"
+              :label="option.label" 
+              :value="option.value" 
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="购买价格" prop="purchase_price" required>
@@ -183,9 +187,52 @@ import {
   updateFixedAsset,
   deleteFixedAsset
 } from "@/api/finance";
+import { getDictionary, getDictOptions } from '@/utils/dictionary';
 
 const loading = ref(false);
 const tableData = ref([]);
+
+// 资产类别字典
+const assetCategoryDict = ref({});
+const assetCategoryOptions = ref([]);
+
+// 加载资产类别字典
+const loadAssetCategoryDict = async () => {
+  try {
+    assetCategoryDict.value = await getDictionary('finance_asset_category');
+    assetCategoryOptions.value = await getDictOptions('finance_asset_category');
+  } catch (error) {
+    console.error('加载资产类别字典失败:', error);
+    // 使用默认值（注意：需要映射旧的字符串值到新的值）
+    assetCategoryDict.value = {
+      electronics: "电子设备",
+      furniture: "办公家具",
+      machinery: "机械设备",
+      vehicle: "车辆",
+      building: "房屋建筑物",
+      other: "其他"
+    };
+    assetCategoryOptions.value = [
+      { label: "电子设备", value: "electronics" },
+      { label: "办公家具", value: "furniture" },
+      { label: "机械设备", value: "machinery" },
+      { label: "车辆", value: "vehicle" },
+      { label: "房屋建筑物", value: "building" },
+      { label: "其他", value: "other" }
+    ];
+  }
+};
+
+// 获取资产类别标签（兼容旧数据）
+const getCategoryLabel = (category) => {
+  if (!category) return '-';
+  // 如果是旧数据（中文），直接返回
+  if (['电子设备', '办公家具', '机械设备', '车辆', '房屋建筑物', '其他'].includes(category)) {
+    return category;
+  }
+  // 新数据使用字典
+  return assetCategoryDict.value[category] || category || '-';
+};
 
 const searchForm = reactive({
   keyword: "",
@@ -397,7 +444,10 @@ const getDepreciationMethodLabel = (method) => {
   return methodMap[method] || method || "-";
 };
 
-onMounted(() => loadData());
+onMounted(() => {
+  loadAssetCategoryDict();
+  loadData();
+});
 </script>
 
 <style scoped>
