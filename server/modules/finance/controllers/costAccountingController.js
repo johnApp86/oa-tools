@@ -4,14 +4,14 @@ const { body, validationResult } = require('express-validator');
 // 获取成本中心列表
 exports.getCostCenters = (req, res) => {
   try {
-    const { page = 1, limit = 10, keyword = '' } = req.query;
+    const { page = 1, limit = 10, keyword = '', costType = '' } = req.query;
     const offset = (page - 1) * limit;
 
     let sql = `SELECT 
       id,
       code as cost_center_code,
       name as cost_center_name,
-      '' as cost_type,
+      COALESCE(cost_type, '') as cost_type,
       0 as budget_amount,
       0 as actual_amount,
       0 as variance,
@@ -26,6 +26,11 @@ exports.getCostCenters = (req, res) => {
     if (keyword) {
       sql += ` AND (name LIKE ? OR code LIKE ?)`;
       params.push(`%${keyword}%`, `%${keyword}%`);
+    }
+    
+    if (costType) {
+      sql += ` AND cost_type = ?`;
+      params.push(costType);
     }
 
     sql += ` ORDER BY code LIMIT ? OFFSET ?`;
@@ -43,6 +48,10 @@ exports.getCostCenters = (req, res) => {
       if (keyword) {
         countSql += ` AND (name LIKE ? OR code LIKE ?)`;
         countParams.push(`%${keyword}%`, `%${keyword}%`);
+      }
+      if (costType) {
+        countSql += ` AND cost_type = ?`;
+        countParams.push(costType);
       }
 
       db.get(countSql, countParams, (err, countResult) => {
@@ -74,12 +83,12 @@ exports.createCostCenter = [
       return res.status(400).json({ message: errors.array()[0].msg });
     }
 
-    const { name, code, description, parent_id, status = 1 } = req.body;
+    const { name, code, cost_type, description, parent_id, status = 1 } = req.body;
 
     db.run(
-      `INSERT INTO cost_centers (name, code, description, parent_id, status, created_at) 
-       VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-      [name, code, description, parent_id, status],
+      `INSERT INTO cost_centers (name, code, cost_type, description, parent_id, status, created_at) 
+       VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      [name, code, cost_type || null, description, parent_id, status],
       function(err) {
         if (err) {
           return res.status(500).json({ message: '创建失败' });
@@ -95,13 +104,13 @@ exports.createCostCenter = [
 exports.updateCostCenter = (req, res) => {
   try {
     const { id } = req.params;
-    const { name, code, description, parent_id, status } = req.body;
+    const { name, code, cost_type, description, parent_id, status } = req.body;
 
     db.run(
       `UPDATE cost_centers 
-       SET name = ?, code = ?, description = ?, parent_id = ?, status = ?, updated_at = CURRENT_TIMESTAMP 
+       SET name = ?, code = ?, cost_type = ?, description = ?, parent_id = ?, status = ?, updated_at = CURRENT_TIMESTAMP 
        WHERE id = ?`,
-      [name, code, description || null, parent_id || 0, status !== undefined ? status : 1, id],
+      [name, code, cost_type || null, description || null, parent_id || 0, status !== undefined ? status : 1, id],
       function(err) {
         if (err) {
           console.error('更新成本中心失败:', err);

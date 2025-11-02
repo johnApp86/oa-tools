@@ -223,26 +223,107 @@ const insertHRSampleData = () => {
               return reject(err);
             }
             
-            // 插入考勤记录（最近7天）
+            // 插入考勤记录（生成过去12个月的完整数据，覆盖所有员工）
             const attendanceRecords = [];
-            for (let i = 0; i < 7; i++) {
-              const date = new Date(today);
-              date.setDate(date.getDate() - i);
-              const dateStr = date.toISOString().split('T')[0];
-              attendanceRecords.push(`(1, 2, '${dateStr}', '${dateStr} 09:00:00', '${dateStr} 18:00:00', '办公室', '办公室', NULL, NULL)`);
-              attendanceRecords.push(`(2, 3, '${dateStr}', '${dateStr} 09:30:00', '${dateStr} 18:30:00', '办公室', '办公室', NULL, NULL)`);
+            let recordId = 1;
+            
+            // 所有用户及其岗位ID：1-admin(1), 2-zhangsan(2), 3-lisi(3), 4-wangwu(5), 5-zhaoliu(6), 6-sunqi(7)
+            const users = [
+              { user_id: 1, position_id: 1 }, // 系统管理员
+              { user_id: 2, position_id: 2 }, // 张三-前端
+              { user_id: 3, position_id: 3 }, // 李四-后端
+              { user_id: 4, position_id: 5 }, // 王五-销售
+              { user_id: 5, position_id: 6 }, // 赵六-HR
+              { user_id: 6, position_id: 7 }  // 孙七-财务
+            ];
+            
+            // 生成过去12个月的数据
+            for (let monthOffset = 0; monthOffset < 12; monthOffset++) {
+              const monthDate = new Date(today.getFullYear(), today.getMonth() - monthOffset, 1);
+              const year = monthDate.getFullYear();
+              const month = monthDate.getMonth() + 1;
+              const daysInMonth = new Date(year, month, 0).getDate();
+              
+              // 为每个用户生成该月的工作日考勤记录
+              users.forEach((user) => {
+                for (let day = 1; day <= daysInMonth; day++) {
+                  const date = new Date(year, month - 1, day);
+                  const dayOfWeek = date.getDay();
+                  
+                  // 只生成工作日（周一到周五）的考勤，周末跳过
+                  if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    
+                    // 随机生成不同的签到时间（8:30-10:00）和签退时间（17:30-19:30）
+                    const checkinHour = 8 + Math.floor(Math.random() * 2);
+                    const checkinMinute = 30 + Math.floor(Math.random() * 30);
+                    const checkoutHour = 17 + Math.floor(Math.random() * 2);
+                    const checkoutMinute = 30 + Math.floor(Math.random() * 30);
+                    
+                    // 偶尔有缺勤的情况（5%概率）
+                    const isAbsent = Math.random() < 0.05;
+                    
+                    const checkinTime = isAbsent ? 'NULL' : `'${dateStr} ${String(checkinHour).padStart(2, '0')}:${String(checkinMinute).padStart(2, '0')}:00'`;
+                    const checkoutTime = isAbsent ? 'NULL' : `'${dateStr} ${String(checkoutHour).padStart(2, '0')}:${String(checkoutMinute).padStart(2, '0')}:00'`;
+                    
+                    attendanceRecords.push(`(${recordId}, ${user.user_id}, ${user.position_id}, '${dateStr}', ${checkinTime}, ${checkoutTime}, '办公室', '办公室', NULL, NULL)`);
+                    recordId++;
+                  }
+                }
+              });
             }
             
-            db.run(`
-              INSERT OR REPLACE INTO attendance_records 
-              (id, user_id, position_id, date, checkin_time, checkout_time, checkin_location, checkout_location, checkin_notes, checkout_notes)
-              VALUES ${attendanceRecords.join(',')}
-            `, (err) => {
-              if (err) {
-                console.error('插入考勤记录失败:', err.message);
-                return reject(err);
+            // 分批插入考勤记录（避免SQL语句过长）
+            console.log(`📊 正在生成考勤记录数据（共 ${attendanceRecords.length} 条）...`);
+            const batchSize = 500;
+            let insertedCount = 0;
+            
+            const insertBatch = (batchIndex) => {
+              const start = batchIndex * batchSize;
+              const end = Math.min(start + batchSize, attendanceRecords.length);
+              const batch = attendanceRecords.slice(start, end);
+              
+              if (batch.length === 0) {
+                console.log(`✓ 考勤记录插入完成（共 ${insertedCount} 条）`);
+                
+                // 继续插入请假申请
+                db.run(`
+                  INSERT OR REPLACE INTO leave_applications 
+                  (id, user_id, position_id, type, start_date, end_date, reason, emergency_contact, status) VALUES
+                  (1, 2, 2, 'annual', '${new Date(today.getFullYear(), today.getMonth() + 1, 20).toISOString().split('T')[0]}', 
+                   '${new Date(today.getFullYear(), today.getMonth() + 1, 22).toISOString().split('T')[0]}', '年假', '13800000001', 1),
+                  (2, 3, 3, 'sick', '${today.toISOString().split('T')[0]}', '${today.toISOString().split('T')[0]}', '生病请假', '13800000002', 1),
+                  (3, 2, 2, 'personal', '${new Date(today.getFullYear(), today.getMonth() + 1, 10).toISOString().split('T')[0]}', 
+                   '${new Date(today.getFullYear(), today.getMonth() + 1, 10).toISOString().split('T')[0]}', '事假', '13800000003', 1)
+                `, (err) => {
+                  if (err) {
+                    console.error('插入请假申请失败:', err.message);
+                    return reject(err);
+                  }
+                  
+                  // 继续插入薪酬记录...
+                  insertSalaryRecords();
+                });
+                return;
               }
               
+              db.run(`
+                INSERT OR REPLACE INTO attendance_records 
+                (id, user_id, position_id, date, checkin_time, checkout_time, checkin_location, checkout_location, checkin_notes, checkout_notes)
+                VALUES ${batch.join(',')}
+              `, (err) => {
+                if (err) {
+                  console.error(`插入考勤记录批次 ${batchIndex + 1} 失败:`, err.message);
+                  return reject(err);
+                }
+                insertedCount += batch.length;
+                process.stdout.write(`\r  进度: ${insertedCount}/${attendanceRecords.length} (${Math.round(insertedCount/attendanceRecords.length*100)}%)`);
+                insertBatch(batchIndex + 1);
+              });
+            };
+            
+            // 插入薪酬记录函数（在考勤记录插入完成后调用）
+            const insertSalaryRecords = () => {
               // 插入请假申请
               db.run(`
                 INSERT OR REPLACE INTO leave_applications 
@@ -258,23 +339,114 @@ const insertHRSampleData = () => {
                   return reject(err);
                 }
                 
-                // 插入薪酬记录（最近3个月）
+                // 插入薪酬记录（生成2025年全年数据，覆盖所有员工）
                 const salaryRecords = [];
-                for (let i = 0; i < 3; i++) {
-                  const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
-                  salaryRecords.push(`(1, ${monthDate.getFullYear()}, ${monthDate.getMonth() + 1}, 20000, ${5000 + i * 1000}, 2000, 1000, '${monthDate.getFullYear()}年${monthDate.getMonth() + 1}月薪酬')`);
-                  salaryRecords.push(`(2, ${monthDate.getFullYear()}, ${monthDate.getMonth() + 1}, 18000, ${3000 + i * 500}, 1500, 800, '${monthDate.getFullYear()}年${monthDate.getMonth() + 1}月薪酬')`);
+                let salaryRecordId = 1;
+                
+                // 定义不同岗位的薪酬范围（基础工资、奖金范围、津贴、扣除）
+                const salaryConfigs = {
+                  1: { base: 25000, bonusRange: [3000, 8000], allowance: 3000, deduction: 1500 }, // 系统管理员
+                  2: { base: 20000, bonusRange: [2000, 6000], allowance: 2000, deduction: 1000 }, // 前端开发
+                  3: { base: 22000, bonusRange: [2500, 7000], allowance: 2500, deduction: 1200 }, // 后端开发
+                  4: { base: 18000, bonusRange: [1500, 5000], allowance: 1500, deduction: 800 },  // 项目经理
+                  5: { base: 15000, bonusRange: [1000, 8000], allowance: 1000, deduction: 500 },   // 销售经理（奖金波动大）
+                  6: { base: 12000, bonusRange: [1000, 4000], allowance: 1500, deduction: 600 }, // HR专员
+                  7: { base: 13000, bonusRange: [1000, 4000], allowance: 1500, deduction: 700 }    // 财务专员
+                };
+                
+                // 所有用户及其岗位ID
+                const salaryUsers = [
+                  { user_id: 1, position_id: 1 }, // 系统管理员
+                  { user_id: 2, position_id: 2 }, // 张三-前端
+                  { user_id: 3, position_id: 3 }, // 李四-后端
+                  { user_id: 4, position_id: 5 }, // 王五-销售
+                  { user_id: 5, position_id: 6 }, // 赵六-HR
+                  { user_id: 6, position_id: 7 }  // 孙七-财务
+                ];
+                
+                // 生成2025年全年（1-12月）的薪酬数据
+                const targetYear = 2025;
+                for (let month = 1; month <= 12; month++) {
+                  salaryUsers.forEach((user) => {
+                    const config = salaryConfigs[user.position_id] || salaryConfigs[2];
+                    
+                    // 随机生成奖金（在范围内）
+                    const bonus = config.bonusRange[0] + 
+                      Math.floor(Math.random() * (config.bonusRange[1] - config.bonusRange[0]));
+                    
+                    // 偶尔有特别奖金（10%概率）
+                    const hasExtraBonus = Math.random() < 0.1;
+                    const finalBonus = hasExtraBonus ? bonus + 2000 : bonus;
+                    
+                    salaryRecords.push(
+                      `(${salaryRecordId}, ${user.user_id}, ${targetYear}, ${month}, ${config.base}, ${finalBonus}, ${config.allowance}, ${config.deduction}, '${targetYear}年${month}月薪酬')`
+                    );
+                    salaryRecordId++;
+                  });
+                }
+                
+              console.log(`💰 正在生成薪酬记录数据（共 ${salaryRecords.length} 条）...`);
+              
+              // 分批插入薪酬记录（避免SQL语句过长）
+              const salaryBatchSize = 500;
+              let salaryInsertedCount = 0;
+              
+              const insertSalaryBatch = (batchIndex) => {
+                const start = batchIndex * salaryBatchSize;
+                const end = Math.min(start + salaryBatchSize, salaryRecords.length);
+                const batch = salaryRecords.slice(start, end);
+                
+                if (batch.length === 0) {
+                  console.log(`✓ 薪酬记录插入完成（共 ${salaryInsertedCount} 条）`);
+                  
+                  // 继续插入员工档案
+                  db.run(`
+                    INSERT OR REPLACE INTO employee_files 
+                    (id, user_id, employee_id, position_id, org_id, department, personal_info, work_info, education_info, family_info) VALUES
+                    (1, 2, 'EMP001', 2, 6, '技术部-前端组', '{"age": 28, "gender": "男", "marital_status": "未婚", "id_card": "110101199001011234"}', 
+                     '{"join_date": "2024-01-15", "work_years": 5, "contract_type": "formal"}', 
+                     '{"education": "本科", "school": "XX大学", "major": "计算机科学"}', '{"spouse": "", "children": []}'),
+                    (2, 3, 'EMP002', 3, 7, '技术部-后端组', '{"age": 26, "gender": "女", "marital_status": "已婚", "id_card": "110101199501011234"}', 
+                     '{"join_date": "2024-02-01", "work_years": 4, "contract_type": "formal"}', 
+                     '{"education": "本科", "school": "YY大学", "major": "软件工程"}', '{"spouse": "XXX", "children": []}'),
+                    (3, 4, 'EMP003', 5, 3, '销售部', '{"age": 30, "gender": "男", "marital_status": "已婚", "id_card": "110101199001011234"}', 
+                     '{"join_date": "2023-06-01", "work_years": 3, "contract_type": "formal"}', 
+                     '{"education": "大专", "school": "ZZ大学", "major": "市场营销"}', '{"spouse": "YYY", "children": ["孩子1"]}')
+                  `, (err) => {
+                    if (err) {
+                      console.error('插入员工档案失败:', err.message);
+                      return reject(err);
+                    }
+                    
+                    console.log('✓ HR模块完整示例数据插入完成');
+                    resolve();
+                  });
+                  return;
                 }
                 
                 db.run(`
                   INSERT OR REPLACE INTO salary_records 
                   (id, user_id, year, month, base_salary, bonus, allowance, deduction, notes)
-                  VALUES ${salaryRecords.join(',')}
+                  VALUES ${batch.join(',')}
                 `, (err) => {
                   if (err) {
-                    console.error('插入薪酬记录失败:', err.message);
+                    console.error(`插入薪酬记录批次 ${batchIndex + 1} 失败:`, err.message);
                     return reject(err);
                   }
+                  salaryInsertedCount += batch.length;
+                  process.stdout.write(`\r  进度: ${salaryInsertedCount}/${salaryRecords.length} (${Math.round(salaryInsertedCount/salaryRecords.length*100)}%)`);
+                  insertSalaryBatch(batchIndex + 1);
+                });
+              };
+              
+              // 开始分批插入薪酬记录
+              insertSalaryBatch(0);
+            };
+            
+            // 开始分批插入考勤记录
+            insertBatch(0);
+            
+            // 注意：薪酬记录和员工档案的插入会在考勤记录插入完成后自动执行
                   
                   // 插入员工档案
                   db.run(`

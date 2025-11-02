@@ -1,30 +1,71 @@
 const db = require('../../../core/database/db-connection');
 
+// 计算工作天数（排除周末）
+function calculateWorkDays(startDate, endDate) {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  let count = 0;
+  
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const dayOfWeek = d.getDay();
+    // 0 = 周日, 6 = 周六
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      count++;
+    }
+  }
+  
+  return count;
+}
+
 // 获取考勤统计
 exports.getAttendanceStats = (req, res) => {
   try {
-    const { date_start, date_end, department = '', user_id = '' } = req.query;
-    const startDate = date_start || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-    const endDate = date_end || new Date().toISOString().split('T')[0];
+    // 支持 year/month 参数（前端传的）和 date_start/date_end 参数
+    const { year, month, date_start, date_end, department = '', user_id = '' } = req.query;
+    
+    let startDate, endDate;
+    if (year && month) {
+      // 如果传了 year 和 month，计算该月的开始和结束日期
+      const yearNum = parseInt(year);
+      const monthNum = parseInt(month);
+      startDate = new Date(yearNum, monthNum - 1, 1).toISOString().split('T')[0];
+      // 计算该月最后一天
+      const lastDay = new Date(yearNum, monthNum, 0).getDate();
+      endDate = new Date(yearNum, monthNum - 1, lastDay).toISOString().split('T')[0];
+    } else {
+      // 否则使用 date_start/date_end 或默认值
+      startDate = date_start || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+      endDate = date_end || new Date().toISOString().split('T')[0];
+    }
+
+    // 计算该期间的工作天数（排除周末，可以根据实际需求调整）
+    const totalWorkDays = calculateWorkDays(startDate, endDate);
 
     let sql = `
       SELECT 
         u.id as user_id,
         u.real_name as user_name,
         u.username,
-        u.real_name,
         p.name as position_name,
         o.name as org_name,
+        ? as work_days,
         COUNT(DISTINCT ar.date) as attendance_days,
-        SUM(CASE WHEN ar.checkin_time IS NOT NULL AND ar.checkout_time IS NOT NULL THEN 1 ELSE 0 END) as full_day_count,
-        SUM(CASE WHEN ar.checkin_time IS NULL OR ar.checkout_time IS NULL THEN 1 ELSE 0 END) as incomplete_day_count
+        SUM(CASE WHEN ar.checkin_time IS NOT NULL AND ar.checkout_time IS NOT NULL THEN 1 ELSE 0 END) as complete_days,
+        SUM(CASE WHEN ar.checkin_time IS NULL AND ar.checkout_time IS NULL THEN 1 ELSE 0 END) as absent_days,
+        AVG(CASE 
+          WHEN ar.checkin_time IS NOT NULL AND ar.checkout_time IS NOT NULL 
+          THEN (
+            (julianday(ar.checkout_time) - julianday(ar.checkin_time)) * 24
+          )
+          ELSE NULL
+        END) as avg_work_hours
       FROM attendance_records ar
       LEFT JOIN users u ON ar.user_id = u.id
       LEFT JOIN positions p ON ar.position_id = p.id
       LEFT JOIN organizations o ON u.organization_id = o.id
       WHERE ar.date >= ? AND ar.date <= ?
     `;
-    const params = [startDate, endDate];
+    const params = [totalWorkDays, startDate, endDate];
     
     if (user_id) {
       sql += ` AND ar.user_id = ?`;
@@ -36,26 +77,36 @@ exports.getAttendanceStats = (req, res) => {
       params.push(department);
     }
 
-    sql += ` GROUP BY ar.user_id, u.real_name, p.name, o.name ORDER BY attendance_days DESC`;
+    sql += ` GROUP BY u.id, u.real_name, u.username, p.name, o.name ORDER BY attendance_days DESC`;
 
     db.all(sql, params, (err, stats) => {
       if (err) {
-        return res.status(500).json({ message: '查询失败' });
+        console.error('查询考勤统计失败:', err);
+        return res.status(500).json({ message: '查询失败', error: err.message });
       }
 
-      const totalDays = (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24) + 1;
+      // 处理数据，确保所有字段都有值
+      const processedStats = (stats || []).map(item => ({
+        user_id: item.user_id,
+        user_name: item.user_name || item.username || '-',
+        username: item.username,
+        position_name: item.position_name || '-',
+        org_name: item.org_name || '-',
+        work_days: item.work_days || totalWorkDays,
+        complete_days: item.complete_days || 0,
+        absent_days: item.absent_days || Math.max(0, totalWorkDays - (item.attendance_days || 0)),
+        avg_work_hours: item.avg_work_hours ? parseFloat(item.avg_work_hours.toFixed(2)) : 0
+      }));
       
-      const summary = {
-        period: { start: startDate, end: endDate },
-        total_working_days: totalDays,
-        total_employees: stats.length,
-        total_attendance_days: stats.reduce((sum, item) => sum + item.attendance_days, 0),
-        total_full_days: stats.reduce((sum, item) => sum + item.full_day_count, 0),
-        total_incomplete_days: stats.reduce((sum, item) => sum + item.incomplete_day_count, 0),
-        details: stats
-      };
-
-      res.json(summary);
+      res.json({
+        data: processedStats,
+        total: processedStats.length,
+        summary: {
+          period: { start: startDate, end: endDate },
+          total_working_days: totalWorkDays,
+          total_employees: processedStats.length
+        }
+      });
     });
   } catch (error) {
     res.status(500).json({ message: '服务器错误' });
@@ -65,26 +116,29 @@ exports.getAttendanceStats = (req, res) => {
 // 获取薪酬统计
 exports.getSalaryStats = (req, res) => {
   try {
-    const { year, month, department = '', user_id = '' } = req.query;
+    const { year, department = '', user_id = '' } = req.query;
     const currentYear = year || new Date().getFullYear();
-    const currentMonth = month || new Date().getMonth() + 1;
 
     let sql = `
       SELECT 
-        sr.*,
+        sr.user_id,
         u.real_name as user_name,
         u.username,
-        u.real_name,
         p.name as position_name,
         o.name as org_name,
-        (sr.base_salary + sr.bonus + sr.allowance - sr.deduction) as total_salary
+        SUM(sr.base_salary) as total_base_salary,
+        SUM(sr.bonus) as total_bonus,
+        SUM(sr.allowance) as total_allowance,
+        SUM(sr.deduction) as total_deduction,
+        SUM(sr.base_salary + sr.bonus + sr.allowance - sr.deduction) as total_salary,
+        COUNT(DISTINCT sr.month) as salary_months
       FROM salary_records sr
       LEFT JOIN users u ON sr.user_id = u.id
       LEFT JOIN positions p ON u.position_id = p.id
       LEFT JOIN organizations o ON u.organization_id = o.id
-      WHERE sr.year = ? AND sr.month = ?
+      WHERE sr.year = ?
     `;
-    const params = [currentYear, currentMonth];
+    const params = [currentYear];
     
     if (user_id) {
       sql += ` AND sr.user_id = ?`;
@@ -96,26 +150,41 @@ exports.getSalaryStats = (req, res) => {
       params.push(department);
     }
 
-    sql += ` ORDER BY total_salary DESC`;
+    sql += ` GROUP BY sr.user_id, u.real_name, u.username, p.name, o.name ORDER BY total_salary DESC`;
 
     db.all(sql, params, (err, records) => {
       if (err) {
-        return res.status(500).json({ message: '查询失败' });
+        console.error('查询薪酬统计失败:', err);
+        return res.status(500).json({ message: '查询失败', error: err.message });
       }
 
-      const summary = {
-        period: { year: currentYear, month: currentMonth },
-        total_employees: records.length,
-        total_base_salary: records.reduce((sum, item) => sum + (item.base_salary || 0), 0),
-        total_bonus: records.reduce((sum, item) => sum + (item.bonus || 0), 0),
-        total_allowance: records.reduce((sum, item) => sum + (item.allowance || 0), 0),
-        total_deduction: records.reduce((sum, item) => sum + (item.deduction || 0), 0),
-        total_salary: records.reduce((sum, item) => sum + (item.total_salary || 0), 0),
-        avg_salary: records.length > 0 ? (records.reduce((sum, item) => sum + (item.total_salary || 0), 0) / records.length).toFixed(2) : 0,
-        details: records
-      };
+      // 处理数据，确保所有字段都有值
+      const processedRecords = (records || []).map(item => ({
+        user_id: item.user_id,
+        user_name: item.user_name || item.username || '-',
+        username: item.username,
+        position_name: item.position_name || '-',
+        org_name: item.org_name || '-',
+        total_base_salary: item.total_base_salary || 0,
+        total_bonus: item.total_bonus || 0,
+        total_allowance: item.total_allowance || 0,
+        total_deduction: item.total_deduction || 0,
+        total_salary: item.total_salary || 0,
+        salary_months: item.salary_months || 0
+      }));
 
-      res.json(summary);
+      res.json({
+        data: processedRecords,
+        total: processedRecords.length,
+        summary: {
+          period: { year: currentYear },
+          total_employees: processedRecords.length,
+          total_salary: processedRecords.reduce((sum, item) => sum + (item.total_salary || 0), 0),
+          avg_salary: processedRecords.length > 0 
+            ? (processedRecords.reduce((sum, item) => sum + (item.total_salary || 0), 0) / processedRecords.length).toFixed(2) 
+            : 0
+        }
+      });
     });
   } catch (error) {
     res.status(500).json({ message: '服务器错误' });

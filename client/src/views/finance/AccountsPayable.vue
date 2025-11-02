@@ -45,7 +45,11 @@
       <el-table :data="tableData" v-loading="loading" stripe border
         style="width: 100%"
         table-layout="fixed">
-        <el-table-column prop="invoice_no" label="发票号" width="150" show-overflow-tooltip/>
+        <el-table-column prop="invoice_number" label="发票号" width="150" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.invoice_number || row.invoice_no || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="supplier_name" label="供应商名称" width="200" show-overflow-tooltip/>
         <el-table-column prop="amount" label="应付金额" width="120" show-overflow-tooltipalign="right">
           <template #default="{ row }">
@@ -166,7 +170,12 @@ const loadData = async () => {
       status: searchForm.status
     };
     const response = await getAccountsPayable(params);
-    tableData.value = response.data || [];
+    // 统一字段名，将 invoice_number 映射为 invoice_no 以兼容前端代码
+    const data = (response.data || []).map(item => ({
+      ...item,
+      invoice_no: item.invoice_number || item.invoice_no
+    }));
+    tableData.value = data;
   } catch (error) {
     console.error("加载数据失败:", error);
     ElMessage.error("加载数据失败");
@@ -208,7 +217,7 @@ const handleAdd = () => {
 const handleEdit = (row) => {
   Object.assign(form, {
     id: row.id,
-    invoice_no: row.invoice_no,
+    invoice_no: row.invoice_number || row.invoice_no || "",
     supplier_name: row.supplier_name,
     amount: row.amount,
     due_date: row.due_date
@@ -219,10 +228,11 @@ const handleEdit = (row) => {
 const handleSubmit = async () => {
   try {
     const submitData = {
-      invoice_no: form.invoice_no,
+      invoice_number: form.invoice_no, // 后端使用 invoice_number
       supplier_name: form.supplier_name,
       amount: form.amount,
-      due_date: form.due_date
+      due_date: form.due_date,
+      description: '' // 后端需要 description 字段
     };
     
     if (form.id) {
@@ -253,7 +263,7 @@ const handleBatchPay = () => {
 const handleDelete = async (row) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除应付账"${row.invoice_no}"吗？`,
+      `确定要删除应付账"${row.invoice_number || row.invoice_no || '无发票号'}"吗？`,
       "确认删除",
       {
         confirmButtonText: "确定",

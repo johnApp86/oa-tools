@@ -171,13 +171,28 @@ const createFinanceTables = () => {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name VARCHAR(100) NOT NULL,
       code VARCHAR(50) UNIQUE NOT NULL,
+      cost_type VARCHAR(50),
       description TEXT,
       parent_id INTEGER DEFAULT 0,
       status INTEGER DEFAULT 1,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
-  `);
+  `, (err) => {
+    if (err) {
+      console.error('创建成本中心表失败:', err);
+    } else {
+      // 如果表已存在，尝试添加 cost_type 字段
+      db.run(`
+        ALTER TABLE cost_centers ADD COLUMN cost_type VARCHAR(50)
+      `, (alterErr) => {
+        // 忽略字段已存在的错误
+        if (alterErr && !alterErr.message.includes('duplicate column')) {
+          console.error('添加 cost_type 字段失败:', alterErr);
+        }
+      });
+    }
+  });
 
   // 成本分配表
   db.run(`

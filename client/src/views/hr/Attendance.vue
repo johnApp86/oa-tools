@@ -33,7 +33,9 @@
                 </div>
                 <div class="status-item">
                   <span class="label">工作时长：</span>
-                  <span class="value">{{ todayWorkHours }}小时</span>
+                  <span class="value" :class="getWorkHoursClass(todayAttendance.checkin_time, todayAttendance.checkout_time)">
+                    {{ formatWorkHours(todayAttendance.checkin_time, todayAttendance.checkout_time) }}
+                  </span>
                 </div>
               </div>
             </el-card>
@@ -98,7 +100,9 @@
             </el-table-column>
             <el-table-column label="工作时长">
               <template #default="{ row }">
-                {{ calculateWorkHours(row.checkin_time, row.checkout_time) }}小时
+                <span :class="getWorkHoursClass(row.checkin_time, row.checkout_time)">
+                  {{ formatWorkHours(row.checkin_time, row.checkout_time) }}
+                </span>
               </template>
             </el-table-column>
             <el-table-column prop="checkin_location" label="签到地点" />
@@ -439,13 +443,50 @@ const formatTime = (timeStr) => {
   return new Date(timeStr).toLocaleString()
 }
 
-// 计算工作时长
+// 计算工作时长（确保不为负数）
 const calculateWorkHours = (checkinTime, checkoutTime) => {
   if (!checkinTime || !checkoutTime) return 0
   const start = new Date(checkinTime)
   const end = new Date(checkoutTime)
   const diffMs = end - start
-  return Math.round(diffMs / (1000 * 60 * 60) * 100) / 100
+  const hours = Math.round(diffMs / (1000 * 60 * 60) * 100) / 100
+  // 如果计算出的时长为负数，返回0（可能是数据异常，签退时间早于签到时间）
+  return hours > 0 ? hours : 0
+}
+
+// 格式化工作时长显示
+const formatWorkHours = (checkinTime, checkoutTime) => {
+  if (!checkinTime || !checkoutTime) return '0小时'
+  const hours = calculateWorkHours(checkinTime, checkoutTime)
+  const start = new Date(checkinTime)
+  const end = new Date(checkoutTime)
+  
+  // 如果签退时间早于签到时间，显示警告
+  if (end < start) {
+    return '数据异常（0小时）'
+  }
+  
+  return `${hours}小时`
+}
+
+// 获取工作时长的样式类
+const getWorkHoursClass = (checkinTime, checkoutTime) => {
+  if (!checkinTime || !checkoutTime) return ''
+  const start = new Date(checkinTime)
+  const end = new Date(checkoutTime)
+  
+  // 如果签退时间早于签到时间，显示警告样式
+  if (end < start) {
+    return 'work-hours-error'
+  }
+  
+  const hours = calculateWorkHours(checkinTime, checkoutTime)
+  // 工作时长小于8小时显示警告
+  if (hours > 0 && hours < 8) {
+    return 'work-hours-warning'
+  }
+  
+  return 'work-hours-normal'
 }
 
 // 计算请假天数
@@ -694,6 +735,22 @@ onMounted(() => {
   font-size: 16px;
   font-weight: bold;
   color: #333;
+}
+
+/* 工作时长样式 */
+.work-hours-normal {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.work-hours-warning {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.work-hours-error {
+  color: #ef4444;
+  font-weight: 600;
 }
 
 .search-form {

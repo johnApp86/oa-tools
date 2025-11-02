@@ -185,6 +185,11 @@ exports.checkIn = [
             }
           );
         } else {
+          // 签退：验证签退时间不能早于签到时间
+          if (existing.checkin_time && now < existing.checkin_time) {
+            return res.status(400).json({ message: '签退时间不能早于签到时间，请检查时间设置' });
+          }
+          
           db.run(
             `UPDATE attendance_records 
              SET checkout_time = ?, checkout_location = ?, checkout_notes = ?, updated_at = CURRENT_TIMESTAMP 
@@ -213,18 +218,8 @@ exports.checkIn = [
             }
           );
         } else {
-          // 签退但没有签到记录，创建记录但只填写签退时间
-          db.run(
-            `INSERT INTO attendance_records (user_id, position_id, date, checkout_time, checkout_location, checkout_notes, created_at) 
-             VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-            [user_id, position_id, today, now, location, notes],
-            function(err) {
-              if (err) {
-                return res.status(500).json({ message: '签退失败' });
-              }
-              res.json({ message: '签退成功', id: this.lastID });
-            }
-          );
+          // 签退但没有签到记录，提示需要先签到
+          return res.status(400).json({ message: '请先完成签到后再进行签退' });
         }
       }
     });

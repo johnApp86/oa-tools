@@ -39,7 +39,11 @@
         table-layout="fixed">
         <el-table-column prop="cost_center_code" label="成本中心编号" width="150" show-overflow-tooltip/>
         <el-table-column prop="cost_center_name" label="成本中心名称" width="200" show-overflow-tooltip/>
-        <el-table-column prop="cost_type" label="成本类型" width="120" show-overflow-tooltip/>
+        <el-table-column prop="cost_type" label="成本类型" width="120" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ getCostTypeLabel(row.cost_type) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="budget_amount" label="预算金额" width="120" show-overflow-tooltipalign="right">
           <template #default="{ row }">
             {{ formatCurrency(row.budget_amount) }}
@@ -92,6 +96,14 @@
         </el-form-item>
         <el-form-item label="成本中心代码" prop="code" required>
           <el-input v-model="form.code" placeholder="请输入成本中心代码" />
+        </el-form-item>
+        <el-form-item label="成本类型" prop="cost_type">
+          <el-select v-model="form.cost_type" placeholder="请选择成本类型" style="width: 100%">
+            <el-option label="直接材料" value="direct_material" />
+            <el-option label="直接人工" value="direct_labor" />
+            <el-option label="制造费用" value="manufacturing" />
+            <el-option label="间接费用" value="indirect" />
+          </el-select>
         </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input
@@ -149,7 +161,8 @@ const loadData = async () => {
   loading.value = true;
   try {
     const params = {
-      keyword: searchForm.keyword
+      keyword: searchForm.keyword,
+      costType: searchForm.costType || ''
     };
     const response = await getCostCenters(params);
     tableData.value = response.data || [];
@@ -174,6 +187,7 @@ const form = reactive({
   id: null,
   name: "",
   code: "",
+  cost_type: "",
   description: "",
   parent_id: 0,
   status: 1
@@ -194,8 +208,9 @@ const handleEdit = (row) => {
   resetForm();
   Object.assign(form, {
     id: row.id,
-    name: row.name || "",
-    code: row.code || "",
+    name: row.cost_center_name || row.name || "",
+    code: row.cost_center_code || row.code || "",
+    cost_type: row.cost_type || "",
     description: row.description || "",
     parent_id: row.parent_id !== undefined ? row.parent_id : 0,
     status: row.status !== undefined ? row.status : 1
@@ -210,6 +225,7 @@ const resetForm = () => {
     id: null,
     name: "",
     code: "",
+    cost_type: "",
     description: "",
     parent_id: 0,
     status: 1
@@ -232,6 +248,7 @@ const handleSubmit = async () => {
     const submitData = {
       name: form.name,
       code: form.code,
+      cost_type: form.cost_type || null,
       description: form.description || null,
       parent_id: form.parent_id || 0,
       status: form.status !== undefined ? form.status : 1
@@ -283,6 +300,17 @@ const formatCurrency = (amount) => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
+};
+
+// 获取成本类型标签
+const getCostTypeLabel = (type) => {
+  const typeMap = {
+    direct_material: "直接材料",
+    direct_labor: "直接人工",
+    manufacturing: "制造费用",
+    indirect: "间接费用"
+  };
+  return typeMap[type] || type || "-";
 };
 
 onMounted(() => loadData());

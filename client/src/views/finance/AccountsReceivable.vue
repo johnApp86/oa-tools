@@ -71,7 +71,11 @@
         table-layout="fixed"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="invoice_no" label="发票号" width="150" show-overflow-tooltip />
+        <el-table-column prop="invoice_number" label="发票号" width="150" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.invoice_number || row.invoice_no || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column prop="customer_name" label="客户名称" min-width="200" show-overflow-tooltip />
         <el-table-column prop="amount" label="应收金额" width="140" align="right" show-overflow-tooltip>
           <template #default="{ row }">
@@ -344,7 +348,12 @@ const loadData = async () => {
     }
     
     const response = await getAccountsReceivable(params);
-    tableData.value = response.data || [];
+    // 统一字段名，将 invoice_number 映射为 invoice_no 以兼容前端代码
+    const data = (response.data || []).map(item => ({
+      ...item,
+      invoice_no: item.invoice_number || item.invoice_no
+    }));
+    tableData.value = data;
     pagination.total = response.total || 0;
   } catch (error) {
     console.error("加载数据失败:", error);
@@ -381,11 +390,11 @@ const handleAdd = () => {
 const handleEdit = (row) => {
   Object.assign(form, {
     id: row.id,
-    invoice_no: row.invoice_no,
+    invoice_no: row.invoice_number || row.invoice_no || "",
     customer_name: row.customer_name,
     amount: row.amount,
     due_date: row.due_date,
-    remark: row.remark || "",
+    remark: row.description || row.remark || "",
   });
   dialogVisible.value = true;
 };
@@ -415,7 +424,7 @@ const handleBatchReceive = () => {
 const handleDelete = async (row) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除应收账"${row.invoice_no}"吗？`,
+      `确定要删除应收账"${row.invoice_number || row.invoice_no || '无发票号'}"吗？`,
       "确认删除",
       {
         confirmButtonText: "确定",
@@ -448,11 +457,11 @@ const handleSubmit = async () => {
     submitLoading.value = true;
     
     const submitData = {
-      invoice_no: form.invoice_no,
+      invoice_number: form.invoice_no, // 后端使用 invoice_number
       customer_name: form.customer_name,
       amount: form.amount,
       due_date: form.due_date,
-      remark: form.remark
+      description: form.remark // 后端使用 description 而不是 remark
     };
     
     if (form.id) {
