@@ -44,6 +44,18 @@ if not exist "server\node_modules" (
     )
 )
 
+if not exist "client\node_modules" (
+    echo ⚠️  客户端依赖未安装，正在安装...
+    cd client
+    npm install
+    cd ..
+    if %errorlevel% neq 0 (
+        echo ❌ 客户端依赖安装失败
+        pause
+        exit /b 1
+    )
+)
+
 echo ✓ 依赖检查完成
 
 echo.
